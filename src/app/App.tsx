@@ -15,6 +15,13 @@ export default function App() {
           <Route path="/" element={<Dashboard />} />
           <Route path="/fov-test" element={<FovTestPage />} />
           <Route path="/styleguide" element={<StyleguidePage />} />
+          {/*
+            Marketing demo route — same Dashboard component as `/`, served
+            from a separate URL so we can iterate on demo-only tweaks
+            without touching the production surface. Identical to `/`
+            today; diverges as adjustments land here.
+          */}
+          <Route path="/demo" element={<Dashboard />} />
         </Routes>
       </BrowserRouter>
       <DialRoot position="bottom-right" />
