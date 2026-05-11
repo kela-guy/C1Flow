@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useDrag } from 'react-dnd';
-import { X, Camera, AlertTriangle, MapPin, BellOff, Wrench, Check, Loader2, Square, ChevronsUpDown } from 'lucide-react';
+import { X, Camera, AlertTriangle, MapPin, BellOff, Wrench, Check, Loader2, Square, ChevronsUpDown, Pin, PinOff } from 'lucide-react';
 import { Tooltip, TooltipTrigger, TooltipContent } from './ui/tooltip';
 import { Tabs, TabsList, TabsTrigger } from './ui/tabs';
 import { Switch } from './ui/switch';
@@ -170,6 +170,11 @@ export interface DevicesPanelStrings {
   audioTrackAriaLabel: string;
   audioTrackSearchPlaceholder: string;
   audioTrackNoMatches: string;
+  /** Pin / unpin a camera or drone to a video feed slot in the playground. */
+  pinToFeed: string;
+  pinToFeedAriaLabel: string;
+  unpinFromFeed: string;
+  unpinFromFeedAriaLabel: string;
 }
 
 export const DEFAULT_DEVICE_PANEL_STRINGS: DevicesPanelStrings = {
@@ -216,6 +221,10 @@ export const DEFAULT_DEVICE_PANEL_STRINGS: DevicesPanelStrings = {
   audioTrackAriaLabel: 'Audio track',
   audioTrackSearchPlaceholder: 'Search…',
   audioTrackNoMatches: 'No matches',
+  pinToFeed: 'Pin to feed',
+  pinToFeedAriaLabel: 'Pin device to a video feed',
+  unpinFromFeed: 'Unpin',
+  unpinFromFeedAriaLabel: 'Remove device from the video feed',
 };
 
 const CONNECTION_STATE_COLORS: Record<ConnectionState, string> = {
@@ -247,6 +256,9 @@ export function DeviceRow({
   isMuted,
   muteRemaining,
   onToggleMute,
+  onPinToFeed,
+  onUnpinFromFeed,
+  isPinnedToFeed,
   connectionStateLabels = DEFAULT_CONNECTION_STATE_LABELS,
   cameraPresets,
   strings = DEFAULT_DEVICE_PANEL_STRINGS,
@@ -265,6 +277,12 @@ export function DeviceRow({
   isMuted: boolean;
   muteRemaining: string | null;
   onToggleMute: (deviceId: string) => void;
+  /** Pin a camera/drone into the next available video feed slot. */
+  onPinToFeed?: (deviceId: string) => void;
+  /** Unpin a camera/drone from its video feed slot. */
+  onUnpinFromFeed?: (deviceId: string) => void;
+  /** Whether this device is currently pinned to a feed. Drives the toggle visual + label. */
+  isPinnedToFeed?: boolean;
   connectionStateLabels?: Record<ConnectionState, string>;
   cameraPresets?: Record<string, string[]>;
   strings?: DevicesPanelStrings;
@@ -610,6 +628,28 @@ export function DeviceRow({
               {strings.centerOnMap}
             </button>
 
+            {(onPinToFeed || onUnpinFromFeed) && (device.type === 'camera' || device.type === 'drone') && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (isPinnedToFeed) onUnpinFromFeed?.(device.id);
+                  else onPinToFeed?.(device.id);
+                }}
+                disabled={isOffline || (isPinnedToFeed ? !onUnpinFromFeed : !onPinToFeed)}
+                aria-pressed={!!isPinnedToFeed}
+                aria-label={isPinnedToFeed ? strings.unpinFromFeedAriaLabel : strings.pinToFeedAriaLabel}
+                className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded text-[11px] font-medium active:scale-[0.98] transition-[background-color,color,transform] duration-150 ease-out cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed focus-visible:ring-2 focus-visible:ring-white/25 focus-visible:outline-none ${
+                  isPinnedToFeed
+                    ? 'text-sky-100 bg-sky-500/30 ring-1 ring-inset ring-sky-300/45 hover:bg-sky-500/40'
+                    : 'text-sky-200 bg-sky-500/15 hover:bg-sky-500/25'
+                }`}
+              >
+                {isPinnedToFeed ? <PinOff size={12} /> : <Pin size={12} />}
+                {isPinnedToFeed ? strings.unpinFromFeed : strings.pinToFeed}
+              </button>
+            )}
+
             <button
               type="button"
               onClick={(e) => { e.stopPropagation(); onToggleMute(device.id); }}
@@ -694,6 +734,12 @@ export interface DevicesPanelProps {
   speakerPlayingIds?: Set<string>;
   /** Override audio tracks rendered in the speaker combobox. Defaults to `DEFAULT_SPEAKER_TRACKS`. */
   speakerTracks?: { id: string; label: string }[];
+  /** Pin a camera/drone to a video feed slot. Visible on camera + drone cards only. */
+  onPinToFeed?: (deviceId: string) => void;
+  /** Unpin a camera/drone from its video feed slot. Visible on camera + drone cards only. */
+  onUnpinFromFeed?: (deviceId: string) => void;
+  /** Set / list of device ids currently pinned to a feed. Drives the Pin/Unpin toggle state. */
+  pinnedDeviceIds?: ReadonlySet<string> | readonly string[];
   noTransition?: boolean;
   width?: number;
   focusedDeviceId?: string | null;
@@ -724,6 +770,9 @@ export function DevicesPanel({
   floodlightOnIds,
   speakerPlayingIds,
   speakerTracks,
+  onPinToFeed,
+  onUnpinFromFeed,
+  pinnedDeviceIds,
   noTransition,
   width,
   focusedDeviceId,
@@ -745,6 +794,14 @@ export function DevicesPanel({
   const connectionStateLabels = useMemo(
     () => ({ ...DEFAULT_CONNECTION_STATE_LABELS, ...(connectionStateLabelsProp ?? {}) }) as Record<ConnectionState, string>,
     [connectionStateLabelsProp],
+  );
+
+  // Normalize the `pinnedDeviceIds` prop so consumers can pass either a Set
+  // (cheap O(1) lookup, what PlaygroundPage uses) or a plain array (cheaper
+  // to build for callers without state).
+  const pinnedSet = useMemo<ReadonlySet<string>>(
+    () => (pinnedDeviceIds instanceof Set ? pinnedDeviceIds : new Set(pinnedDeviceIds ?? [])),
+    [pinnedDeviceIds],
   );
 
   /** Pick a representative icon per type from the first device of that type. */
@@ -933,6 +990,9 @@ export function DevicesPanel({
                     isMuted={mutedDevices.has(device.id)}
                     muteRemaining={getMuteRemaining(device.id)}
                     onToggleMute={handleToggleMute}
+                    onPinToFeed={onPinToFeed}
+                    onUnpinFromFeed={onUnpinFromFeed}
+                    isPinnedToFeed={pinnedSet.has(device.id)}
                     connectionStateLabels={connectionStateLabels}
                     cameraPresets={cameraPresets}
                     strings={strings}
