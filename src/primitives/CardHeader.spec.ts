@@ -142,7 +142,7 @@ export const spec: ComponentSpec = {
     role: 'heading (h2 for title)',
     ariaAttributes: [
       'aria-hidden="true" on icon element (decorative)',
-      'aria-hidden="true" on ChevronDown (decorative indicator)',
+      'aria-hidden="true" on CardChevronDown (decorative indicator)',
     ],
     keyboardNav: [
       'Tab: focuses quickAction slot if present (native)',
@@ -254,5 +254,6 @@ export const spec: ComponentSpec = {
     'iconBgActive opacity is calculated at render time via hex string manipulation — this could be simplified with CSS color-mix().',
     'IFF coloring (affiliation prop) takes precedence over lifecycle coloring (iconColor + iconBgActive). The single accent rule from ui-craft: color carries meaning, and affiliation is the meaning when present.',
     'Flex layout: LEFT container is `min-w-0 flex-1` (can shrink), RIGHT container is `shrink-0` (status/badge/chevron never compress). Title and subtitle both `truncate` inside the LEFT column so long strings end-ellipsize instead of squashing the right side. Always preserve this when modifying the header.',
+    'Chevron is a custom inline `CardChevronDown` (chunky filled wedge) rather than Central\'s `IconChevronBottom` (thin outlined). The outlined variant is too light at 18px against the card surface — the filled wedge reads as a clear affordance without dominating the header. Sibling accordion-section chevrons (CardDetails, CardIdentity, sidebar accordions) intentionally keep the outlined Central chevron because they\'re a softer, secondary disclosure surface.',
   ],
 };

@@ -3,12 +3,12 @@ import type { ComponentSpec } from '@/specs/types';
 export const spec: ComponentSpec = {
   name: 'CardIdentity',
   filePath: 'src/primitives/CardIdentity.tsx',
-  purpose: 'Collapsible "General info" accordion section that surfaces drone identity (model, serial number, and future identity fields) as full-width stacked rows. Sits above CardDetails because identity ("what is this?") precedes telemetry ("where is it?") in operator scanning order.',
+  purpose: 'Collapsible "General info" accordion section that surfaces drone identity (model, serial number, and future identity fields) in a 2-column grid that matches CardDetails. Sits above CardDetails because identity ("what is this?") precedes telemetry ("where is it?") in operator scanning order.',
   location: 'TargetCard/Slots',
   status: 'prototype',
 
   props: [
-    { name: 'rows', type: 'IdentityRow[]', required: true, description: 'Array of { label, value } entries. Each renders as a full-width stacked row (label above value) with a per-row copy button.' },
+    { name: 'rows', type: 'IdentityRow[]', required: true, description: 'Array of { label, value } entries. Rows flow into a 2-column grid; within each cell the label sits above the value with a per-row copy button.' },
     { name: 'title', type: 'string', required: false, defaultValue: "'General info'", description: 'Section header title' },
     { name: 'copyLabel', type: 'string', required: true, description: 'Verb label for the per-row copy button. Composed with each row\'s label to form the aria-label (e.g. "Copy serial number").' },
     { name: 'copiedLabel', type: 'string', required: true, description: 'Post-success label ("Copied"). Used for the icon button aria-label and the aria-live announcement.' },
@@ -32,9 +32,9 @@ export const spec: ComponentSpec = {
     {
       name: 'expanded',
       trigger: 'User clicks accordion header or defaultOpen=true',
-      description: 'Identity rows displayed in a vertical stack. Each value sits in a `w-fit` wrapper anchored to the row\'s inline-start edge, so the copy button rides immediately after the text (not pinned to the far end of the row). The button sits on top of a gradient-faded overlay at the wrapper\'s inline-end so long values dissolve smoothly under the icon instead of being truncated or pushing the icon out of view.',
+      description: 'Identity rows displayed in a 2-column grid (`grid-cols-2 gap-x-8 gap-y-2`) matching CardDetails. Within each cell the label sits above the value; the value is wrapped in a `w-fit` container anchored to the cell\'s inline-start edge so the copy button rides immediately after the text (not pinned to the far end of the cell). The button sits on top of a gradient-faded overlay at the wrapper\'s inline-end so long values dissolve smoothly under the icon instead of being truncated or pushing the icon out of view.',
       implementedInPrototype: true,
-      visualNotes: 'Both label and value use `text-xs` (12px) for a uniform compact scale. Values are monospace + tabular-nums + slashed-zero (`0` vs `O` disambiguation). `break-all` is the last-resort wrap for extremely long identifiers.',
+      visualNotes: 'Both label and value use `text-xs` (12px) for a uniform compact scale. Values are monospace + tabular-nums + slashed-zero (`0` vs `O` disambiguation). `break-all` is the last-resort wrap for extremely long identifiers. With one row, the second grid cell stays empty (matches CardDetails behavior).',
     },
     {
       name: 'empty',
@@ -115,8 +115,9 @@ export const spec: ComponentSpec = {
       { name: 'value', fontFamily: 'monospace', fontSize: '12px (text-xs)', usage: 'Row value with tabular-nums + slashed-zero so 0 vs O is unambiguous' },
     ],
     spacing: [
-      { name: 'row-gap', value: '8px (gap-2)', usage: 'Vertical gap between identity rows' },
-      { name: 'row-internal', value: '4px (gap-1)', usage: 'Gap between label and value within a row' },
+      { name: 'col-gap', value: '32px (gap-x-8)', usage: 'Horizontal gap between grid columns — matches CardDetails' },
+      { name: 'row-gap', value: '8px (gap-y-2)', usage: 'Vertical gap between grid rows' },
+      { name: 'cell-internal', value: '4px (gap-1)', usage: 'Gap between label and value within a cell' },
       { name: 'fade-zone-inset-start', value: '16px (ps-4)', usage: 'How far the gradient overlay extends to the inside before reaching the icon — combined with the 24px icon this gives a 40px overlay' },
     ],
   },
@@ -139,7 +140,7 @@ export const spec: ComponentSpec = {
   },
 
   notes: [
-    'Why a separate primitive instead of reusing CardDetails: telemetry rows live in a 3-col grid sized for short numeric values (lat/lon, altitude). Identity values (16-char serials, long model strings) overflow that grid and read poorly when truncated. Stacked full-width rows give them room to breathe.',
+    'Why a separate primitive instead of reusing CardDetails: identity values are alphanumeric IDs (model strings, serial numbers) that benefit from the per-row copy affordance and slashed-zero numerals. CardDetails is the read-only telemetry surface (no per-row copy). Both share the same 2-col grid rhythm so they read as one consistent stack inside the card.',
     'Identity values use `font-variant-numeric: tabular-nums slashed-zero` (polish.md) so 0 vs O is unambiguous in dense alphanumeric IDs.',
     'Section is extensible: any future identity-style field (manufacturer, firmware, operator, …) is one entry in the rows array.',
     'Lives above CardDetails in UnifiedCard: identity ("what is this?") comes before telemetry ("where is it?") in operator scanning order.',

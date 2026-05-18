@@ -26,19 +26,23 @@ export interface CardIdentityProps {
 }
 
 /**
- * Stacked, full-width identity rows (model, serial, future "general info"
- * fields). Lives above CardDetails because "what is this?" comes before
- * "where is it?" in operator scanning order.
+ * Identity rows (model, serial, future "general info" fields) laid out
+ * in a 2-col grid that matches CardDetails. Lives above CardDetails
+ * because "what is this?" comes before "where is it?" in operator
+ * scanning order.
  *
  * Layout:
+ * - Outer wrapper is `grid grid-cols-2 gap-x-8 gap-y-2` (same rhythm as
+ *   CardDetails / TelemetryRow grid) so all collapsible sections inside
+ *   a TargetCard share one layout grammar.
  * - Each row is `group/copy` so the per-row copy reveal is scoped to the
  *   hovered/focused row only — never the whole section.
- * - Value sits in a `w-fit` wrapper anchored to the row's inline-start
+ * - Value sits in a `w-fit` wrapper anchored to the cell's inline-start
  *   edge, so the CopyButton rides immediately after the text instead of
- *   being pinned to the far end of the row. The button is absolutely
+ *   being pinned to the far end of the cell. The button is absolutely
  *   positioned at the wrapper's inline-end and rides on top of a
  *   linear-gradient fade (transparent → card surface) so values that do
- *   reach the row edge dissolve smoothly under the icon instead of
+ *   reach the cell edge dissolve smoothly under the icon instead of
  *   being abruptly truncated or pushing the icon out of view.
  * - Text selection still works — the gradient wrapper is
  *   `pointer-events-none`; only the button inside captures pointer events.
@@ -62,11 +66,18 @@ export function CardIdentity({
   return (
     <AccordionSection title={title} defaultOpen={defaultOpen} icon={Info} className={className}>
       <div className="w-full py-1">
-        <div className="w-full flex flex-col gap-2">
+        {/*
+          2-col grid matching CardDetails so the collapsible sections
+          inside a TargetCard share one layout rhythm. With at most 2
+          identity fields today (model + SN) each row gets its own column,
+          and longer values still dissolve cleanly under the per-cell copy
+          overlay rather than wrapping aggressively.
+        */}
+        <div className="w-full grid grid-cols-2 gap-x-8 gap-y-2">
           {rows.map((row, idx) => (
             <div
               key={idx}
-              className="group/copy w-full flex flex-col items-start py-1 gap-1"
+              className="group/copy w-full flex flex-col items-start py-1 gap-1 min-w-0"
             >
               <span className="text-xs text-zinc-400">{row.label}</span>
               <div className="relative w-fit">

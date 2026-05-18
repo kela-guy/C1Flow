@@ -1,7 +1,32 @@
 import React from 'react';
-import { ChevronDown } from '@/lib/icons/central';
 import { CARD_TOKENS, hexToRgba } from './tokens';
 import { AFFILIATION_PALETTES, AFFILIATION_LABELS, type Affiliation } from './markerStyles';
+
+/**
+ * Custom solid chevron used by the card-header expand/collapse trigger.
+ * Inlined here (rather than re-exported from `@/lib/icons/central`) because
+ * Central's outlined `IconChevronBottom` is too thin to read at the
+ * 18px header size against the dark card surface — this chunkier filled
+ * variant matches the header's visual weight. Uses `currentColor` so it
+ * inherits the wrapper's `text-zinc-500`.
+ */
+function CardChevronDown({ size = 18, ...rest }: { size?: number } & React.SVGAttributes<SVGSVGElement>) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      {...rest}
+    >
+      <path
+        d="M19.4141 9.5L12 16.9141L4.58594 9.5L6 8.08594L12 14.0859L18 8.08594L19.4141 9.5Z"
+        fill="currentColor"
+      />
+    </svg>
+  );
+}
 
 export interface CardHeaderProps {
   icon?: React.ElementType;
@@ -111,7 +136,7 @@ export function CardHeader({
         <div
           className={`text-zinc-500 shrink-0 transition-transform duration-200${open ? ' rotate-180' : ''}`}
         >
-          <ChevronDown size={d.animation.chevronSize} aria-hidden="true" />
+          <CardChevronDown size={d.animation.chevronSize} aria-hidden="true" />
         </div>
       </div>
     </div>
