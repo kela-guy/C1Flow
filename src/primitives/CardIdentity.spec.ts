@@ -34,7 +34,7 @@ export const spec: ComponentSpec = {
       trigger: 'User clicks accordion header or defaultOpen=true',
       description: 'Identity rows displayed in a 2-column grid (`grid-cols-2 gap-x-8 gap-y-2`) matching CardDetails. Within each cell the label sits above the value; the value is wrapped in a `w-fit` container anchored to the cell\'s inline-start edge so the copy button rides immediately after the text (not pinned to the far end of the cell). The button sits on top of a gradient-faded overlay at the wrapper\'s inline-end so long values dissolve smoothly under the icon instead of being truncated or pushing the icon out of view.',
       implementedInPrototype: true,
-      visualNotes: 'Both label and value use `text-xs` (12px) for a uniform compact scale. Values are monospace + tabular-nums + slashed-zero (`0` vs `O` disambiguation). `break-all` is the last-resort wrap for extremely long identifiers. With one row, the second grid cell stays empty (matches CardDetails behavior).',
+      visualNotes: 'Both label and value use `text-xs` (12px) for a uniform compact scale. Values use Heebo + tabular-nums + slashed-zero (`0` vs `O` disambiguation). `break-all` is the last-resort wrap for extremely long identifiers. With one row, the second grid cell stays empty (matches CardDetails behavior).',
     },
     {
       name: 'empty',
@@ -108,11 +108,11 @@ export const spec: ComponentSpec = {
     colors: [
       { name: 'label', value: 'text-zinc-400 (#a1a1aa)', usage: 'Row label color' },
       { name: 'value', value: 'text-zinc-200 (#e4e4e7)', usage: 'Row value color' },
-      { name: 'fade-bg', value: 'SURFACE.level2 (≈ #272727)', usage: 'Gradient mask end-color behind the copy icon — matches the effective AccordionSection content surface (base sidebar + rgba(255,255,255,0.08) overlay) so the tail of long values dissolves smoothly into the card backdrop' },
+      { name: 'fade-bg', value: 'SURFACE.level3 (≈ #2e2e2e)', usage: 'Gradient mask end-color behind the copy icon — matches the effective AccordionSection content surface (card content well SURFACE.level1 + rgba(255,255,255,0.11) overlay) so the tail of long values dissolves smoothly into the card backdrop' },
     ],
     typography: [
       { name: 'label', fontSize: '12px (text-xs)', usage: 'Row label' },
-      { name: 'value', fontFamily: 'monospace', fontSize: '12px (text-xs)', usage: 'Row value with tabular-nums + slashed-zero so 0 vs O is unambiguous' },
+      { name: 'value', fontFamily: 'Heebo', fontSize: '12px (text-xs)', usage: 'Row value with tabular-nums + slashed-zero so 0 vs O is unambiguous' },
     ],
     spacing: [
       { name: 'col-gap', value: '32px (gap-x-8)', usage: 'Horizontal gap between grid columns — matches CardDetails' },

@@ -26,7 +26,7 @@ export interface CardIdentityProps {
 }
 
 /**
- * Identity rows (model, serial, future "general info" fields) laid out
+ * Identity rows (drone name, model, serial, future "general info" fields) laid out
  * in a 2-col grid that matches CardDetails. Lives above CardDetails
  * because "what is this?" comes before "where is it?" in operator
  * scanning order.
@@ -68,8 +68,8 @@ export function CardIdentity({
       <div className="w-full py-1">
         {/*
           2-col grid matching CardDetails so the collapsible sections
-          inside a TargetCard share one layout rhythm. With at most 2
-          identity fields today (model + SN) each row gets its own column,
+          inside a TargetCard share one layout rhythm. Up to 3 identity
+          fields (name, model, SN) each row gets its own column,
           and longer values still dissolve cleanly under the per-cell copy
           overlay rather than wrapping aggressively.
         */}
@@ -83,7 +83,7 @@ export function CardIdentity({
               <div className="relative w-fit">
                 <Bdi
                   as="span"
-                  className="block w-fit text-xs text-zinc-200 font-mono tabular-nums break-all text-end"
+                  className="block w-fit text-xs text-zinc-200 font-sans tabular-nums break-all text-end"
                   style={{ fontVariantNumeric: 'tabular-nums slashed-zero' }}
                 >
                   {row.value}
@@ -114,12 +114,13 @@ export function CardIdentity({
                   style={
                     {
                       // Match the effective surface behind the value: the
-                      // AccordionSection content adds rgba(255,255,255,0.08)
-                      // on top of the base sidebar, which resolves to
-                      // SURFACE.level2 (≈ #272727). Using baseSurface here
-                      // would produce a visible dark wash instead of a clean
-                      // dissolve into the card backdrop.
-                      ['--card-fade-bg' as string]: SURFACE.level2,
+                      // AccordionSection content adds rgba(255,255,255,0.11)
+                      // on top of the card content well (SURFACE.level1),
+                      // which resolves to SURFACE.level3 (≈ #2e2e2e). Using
+                      // a flat surface here would produce a visible dark
+                      // wash instead of a clean dissolve into the card
+                      // backdrop.
+                      ['--card-fade-bg' as string]: SURFACE.level3,
                     } as React.CSSProperties
                   }
                 >

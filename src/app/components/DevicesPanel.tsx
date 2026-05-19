@@ -10,7 +10,7 @@ import { Collapsible, CollapsibleContent } from './ui/collapsible';
 import { Popover, PopoverTrigger, PopoverContent } from './ui/popover';
 import { Command, CommandInput, CommandList, CommandEmpty, CommandGroup, CommandItem } from './ui/command';
 import { Button } from './ui/button';
-import { LAYOUT_TOKENS } from '@/primitives/tokens';
+import { LAYOUT_TOKENS, SURFACE } from '@/primitives/tokens';
 import { StatusChip } from '@/primitives/StatusChip';
 import { JamIcon, BatteryIcon } from '@/primitives/ProductIcons';
 import { FilterBar, type FilterDef } from '@/primitives';
@@ -980,8 +980,8 @@ export function DevicesPanel({
     // directions (`-translate-x-full` for LTR, `rtl:translate-x-full` for
     // RTL). Border-end is the divider that faces the map.
     <aside
-      className={`absolute top-0 bottom-0 start-0 bg-zinc-950 border-e border-white/10 flex flex-col z-10 font-sans ${noTransition ? '' : 'transition-transform duration-300 ease-out'} ${open ? 'translate-x-0' : '-translate-x-full rtl:translate-x-full pointer-events-none'}`}
-      style={{ width: width ?? LAYOUT_TOKENS.sidebarWidthPx }}
+      className={`absolute top-0 bottom-0 start-0 border-e border-white/10 flex flex-col z-10 font-sans ${noTransition ? '' : 'transition-transform duration-300 ease-out'} ${open ? 'translate-x-0' : '-translate-x-full rtl:translate-x-full pointer-events-none'}`}
+      style={{ width: width ?? LAYOUT_TOKENS.sidebarWidthPx, backgroundColor: SURFACE.level1 }}
     >
       <div className="shrink-0">
         <div className="flex items-center justify-between px-4 pt-3 pb-2 border-b border-white/10">
@@ -1019,7 +1019,7 @@ export function DevicesPanel({
         ) : (
           grouped.map(group => (
             <div key={group.type}>
-              <div className="px-4 py-1.5 text-xs font-normal uppercase tracking-wider text-white border-b border-white/5 bg-white/5">
+              <div className="px-4 py-1.5 text-xs font-normal uppercase tracking-wider text-white border-b border-white/5 bg-white/[0.08]">
                 {group.label} ({group.devices.length})
               </div>
               {group.devices.map(device => (

@@ -47,7 +47,7 @@ export function overlayAt(level: ElevationLevel): string {
 
 export const CARD_TOKENS = {
   container: {
-    bgColor: SURFACE.level1,
+    bgColor: SURFACE.level2,
     borderColor: 'transparent',
     borderRadius: 8,
     borderWidth: 0,
@@ -59,8 +59,8 @@ export const CARD_TOKENS = {
   header: {
     paddingX: 8,
     paddingY: 6,
-    hoverBgOpacity: ELEVATION.overlay.level2,
-    selectedBgOpacity: ELEVATION.overlay.level2,
+    hoverBgOpacity: ELEVATION.overlay.level3,
+    selectedBgOpacity: ELEVATION.overlay.level3,
     gap: 6,
   },
   selectedRing: {
@@ -81,13 +81,13 @@ export const CARD_TOKENS = {
     size: 30,
     borderRadius: 6,
     iconSize: 20,
-    defaultBg: SURFACE.level3,
+    defaultBg: SURFACE.level4,
     activeBg: '#ef4444',
     activeBgOpacity: 0.2,
   },
   content: {
-    bgColor: SURFACE.level0,
-    borderColor: SURFACE.level2,
+    bgColor: SURFACE.level1,
+    borderColor: SURFACE.level3,
     paddingX: 8,
     paddingY: 6,
   },

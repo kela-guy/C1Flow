@@ -1,6 +1,8 @@
 import React from 'react';
+import { Tooltip, TooltipTrigger, TooltipContent } from '@/shared/components/ui/tooltip';
+import { useStrings } from '@/lib/intl';
 import { CARD_TOKENS, hexToRgba } from './tokens';
-import { AFFILIATION_PALETTES, AFFILIATION_LABELS, type Affiliation } from './markerStyles';
+import { AFFILIATION_PALETTES, type Affiliation } from './markerStyles';
 
 /**
  * Custom solid chevron used by the card-header expand/collapse trigger.
@@ -67,6 +69,11 @@ export function CardHeader({
   open,
 }: CardHeaderProps) {
   const d = CARD_TOKENS;
+  const t = useStrings();
+  // Localized IFF label. Drives both the icon-wrapper `aria-label` and the
+  // hover tooltip so Hebrew-first users (and the `/demo` English route) see
+  // a single, locale-correct string per affiliation.
+  const affiliationLabel = affiliation ? t.cards.affiliationLabels[affiliation] : undefined;
 
   const affPalette = affiliation ? AFFILIATION_PALETTES[affiliation] : undefined;
   const affGlyph = affPalette?.glyph;
@@ -82,24 +89,44 @@ export function CardHeader({
   const iconBoxFg = affGlyph ?? iconColor ?? (iconBgActive ? d.iconBox.activeBg : undefined);
   const iconBoxNeedsDefaultFg = !iconBoxFg;
 
+  const iconBox = Icon ? (
+    <div
+      className={`flex items-center justify-center shrink-0${iconBoxNeedsDefaultFg ? ' text-zinc-400' : ''}`}
+      style={{
+        width: `${d.iconBox.size}px`,
+        height: `${d.iconBox.size}px`,
+        borderRadius: `${d.iconBox.borderRadius}px`,
+        backgroundColor: iconBoxBg,
+        ...(iconBoxFg ? { color: iconBoxFg } : {}),
+      }}
+      aria-label={affiliationLabel}
+    >
+      <Icon size={d.iconBox.iconSize} aria-hidden="true" />
+    </div>
+  ) : null;
+
+  // When affiliation is set, wrap the icon box in a tooltip that surfaces the
+  // IFF classification (עוין / ידידותי / לא ידוע ...) for sighted users. The
+  // wrapper keeps its `aria-label`, so screen readers continue to hear the
+  // same localized label even while the tooltip is closed.
+  const iconBoxWithTooltip = iconBox && affiliationLabel ? (
+    <Tooltip>
+      <TooltipTrigger asChild>{iconBox}</TooltipTrigger>
+      <TooltipContent
+        side="top"
+        sideOffset={6}
+        showArrow={false}
+        className="px-2.5 py-1.5 rounded-none text-xs font-normal font-sans text-white bg-zinc-700 shadow-[0_0_0_1px_rgba(255,255,255,0.1),0_10px_15px_-3px_rgba(0,0,0,0.3)] whitespace-nowrap"
+      >
+        {affiliationLabel}
+      </TooltipContent>
+    </Tooltip>
+  ) : iconBox;
+
   return (
     <div className="flex justify-between items-center" style={{ gap: `${d.header.gap}px` }}>
       <div className="flex items-center gap-2 min-w-0 flex-1">
-        {Icon && (
-          <div
-            className={`flex items-center justify-center shrink-0${iconBoxNeedsDefaultFg ? ' text-zinc-400' : ''}`}
-            style={{
-              width: `${d.iconBox.size}px`,
-              height: `${d.iconBox.size}px`,
-              borderRadius: `${d.iconBox.borderRadius}px`,
-              backgroundColor: iconBoxBg,
-              ...(iconBoxFg ? { color: iconBoxFg } : {}),
-            }}
-            aria-label={affiliation ? AFFILIATION_LABELS[affiliation] : undefined}
-          >
-            <Icon size={d.iconBox.iconSize} aria-hidden="true" />
-          </div>
-        )}
+        {iconBoxWithTooltip}
 
         <div className="flex flex-col min-w-0">
           <h2

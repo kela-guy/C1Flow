@@ -28,7 +28,7 @@ export function AccordionSection({
       className={["group", className].filter(Boolean).join(" ")}
     >
       <CollapsibleTrigger
-        className="flex w-full cursor-pointer items-center justify-between rounded-none bg-white/[0.05] p-[8px] transition-colors hover:bg-white/[0.08] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/25"
+        className="flex w-full cursor-pointer items-center justify-between rounded-none bg-white/[0.08] p-[8px] transition-colors hover:bg-white/[0.11] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/25"
       >
         <div className="flex items-center gap-2 text-sm font-normal text-zinc-300">
           {HeaderIcon && (
@@ -52,7 +52,7 @@ export function AccordionSection({
         <div
           className="flex flex-wrap px-[8px] py-[0px]"
           style={{
-            backgroundColor: `rgba(255,255,255,${CARD_TOKENS.elevation.overlay.level2})`,
+            backgroundColor: `rgba(255,255,255,${CARD_TOKENS.elevation.overlay.level3})`,
           }}
         >
           {children}

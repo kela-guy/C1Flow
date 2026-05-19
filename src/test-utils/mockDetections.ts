@@ -295,6 +295,7 @@ export const cuas_bda_complete: Detection = {
 export const drone_friendly: Detection = {
   id: 'drone-friendly-1',
   name: 'Drone 1',
+  droneName: 'Drone 1',
   affiliation: 'friendly',
   model: 'DJI drone',
   serialNumber: 'd45b9174',
@@ -314,6 +315,7 @@ export const drone_friendly: Detection = {
 export const drone_hostile: Detection = {
   id: 'drone-hostile-1',
   name: 'Peleg 4T',
+  droneName: 'Peleg 4T',
   affiliation: 'hostile',
   model: 'DJI Matrice 4 T/E',
   serialNumber: 'f7k3c251f00cx623',
@@ -333,6 +335,7 @@ export const drone_hostile: Detection = {
 export const drone_unknown: Detection = {
   id: 'drone-unknown-1',
   name: 'Shira 4TD',
+  droneName: 'Shira 4TD',
   affiliation: 'unknown',
   model: 'DJI Matrice 4D/4TD',
   serialNumber: 'f8hgx253q00a05dq',

@@ -87,11 +87,11 @@ export const spec: ComponentSpec = {
 
   tokens: {
     colors: [
-      { name: 'container-bg', value: 'SURFACE.level1', usage: 'Card background color' },
-      { name: 'header-hover', value: 'rgba(255,255,255,0.05)', usage: 'Header hover state background' },
-      { name: 'header-selected', value: 'rgba(255,255,255,0.08)', usage: 'Header background when expanded' },
-      { name: 'content-bg', value: 'SURFACE.level0', usage: 'Expanded content area background' },
-      { name: 'content-border', value: 'SURFACE.level2', usage: 'Top border of expanded content (inset shadow)' },
+      { name: 'container-bg', value: 'SURFACE.level2', usage: 'Card background color' },
+      { name: 'header-hover', value: 'rgba(255,255,255,0.08)', usage: 'Header hover state background' },
+      { name: 'header-selected', value: 'rgba(255,255,255,0.11)', usage: 'Header background when expanded' },
+      { name: 'content-bg', value: 'SURFACE.level1', usage: 'Expanded content area background' },
+      { name: 'content-border', value: 'SURFACE.level3', usage: 'Top border of expanded content (inset shadow)' },
       { name: 'selection-ring', value: 'rgba(0,0,0,0.15)', usage: 'Selection ring when card is open' },
     ],
     typography: [],

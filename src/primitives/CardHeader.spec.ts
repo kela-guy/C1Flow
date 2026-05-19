@@ -54,7 +54,7 @@ export const spec: ComponentSpec = {
       trigger: 'affiliation prop set (friendly | hostile | possibleThreat | neutral | unknown)',
       description: 'Icon glyph and box background come from AFFILIATION_PALETTES — single source of truth shared with the map. Hostile / possibleThreat / unknown render their tinted palette; friendly / neutral fall back to the neutral default surface to avoid white-on-white.',
       implementedInPrototype: true,
-      visualNotes: 'Background opacity ~0.12 of palette.glyph (via hexToRgba). Icon box also gets aria-label = AFFILIATION_LABELS[affiliation].',
+      visualNotes: 'Background opacity ~0.12 of palette.glyph (via hexToRgba). Icon box gets aria-label = t.cards.affiliationLabels[affiliation] (localized via useStrings — Hebrew "עוין / ידידותי / חשד לאיום / ניטרלי / לא ידוע" by default, English on the /demo route), and a hover tooltip surfaces the same localized label for sighted users.',
     },
     {
       name: 'with status and badge',
@@ -110,6 +110,11 @@ export const spec: ComponentSpec = {
       result: 'Rotates 0° → 180° when open transitions to true',
       animation: { property: 'rotate', from: '0deg', to: '180deg', duration: '200ms', easing: 'ease' },
     },
+    {
+      trigger: 'hover',
+      element: 'Affiliation icon wrapper',
+      result: 'Tooltip surfaces the localized IFF label via t.cards.affiliationLabels[affiliation] (Hebrew by default: עוין / ידידותי / חשד לאיום / ניטרלי / לא ידוע; English on the /demo locale). Only rendered when the affiliation prop is set; lifecycle-only icon coloring (iconColor / iconBgActive) does not get a tooltip.',
+    },
   ],
 
   tokens: {
@@ -117,7 +122,7 @@ export const spec: ComponentSpec = {
       { name: 'title', value: 'CARD_TOKENS.title.color (#dee2e6)', usage: 'Primary heading text color' },
       { name: 'subtitle', value: 'CARD_TOKENS.subtitle.color (#999999)', usage: 'Secondary subtitle text color' },
       { name: 'icon-default', value: '#9ca3af (gray-400)', usage: 'Default icon color when not active' },
-      { name: 'icon-box-bg', value: 'CARD_TOKENS.iconBox.defaultBg (SURFACE.level3)', usage: 'Icon box background when not active' },
+      { name: 'icon-box-bg', value: 'CARD_TOKENS.iconBox.defaultBg (SURFACE.level4)', usage: 'Icon box background when not active' },
       { name: 'icon-box-active-bg', value: 'CARD_TOKENS.iconBox.activeBg (#ef4444) at 20%', usage: 'Icon box tinted background when active' },
       { name: 'chevron', value: 'text-zinc-500', usage: 'Chevron icon color' },
     ],
@@ -143,13 +148,14 @@ export const spec: ComponentSpec = {
     ariaAttributes: [
       'aria-hidden="true" on icon element (decorative)',
       'aria-hidden="true" on CardChevronDown (decorative indicator)',
+      'aria-label = t.cards.affiliationLabels[affiliation] on the icon wrapper when affiliation is set (single source of truth shared with the hover tooltip; localized via useStrings)',
     ],
     keyboardNav: [
       'Tab: focuses quickAction slot if present (native)',
       'Header click is handled by parent TargetCard — no direct keyboard role on CardHeader',
     ],
     focusManagement: 'quickAction click/keydown events stopPropagation to prevent card toggle. No focus indicator on the header itself — parent provides interactive wrapper.',
-    screenReaderNotes: 'Title is an h2 — ensure proper heading hierarchy within the card. Chevron state (open/closed) is not announced — parent should use aria-expanded.',
+    screenReaderNotes: 'Title is an h2 — ensure proper heading hierarchy within the card. Chevron state (open/closed) is not announced — parent should use aria-expanded. The affiliation icon wrapper carries a localized aria-label so the IFF classification is still announced (in the active locale) even when the hover tooltip is closed.',
   },
 
   flows: [

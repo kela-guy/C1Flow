@@ -20,7 +20,7 @@ import { useDevicesFromAssets, useCameraPresets } from './useDevicesFromAssets';
 import { CameraViewerPanel } from './CameraViewerPanel';
 import type { CameraFeed } from './CameraViewerPanel';
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/shared/components/ui/resizable';
-import { LAYOUT_TOKENS } from '@/primitives/tokens';
+import { LAYOUT_TOKENS, SURFACE } from '@/primitives/tokens';
 import { toast } from 'sonner';
 // Joyride is only used when the user opens the in-app tour. Lazy-loading it
 // keeps the ~80 KB tour package out of the dashboard's initial bundle.
@@ -746,6 +746,7 @@ export const Dashboard = ({ demoMode = false }: DashboardProps = {}) => {
     const rawDetection: Detection = {
       id: targetId,
       name: targetName,
+      droneName: droneIdentity ? sim.droneIdentityName(opts.nameSuffix) : undefined,
       type: isCar ? 'ground_vehicle' : isBird ? 'unknown' : 'uav',
       classifiedType: isCar ? 'car' : isBird ? 'bird' : 'drone',
       affiliation: isBird ? 'unknown' : isCar ? 'possibleThreat' : 'hostile',
@@ -1797,11 +1798,12 @@ export const Dashboard = ({ demoMode = false }: DashboardProps = {}) => {
         <aside
           ref={asideRef}
           className={`
-            absolute top-0 bottom-0 start-0 bg-[#141414] border-e border-white/10 flex flex-col ${panelSwitching || isDragging ? '' : isSnapping ? '' : 'transition-[transform,opacity] duration-300 ease-in-out'} z-30
+            absolute top-0 bottom-0 start-0 border-e border-white/10 flex flex-col ${panelSwitching || isDragging ? '' : isSnapping ? '' : 'transition-[transform,opacity] duration-300 ease-in-out'} z-30
             ${sidebarOpen ? 'translate-x-0' : '-translate-x-full rtl:translate-x-full'}
           `}
           style={{
             width: sidebarWidth,
+            backgroundColor: SURFACE.level1,
             ...(isDragging ? { transition: 'none', willChange: 'width' } : {}),
             ...(isSnapping ? { transition: 'width 200ms ease-out' } : {}),
           }}

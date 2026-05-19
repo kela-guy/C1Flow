@@ -116,6 +116,8 @@ export interface Detection {
   laserElevation?: string;
   laserRange?: string;
   affiliation?: Affiliation;
+  /** Operator-facing drone callsign (General info row), separate from card header title. */
+  droneName?: string;
   model?: string;
   serialNumber?: string;
 }

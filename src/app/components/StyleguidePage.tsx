@@ -3507,7 +3507,7 @@ export function DetectionRow() {
                       <div className="relative w-fit">
                         <span
                           dir="auto"
-                          className="block w-fit text-xs text-zinc-200 font-mono tabular-nums break-all text-end"
+                          className="block w-fit text-xs text-zinc-200 font-sans tabular-nums break-all text-end"
                           style={{ unicodeBidi: 'isolate', fontVariantNumeric: 'tabular-nums slashed-zero' }}
                         >
                           {row.value}
@@ -3624,6 +3624,20 @@ export function DetectionRow() {
               <ExampleBlock title="Minimal (no icon, no badge)" tight>
                 <div className="rounded-lg p-2" style={{ backgroundColor: SURFACE.level1 }}>
                   <CardHeader title="יעד בסיסי" subtitle="TGT-0001" open={false} />
+                </div>
+              </ExampleBlock>
+
+              <ExampleBlock title="Affiliation (hover icon for IFF tooltip)" tight>
+                <div className="flex flex-col gap-2">
+                  <div className="rounded-lg p-2" style={{ backgroundColor: SURFACE.level1 }}>
+                    <CardHeader icon={ShieldAlert} affiliation="hostile" title="רחפן עוין" subtitle="TGT-0042" open={false} />
+                  </div>
+                  <div className="rounded-lg p-2" style={{ backgroundColor: SURFACE.level1 }}>
+                    <CardHeader icon={ShieldAlert} affiliation="friendly" title="רחפן ידידותי" subtitle="TGT-0043" open={false} />
+                  </div>
+                  <div className="rounded-lg p-2" style={{ backgroundColor: SURFACE.level1 }}>
+                    <CardHeader icon={ShieldAlert} affiliation="unknown" title="עצם לא מזוהה" subtitle="TGT-0044" open={false} />
+                  </div>
                 </div>
               </ExampleBlock>
             </ComponentSection>
@@ -3764,6 +3778,7 @@ export function DetectionRow() {
                 <div className="max-w-sm rounded-lg overflow-hidden" style={{ backgroundColor: SURFACE.level1 }}>
                   <CardIdentity
                     rows={[
+                      { label: 'Drone name', value: 'Drone 1' },
                       { label: 'Model', value: 'DJI Matrice 4 T/E' },
                       { label: 'Serial Number', value: 'f7k3c251f00cx623' },
                       { label: 'Long ID (wraps via break-all)', value: 'AB-12CD-34EF-56GH-78IJ-90KL-MNOPQRST' },

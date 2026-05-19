@@ -106,11 +106,11 @@ export const spec: ComponentSpec = {
 
   tokens: {
     colors: [
-      { name: 'header-bg', value: 'rgba(255,255,255,0.05)', usage: 'Header bar background' },
-      { name: 'header-bg-hover', value: 'rgba(255,255,255,0.08)', usage: 'Header bar hover state' },
+      { name: 'header-bg', value: 'rgba(255,255,255,0.08)', usage: 'Header bar background' },
+      { name: 'header-bg-hover', value: 'rgba(255,255,255,0.11)', usage: 'Header bar hover state' },
       { name: 'title-color', value: 'text-zinc-300', usage: 'Section title text' },
       { name: 'icon-color', value: 'text-zinc-500', usage: 'Header icon and chevron color' },
-      { name: 'content-bg', value: `rgba(255,255,255,${0.08})`, usage: 'Content panel background via CARD_TOKENS.elevation.overlay.level2' },
+      { name: 'content-bg', value: `rgba(255,255,255,${0.11})`, usage: 'Content panel background via CARD_TOKENS.elevation.overlay.level3' },
       { name: 'focus-ring', value: 'rgba(255,255,255,0.25)', usage: 'Focus-visible ring color' },
     ],
     typography: [

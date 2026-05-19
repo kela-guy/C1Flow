@@ -735,9 +735,16 @@ function buildTimeline(target: Detection, ctx: CardContext, t: Strings): Timelin
   return steps;
 }
 
+function isDroneIdentity(target: Detection): boolean {
+  return target.type === 'uav' || target.classifiedType === 'drone';
+}
+
 function buildIdentity(target: Detection, t: Strings): IdentityRow[] {
   const dr = t.cards.detailRows;
   const rows: IdentityRow[] = [];
+  if (isDroneIdentity(target) && target.droneName) {
+    rows.push({ label: dr.droneName, value: target.droneName });
+  }
   if (target.model) rows.push({ label: dr.model, value: target.model });
   if (target.serialNumber) rows.push({ label: dr.serialNumber, value: target.serialNumber });
   return rows;
@@ -855,7 +862,10 @@ export function useCardSlots(
   const media = useMemo(() => buildMedia(target, ctx, t), [target, ctx.isCameraActive, t]);
   const actions = useMemo(() => buildActions(target, callbacks, ctx, t), [target, callbacks, ctx, t]);
   const timeline = useMemo(() => buildTimeline(target, ctx, t), [target, ctx.isDroneVerifying, t]);
-  const identity = useMemo(() => buildIdentity(target, t), [target.model, target.serialNumber, t]);
+  const identity = useMemo(
+    () => buildIdentity(target, t),
+    [target.droneName, target.model, target.serialNumber, target.type, target.classifiedType, t],
+  );
   const details = useMemo(() => buildDetails(target, t), [target, t]);
   const laserPosition = useMemo(() => buildLaserPosition(target, t), [target.laserAzimuth, target.laserElevation, target.laserRange, target.laserDistance, t]);
   const sensors = useMemo(() => buildSensors(target), [target.contributingSensors, target.detectedBySensors]);
