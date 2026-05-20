@@ -100,6 +100,12 @@ interface CameraFeedTileProps {
   /** Hide the per-tile asset picker (defaults to `true`). Hosts that
    *  expose asset selection in their own chrome pass `false`. */
   showAssetPicker?: boolean;
+  /** Suppress the built-in drone stat column (sandbox / alternate HUD). */
+  suppressDroneHud?: boolean;
+  /** Suppress the bottom-center ALT/VEL telemetry strip. */
+  suppressTelemetryStrip?: boolean;
+  /** Suppress the bottom control bar (sandbox preview). */
+  suppressControlBar?: boolean;
 }
 
 export function CameraFeedTile({
@@ -133,6 +139,9 @@ export function CameraFeedTile({
   pinnedCameraIds,
   onSwapAsset,
   showAssetPicker,
+  suppressDroneHud = false,
+  suppressTelemetryStrip = false,
+  suppressControlBar = false,
 }: CameraFeedTileProps) {
   const tile = useStrings().camera.feedTile;
   const [hovered, setHovered] = useState(false);
@@ -391,26 +400,30 @@ export function CameraFeedTile({
           )}
           {showLiveHud && (
             <>
-              <DroneHud status={status} />
-              <CameraTelemetryStrip visible={controlsVisible} status={status} />
-              <CameraControlBar
-                visible={controlsVisible}
-                mode={feed.mode}
-                status={status}
-                detectionsOn={detectionsOn}
-                designateMode={designateMode}
-                isFullscreen={isFullscreen}
-                settingsOpen={settingsOpen}
-                playbackEnabled={playbackEnabled}
-                onSettingsOpenChange={setSettingsOpen}
-                onTakeRelease={handleTakeRelease}
-                onModeToggle={onModeToggle}
-                onDetectionsToggle={onDetectionsToggle}
-                onDesignateModeToggle={onDesignateModeToggle}
-                onFullscreenToggle={onFullscreenToggle}
-                onPlaybackToggle={onPlaybackToggle}
-                onZoomChange={onZoomChange}
-              />
+              {!suppressDroneHud && <DroneHud status={status} />}
+              {!suppressTelemetryStrip && (
+                <CameraTelemetryStrip visible={controlsVisible} status={status} />
+              )}
+              {!suppressControlBar && (
+                <CameraControlBar
+                  visible={controlsVisible}
+                  mode={feed.mode}
+                  status={status}
+                  detectionsOn={detectionsOn}
+                  designateMode={designateMode}
+                  isFullscreen={isFullscreen}
+                  settingsOpen={settingsOpen}
+                  playbackEnabled={playbackEnabled}
+                  onSettingsOpenChange={setSettingsOpen}
+                  onTakeRelease={handleTakeRelease}
+                  onModeToggle={onModeToggle}
+                  onDetectionsToggle={onDetectionsToggle}
+                  onDesignateModeToggle={onDesignateModeToggle}
+                  onFullscreenToggle={onFullscreenToggle}
+                  onPlaybackToggle={onPlaybackToggle}
+                  onZoomChange={onZoomChange}
+                />
+              )}
             </>
           )}
         </div>
@@ -465,10 +478,10 @@ export function CameraFeedTile({
               data-no-promote
               data-testid="promote-to-hero"
               className="pointer-events-auto inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-sm
-                bg-black/60 backdrop-blur-sm ring-1 ring-inset ring-border-default
+                bg-black/60 backdrop-blur-sm border border-border-default
                 text-slate-12 text-xs font-medium
-                hover:bg-black/75 hover:ring-border-strong
-                focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-border-strong
+                hover:bg-black/75 hover:border-border-strong
+                focus-visible:outline-none focus-visible:border-border-strong
                 active:scale-[0.98] transition-[background-color,box-shadow,transform] duration-150 ease-out"
             >
               <Maximize2 size={12} aria-hidden="true" />

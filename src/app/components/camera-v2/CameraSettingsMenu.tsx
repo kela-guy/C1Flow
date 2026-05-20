@@ -52,12 +52,12 @@ export function CameraSettingsMenu({
               type="button"
               aria-label={t.settingsTriggerAriaLabel}
               aria-pressed={open}
-              className={`p-2 transition-colors duration-150 ease-out
+              className={`flex size-9 shrink-0 items-center justify-center rounded-lg transition-colors duration-150 ease-out
                 focus-visible:ring-2 focus-visible:ring-border-strong focus-visible:outline-none
                 active:scale-[0.97]
                 ${open
                   ? 'bg-state-selected text-slate-12 ring-1 ring-inset ring-border-default'
-                  : 'text-slate-12/80 hover:text-slate-12 hover:bg-state-hover-strong'}`}
+                  : 'text-slate-12/80 hover:bg-state-hover-strong hover:text-slate-12'}`}
             >
               <Settings size={14} />
             </button>

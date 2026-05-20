@@ -87,14 +87,9 @@ import IconTagRaw from '@central-icons-react/round-outlined-radius-1-stroke-1.5/
 import IconArrowRotateCCRaw from '@central-icons-react/round-outlined-radius-1-stroke-1.5/IconArrowRotateCounterClockwise';
 import IconEyeOpenRaw from '@central-icons-react/round-outlined-radius-1-stroke-1.5/IconEyeOpen';
 import IconEyeClosedRaw from '@central-icons-react/round-outlined-radius-1-stroke-1.5/IconEyeClosed';
-import IconPlayRaw from '@central-icons-react/round-outlined-radius-1-stroke-1.5/IconPlay';
 import IconPauseRaw from '@central-icons-react/round-outlined-radius-1-stroke-1.5/IconPause';
-import IconFullscreen1Raw from '@central-icons-react/round-outlined-radius-1-stroke-1.5/IconFullscreen1';
 import IconFullscreen2Raw from '@central-icons-react/round-outlined-radius-1-stroke-1.5/IconFullscreen2';
 import IconSplitRaw from '@central-icons-react/round-outlined-radius-1-stroke-1.5/IconSplit';
-import IconSunRaw from '@central-icons-react/round-outlined-radius-1-stroke-1.5/IconSun';
-import IconMoonRaw from '@central-icons-react/round-outlined-radius-1-stroke-1.5/IconMoon';
-import IconSettingsGear1Raw from '@central-icons-react/round-outlined-radius-1-stroke-1.5/IconSettingsGear1';
 // Off-canon variant pulled from the square-filled-radius-0-stroke-2 family.
 // Used by GridblockHeader's settings affordance specifically — that header
 // asked for a more geometric, heavier-weight chrome icon to anchor the
@@ -153,6 +148,145 @@ const IconXCustom = ({ size = 24, ...props }: SVGAttributes<SVGSVGElement> & { s
     createElement('path', { fillRule: 'evenodd', clipRule: 'evenodd', d: X_PATH, fill: 'currentColor' }),
   );
 
+const SKIP_FORWARD_PATH = 'M4 4V20L12 14V20L22.6667 12L12 4V10L4 4Z';
+
+const IconSkipForwardCustom = ({ size = 24, ...props }: SVGAttributes<SVGSVGElement> & { size?: number | string }) =>
+  createElement(
+    'svg',
+    { xmlns: 'http://www.w3.org/2000/svg', viewBox: '0 0 24 24', fill: 'none', width: size, height: size, ...props },
+    createElement('path', { d: SKIP_FORWARD_PATH, fill: 'currentColor' }),
+  );
+
+const IconSkipBackCustom = ({ size = 24, ...props }: SVGAttributes<SVGSVGElement> & { size?: number | string }) =>
+  createElement(
+    'svg',
+    { xmlns: 'http://www.w3.org/2000/svg', viewBox: '0 0 24 24', fill: 'none', width: size, height: size, ...props },
+    createElement('path', { d: SKIP_FORWARD_PATH, fill: 'currentColor', transform: 'scale(-1,1) translate(-24,0)' }),
+  );
+
+const PLAY_PATH =
+  'M6.5145 2.14251C6.20556 1.95715 5.82081 1.95229 5.5073 2.1298C5.19379 2.30731 5 2.63973 5 3V21C5 21.3603 5.19379 21.6927 5.5073 21.8702C5.82081 22.0477 6.20556 22.0429 6.5145 21.8575L21.5145 12.8575C21.8157 12.6768 22 12.3513 22 12C22 11.6487 21.8157 11.3232 21.5145 11.1425L6.5145 2.14251Z';
+
+const IconPlayCustom = ({ size = 24, ...props }: SVGAttributes<SVGSVGElement> & { size?: number | string }) =>
+  createElement(
+    'svg',
+    { xmlns: 'http://www.w3.org/2000/svg', viewBox: '0 0 24 24', fill: 'none', width: size, height: size, ...props },
+    createElement('path', { d: PLAY_PATH, fill: 'currentColor' }),
+  );
+
+const SETTINGS_GEAR_PATH =
+  'M14.0977 2.57178C14.4108 2.22782 14.9267 2.1429 15.3369 2.3794L18.6631 4.29932C19.1006 4.55201 19.2806 5.09216 19.083 5.55713L18.3896 7.18604C18.7451 7.65711 19.0502 8.16971 19.2959 8.71436C19.3193 8.76631 19.34 8.82002 19.3623 8.87256L21.1211 9.08741C21.6226 9.14862 21.9997 9.57438 22 10.0796V13.9194C22 14.4249 21.6228 14.8514 21.1211 14.9126L19.3623 15.1265C19.1058 15.7299 18.7779 16.2949 18.3887 16.811L19.083 18.4429C19.2806 18.9077 19.1003 19.4469 18.6631 19.6997L15.3369 21.6196C14.8992 21.8723 14.3419 21.7589 14.0381 21.355L12.9727 19.938C12.6534 19.9768 12.329 20.0005 12 20.0005C11.671 20.0005 11.3466 19.9768 11.0273 19.938L9.96191 21.355C9.65814 21.7588 9.10079 21.8731 8.66309 21.6206L5.33691 19.6997C4.89975 19.4468 4.71938 18.9077 4.91699 18.4429L5.61035 16.811C5.22126 16.2949 4.89319 15.7299 4.63672 15.1265L2.87891 14.9126C2.37719 14.8514 2 14.4249 2 13.9194V10.0796C2.00026 9.57438 2.37738 9.14862 2.87891 9.08741L4.6377 8.87159C4.89418 8.26875 5.22147 7.70366 5.61035 7.18799L4.91699 5.55713C4.71941 5.09218 4.89945 4.55204 5.33691 4.29932L8.66309 2.3794L8.74609 2.33643C9.16895 2.14227 9.67698 2.26578 9.96191 2.64405L11.0273 4.06104C11.3465 4.02229 11.671 4.0005 12 4.00049C12.3286 4.00049 12.6528 4.02238 12.9717 4.06104L14.0381 2.64405L14.0977 2.57178ZM12 9.00049C10.3433 9.00056 9.00016 10.3438 9 12.0005C9.00015 13.6572 10.3433 15.0004 12 15.0005C13.6568 15.0005 14.9999 13.6572 15 12.0005C14.9998 10.3438 13.6568 9.00049 12 9.00049Z';
+
+const IconSettingsCustom = ({ size = 24, ...props }: SVGAttributes<SVGSVGElement> & { size?: number | string }) =>
+  createElement(
+    'svg',
+    { xmlns: 'http://www.w3.org/2000/svg', viewBox: '0 0 24 24', fill: 'none', width: size, height: size, ...props },
+    createElement('path', {
+      fillRule: 'evenodd',
+      clipRule: 'evenodd',
+      d: SETTINGS_GEAR_PATH,
+      fill: 'currentColor',
+    }),
+  );
+
+const SUN_PATHS = [
+  'M13 1H11V4H13V1Z',
+  'M13 20H11V23H13V20Z',
+  'M20.4841 4.93005L18.3598 7.05427L16.9456 5.64005L19.0698 3.51584L20.4841 4.93005Z',
+  'M7.05437 18.36L5.64016 16.9458L3.51594 19.07L4.93016 20.4842L7.05437 18.36Z',
+  'M20 11H23V13H20V11Z',
+  'M1 11V13H4V11H1Z',
+  'M18.3598 16.9458L20.4841 19.07L19.0698 20.4842L16.9456 18.36L18.3598 16.9458Z',
+  'M4.93016 3.51584L3.51594 4.93005L5.64016 7.05427L7.05437 5.64005L4.93016 3.51584Z',
+  'M7.75736 7.75736C10.1005 5.41421 13.8995 5.41421 16.2426 7.75736C18.5858 10.1005 18.5858 13.8995 16.2426 16.2426C13.8995 18.5858 10.1005 18.5858 7.75736 16.2426C5.41421 13.8995 5.41421 10.1005 7.75736 7.75736Z',
+] as const;
+
+const MOON_PATH =
+  'M22.0333 11.7226C20.8934 12.5273 19.5024 13 18.001 13C14.135 13 11.001 9.86598 11.001 5.99999C11.001 4.49859 11.4737 3.1076 12.2783 1.9677C12.1868 1.96523 12.095 1.96399 12.0029 1.96399C6.46119 1.96399 1.96875 6.45643 1.96875 11.9981C1.96875 17.5398 6.46119 22.0323 12.0029 22.0323C17.5446 22.0323 22.037 17.5398 22.037 11.9981C22.037 11.906 22.0358 11.8141 22.0333 11.7226Z';
+
+const IconSunCustom = ({ size = 24, ...props }: SVGAttributes<SVGSVGElement> & { size?: number | string }) =>
+  createElement(
+    'svg',
+    { xmlns: 'http://www.w3.org/2000/svg', viewBox: '0 0 24 24', fill: 'none', width: size, height: size, ...props },
+    ...SUN_PATHS.map((d) => createElement('path', { d, fill: 'currentColor' })),
+  );
+
+const IconMoonCustom = ({ size = 24, ...props }: SVGAttributes<SVGSVGElement> & { size?: number | string }) =>
+  createElement(
+    'svg',
+    { xmlns: 'http://www.w3.org/2000/svg', viewBox: '0 0 24 24', fill: 'none', width: size, height: size, ...props },
+    createElement('path', { d: MOON_PATH, fill: 'currentColor' }),
+  );
+
+const DESIGNATE_TARGET_PATHS = [
+  'M3 3H9V5H5V9H3V3Z',
+  'M15 3H21V9H19V5H15V3Z',
+  'M5 15V19H9V21H3V15H5Z',
+  'M21 15V21H15V19H19V15H21Z',
+  'M12 8C9.79086 8 8 9.79086 8 12C8 14.2091 9.79086 16 12 16C14.2091 16 16 14.2091 16 12C16 9.79086 14.2091 8 12 8Z',
+] as const;
+
+const IconDesignateTargetCustom = ({ size = 24, ...props }: SVGAttributes<SVGSVGElement> & { size?: number | string }) =>
+  createElement(
+    'svg',
+    { xmlns: 'http://www.w3.org/2000/svg', viewBox: '0 0 24 24', fill: 'none', width: size, height: size, ...props },
+    ...DESIGNATE_TARGET_PATHS.map((d) => createElement('path', { d, fill: 'currentColor' })),
+  );
+
+const TAKE_CONTROL_PATH =
+  'M12 2C9.23858 2 7 4.23858 7 7V9H4V22H20V9H17V7C17 4.23858 14.7614 2 12 2ZM15 9V7C15 5.34315 13.6569 4 12 4C10.3431 4 9 5.34315 9 7V9H15ZM13 13V18H11V13H13Z';
+
+const IconTakeControlCustom = ({ size = 24, ...props }: SVGAttributes<SVGSVGElement> & { size?: number | string }) =>
+  createElement(
+    'svg',
+    { xmlns: 'http://www.w3.org/2000/svg', viewBox: '0 0 24 24', fill: 'none', width: size, height: size, ...props },
+    createElement('path', {
+      fillRule: 'evenodd',
+      clipRule: 'evenodd',
+      d: TAKE_CONTROL_PATH,
+      fill: 'currentColor',
+    }),
+  );
+
+const ZOOM_CIRCLE_PATH =
+  'M11 18C14.866 18 18 14.866 18 11C18 7.13401 14.866 4 11 4C7.13401 4 4 7.13401 4 11C4 14.866 7.13401 18 11 18Z';
+const ZOOM_HANDLE_PATH = 'M20 20L16.05 16.05';
+
+const IconZoomCustom = ({ size = 24, ...props }: SVGAttributes<SVGSVGElement> & { size?: number | string }) =>
+  createElement(
+    'svg',
+    { xmlns: 'http://www.w3.org/2000/svg', viewBox: '0 0 24 24', fill: 'none', width: size, height: size, ...props },
+    createElement('path', {
+      d: ZOOM_CIRCLE_PATH,
+      fill: 'none',
+      stroke: 'currentColor',
+      strokeWidth: 2,
+      strokeLinecap: 'square',
+    }),
+    createElement('path', {
+      d: ZOOM_HANDLE_PATH,
+      fill: 'none',
+      stroke: 'currentColor',
+      strokeWidth: 2,
+      strokeLinecap: 'square',
+    }),
+  );
+
+const EXPAND_PATH =
+  'M13 3H21V11H19V6.41421L14 11.4142L12.5858 10L17.5858 5H13V3ZM11.4142 14L6.41421 19H11V21H3V13H5V17.5858L10 12.5858L11.4142 14Z';
+
+const IconExpandCustom = ({ size = 24, ...props }: SVGAttributes<SVGSVGElement> & { size?: number | string }) =>
+  createElement(
+    'svg',
+    { xmlns: 'http://www.w3.org/2000/svg', viewBox: '0 0 24 24', fill: 'none', width: size, height: size, ...props },
+    createElement('path', {
+      fillRule: 'evenodd',
+      clipRule: 'evenodd',
+      d: EXPAND_PATH,
+      fill: 'currentColor',
+    }),
+  );
+
 // =====================================================================
 // 1. Direct Central mappings (outlined / line variant)
 // =====================================================================
@@ -188,11 +322,8 @@ export const ChevronLeft = asIcon(IconChevronLeftRaw);
 export const ChevronRight = asIcon(IconChevronRightRaw);
 export const ChevronsLeft = asIcon(IconChevronDoubleLeftRaw);
 export const ChevronsRight = asIcon(IconChevronDoubleRightRaw);
-// SkipBack / SkipForward in lucide are double-chevron-with-bar glyphs. Closest
-// Central match is the plain double chevron; the visual difference is the
-// trailing vertical bar, which is acceptable in a playback strip.
-export const SkipBack = asIcon(IconChevronDoubleLeftRaw);
-export const SkipForward = asIcon(IconChevronDoubleRightRaw);
+export const SkipBack = asIcon(IconSkipBackCustom);
+export const SkipForward = asIcon(IconSkipForwardCustom);
 export const ArrowUp = asIcon(IconArrowUpRaw);
 export const ArrowUpDown = asIcon(IconArrowBottomTopRaw);
 
@@ -203,8 +334,10 @@ export const Plus = asIcon(IconPlusMediumRaw);
 export const Check = asIcon(IconCheckmark1MediumRaw);
 export const CheckCircle2 = asIcon(IconCheckCircle2Raw);
 export const Search = asIcon(IconMagnifyingGlassRaw);
+export const Zoom = asIcon(IconZoomCustom);
 export const Lock = asIcon(IconLockRaw);
 export const LockOpen = asIcon(IconUnlockedRaw);
+export const TakeControl = asIcon(IconTakeControlCustom);
 export const Hand = asIcon(IconHand5FingerRaw);
 export const Ban = asIcon(IconBlockRaw);
 export const Trash2 = asIcon(IconTrashCanSimpleRaw);
@@ -219,18 +352,18 @@ export const Eye = asIcon(IconEyeOpenRaw);
 export const EyeOff = asIcon(IconEyeClosedRaw);
 
 // --- Media playback ---
-export const Play = asIcon(IconPlayRaw);
+export const Play = asIcon(IconPlayCustom);
 export const Pause = asIcon(IconPauseRaw);
-export const Maximize2 = asIcon(IconFullscreen1Raw);
+export const Maximize2 = asIcon(IconExpandCustom);
 export const Minimize2 = asIcon(IconFullscreen2Raw);
 export const SplitSquareHorizontal = asIcon(IconSplitRaw);
 
 // --- Theme / settings ---
-export const Sun = asIcon(IconSunRaw);
-export const Moon = asIcon(IconMoonRaw);
-export const Settings = asIcon(IconSettingsGear1Raw);
-// Variant-suffixed: the canonical `Settings` stays on the round-outlined
-// Gear1 (lucide-compatible). `SettingsGear4` is the square-filled variant
+export const Sun = asIcon(IconSunCustom);
+export const Moon = asIcon(IconMoonCustom);
+export const DesignateTarget = asIcon(IconDesignateTargetCustom);
+export const Settings = asIcon(IconSettingsCustom);
+// Variant-suffixed: `SettingsGear4` is the square-filled Central variant
 // reserved for chrome surfaces that want a heavier, more geometric glyph
 // than the default. Mirrors the `LayoutGrid2` precedent — when a Central
 // icon ships in multiple visual flavours and we want both available,

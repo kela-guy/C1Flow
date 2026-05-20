@@ -22,7 +22,7 @@
  *   bg-accent-{danger,warning,success,info}-soft / -tint
  *   bg-disposition-{suspect,assumed-friend,neutral}
  *   border-border-{default,strong,subtle}
- *   bg-state-{hover,hover-strong,pressed,selected}
+ *   bg-state-{hover,hover-strong,hover-overlay,pressed,selected}
  *
  * Each entry resolves to var(--token) so a theme switch (.light)
  * cascades through Tailwind utilities automatically.
@@ -91,9 +91,10 @@
   --color-border-subtle:  var(--border-subtle);
 
   /* State overlays */
-  --color-state-hover:        var(--state-hover);
-  --color-state-hover-strong: var(--state-hover-strong);
-  --color-state-pressed:      var(--state-pressed);
+  --color-state-hover:         var(--state-hover);
+  --color-state-hover-strong:  var(--state-hover-strong);
+  --color-state-hover-overlay: var(--state-hover-overlay);
+  --color-state-pressed:       var(--state-pressed);
   --color-state-selected:     var(--state-selected);
 
   /*

@@ -22,7 +22,7 @@
 
 import { useCallback, useEffect, useId, useRef, useState, type FocusEvent } from 'react';
 import {
-  Crosshair,
+  DesignateTarget,
   Lock,
   LockOpen,
   Maximize2,
@@ -115,27 +115,21 @@ function ControlButton({
 
 interface ZoomControlProps {
   zoom: number;
+  mode: DayNightMode;
   disabled?: boolean;
   onChange: (next: number) => void;
 }
 
 /**
- * YouTube-volume-style zoom control. Collapsed = single icon button matching
- * the ControlButton chrome. Hover or focus reveals a vertical slider above
- * the icon. Three layered defences keep the cursor from falling into a
- * deadzone between the icon and the slider:
+ * YouTube-volume-style zoom control. Collapsed = round icon trigger only.
+ * Hover or focus expands a single horizontal pill: icon + inline range
+ * slider (same container, no vertical popover). A
+ * `ZOOM_HOVER_CLOSE_DELAY_MS` grace timeout prevents snap-shut when the
+ * pointer briefly leaves the pill.
  *
- *   1. The icon button + popover share a single hover container, so hover is
- *      held as long as the cursor is over either child.
- *   2. A transparent bridge between the popover bottom and the icon top
- *      keeps the hit-test continuous even when the popover is offset.
- *   3. A `ZOOM_HOVER_CLOSE_DELAY_MS` grace timeout on close lets a brief
- *      flicker out of the hover region (e.g. crossing the gap diagonally)
- *      re-enter without the popover snapping shut.
- *
- * No tooltip wrapper here - the popover IS the affordance.
+ * No tooltip wrapper here - the expanded pill IS the affordance.
  */
-function ZoomControl({ zoom, disabled, onChange }: ZoomControlProps) {
+function ZoomControl({ zoom, mode, disabled, onChange }: ZoomControlProps) {
   const [open, setOpen] = useState(false);
   // Tracked across mouse + focus events; cleared on unmount so a delayed
   // setState can't fire on a dead component (mirrors the pattern in
@@ -175,6 +169,8 @@ function ZoomControl({ zoom, disabled, onChange }: ZoomControlProps) {
     [scheduleClose],
   );
 
+  const sensorLabel = mode === 'day' ? 'EO' : 'IR';
+
   return (
     <div
       className="relative flex items-center"
@@ -189,45 +185,32 @@ function ZoomControl({ zoom, disabled, onChange }: ZoomControlProps) {
       }}
       onBlurCapture={handleBlurCapture}
     >
-      <button
-        type="button"
-        aria-label={`Zoom (${fmtZoom(zoom)})`}
-        aria-expanded={open}
-        aria-controls={popoverId}
-        onClick={() => setOpen(true)}
-        className="flex items-center gap-1 px-2 py-2 text-slate-12/80 hover:text-slate-12 hover:bg-state-hover-strong transition-colors duration-150 ease-out focus-visible:ring-2 focus-visible:ring-border-strong focus-visible:outline-none active:scale-[0.97]"
-      >
-        <Search size={14} aria-hidden="true" />
-        <span
-          aria-hidden="true"
-          className="font-mono text-[10px] tabular-nums text-accent-warning leading-none min-w-[26px] text-start"
-        >
-          {fmtZoom(zoom)}
-        </span>
-      </button>
-
       <div
-        id={popoverId}
-        role="group"
-        aria-label="Zoom level"
-        aria-hidden={!open}
-        className={`absolute left-1/2 -translate-x-1/2 bottom-full mb-1 origin-bottom z-30
-          transition-[opacity,transform] duration-150 ease-out motion-reduce:transition-none
-          ${open
-            ? 'opacity-100 scale-100 pointer-events-auto'
-            : 'opacity-0 scale-95 pointer-events-none'}`}
+        className={`flex h-9 items-center overflow-hidden rounded-full bg-surface-3/90 ring-1 ring-inset ring-border-default backdrop-blur-sm transition-[gap,padding] duration-150 ease-out motion-reduce:transition-none
+          ${open ? 'gap-2 pl-1 pr-3' : 'w-9'}`}
       >
-        {/*
-          Hover bridge: a transparent strip that overlaps the gap between
-          the popover and the icon button so the cursor keeps registering
-          hover while travelling between them.
-        */}
-        <div
-          aria-hidden="true"
-          className="absolute -bottom-2 -left-1 -right-1 h-3 pointer-events-auto"
-        />
+        <button
+          type="button"
+          aria-label={`Zoom (${fmtZoom(zoom)}, ${sensorLabel})`}
+          aria-expanded={open}
+          aria-controls={popoverId}
+          onClick={() => setOpen(true)}
+          disabled={disabled}
+          className="flex size-9 shrink-0 items-center justify-center rounded-full text-slate-12 transition-colors duration-150 ease-out hover:bg-state-hover-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-border-strong active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-40"
+        >
+          <Search size={14} aria-hidden="true" />
+        </button>
 
-        <div className="flex flex-col items-center gap-1.5 bg-black/75 backdrop-blur-sm ring-1 ring-inset ring-border-default px-1.5 py-2">
+        <div
+          id={popoverId}
+          role="group"
+          aria-label="Zoom level"
+          aria-hidden={!open}
+          className={`flex items-center overflow-hidden transition-[width,opacity] duration-150 ease-out motion-reduce:transition-none
+            ${open
+              ? 'w-[96px] opacity-100'
+              : 'w-0 opacity-0 pointer-events-none'}`}
+        >
           <input
             type="range"
             min={MIN_ZOOM}
@@ -237,19 +220,8 @@ function ZoomControl({ zoom, disabled, onChange }: ZoomControlProps) {
             disabled={disabled}
             onChange={(e) => onChange(clampZoom(parseFloat(e.target.value)))}
             aria-label="Zoom level"
-            // Modern vertical-slider syntax: writing-mode flips the layout
-            // axis, direction:rtl puts min at the bottom and max at the
-            // top. Supported in Chrome 124+, Safari 17.4+, Firefox 113+.
-            // No rotate() hack required, so hit-target stays correct.
-            // Note: this `direction: 'rtl'` is a *vertical-slider trick*,
-            // not bidi text direction — leave it hard-coded regardless of
-            // the app's writing direction.
-            style={{ writingMode: 'vertical-lr', direction: 'rtl' }}
-            className="w-7 h-28 accent-accent-warning cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
+            className="h-1 w-[96px] shrink-0 cursor-pointer appearance-none rounded-full bg-slate-9/80 accent-slate-12 disabled:cursor-not-allowed disabled:opacity-50 [&::-webkit-slider-thumb]:size-3 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-slate-12"
           />
-          <span className="font-mono text-[10px] tabular-nums text-accent-warning min-w-[28px] text-center">
-            {fmtZoom(zoom)}
-          </span>
         </div>
       </div>
     </div>
@@ -377,9 +349,14 @@ export function CameraControlBar({
             onClick={onDesignateModeToggle}
             active={designateMode}
           >
-            <Crosshair size={14} className={designateMode ? 'text-accent-warning' : ''} />
+            <DesignateTarget size={14} className={designateMode ? 'text-accent-warning' : ''} />
           </ControlButton>
-          <ZoomControl zoom={zoom} disabled={writeDisabled} onChange={onZoomChange} />
+          <ZoomControl
+            zoom={zoom}
+            mode={mode}
+            disabled={writeDisabled}
+            onChange={onZoomChange}
+          />
         </div>
 
         <div className="flex items-center gap-1">

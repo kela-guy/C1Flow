@@ -17,6 +17,10 @@ const CardDesignSandbox = import.meta.env.DEV
   ? lazy(() => import("./components/card-sandbox/CardDesignSandbox"))
   : null;
 
+const VideoHudSandbox = import.meta.env.DEV
+  ? lazy(() => import("./components/video-hud-sandbox/VideoHudSandbox"))
+  : null;
+
 // Dev-only perf HUD. Lazy-loaded so the import chain (stats-gl, sink,
 // observers) is dropped from production bundles via tree-shaking on
 // the `import.meta.env.DEV` constant. Becomes visible only when the
@@ -83,6 +87,16 @@ export default function App() {
                   element={
                     <Suspense fallback={null}>
                       <CardDesignSandbox />
+                    </Suspense>
+                  }
+                />
+              )}
+              {VideoHudSandbox && (
+                <Route
+                  path="/video-hud-sandbox"
+                  element={
+                    <Suspense fallback={null}>
+                      <VideoHudSandbox />
                     </Suspense>
                   }
                 />

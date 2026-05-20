@@ -1,0 +1,259 @@
+import { useCallback, useEffect, useId, useRef, useState, type FocusEvent } from 'react';
+import {
+  DesignateTarget,
+  TakeControl,
+  Maximize2,
+  Moon,
+  Play,
+  Zoom,
+  Settings,
+  Sun,
+} from '@/lib/icons/central';
+import type { DayNightMode } from '@/app/components/camera-v2/types';
+import { DirIsland } from '@/lib/direction';
+
+const MIN_ZOOM = 1;
+const MAX_ZOOM = 30;
+const ZOOM_HOVER_CLOSE_DELAY_MS = 200;
+const BOTTOM_ICON_SIZE = 16;
+const DAY_NIGHT_ICON_SIZE = 12;
+
+const CHROME_PILL =
+  'rounded-full border border-border-default/45 bg-black/25 backdrop-blur-sm';
+
+function clampZoom(z: number): number {
+  return Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, Math.round(z * 10) / 10));
+}
+
+interface SandboxBottomChromeProps {
+  mode: DayNightMode;
+  onModeToggle: () => void;
+  zoomLevel: number;
+  onZoomChange: (next: number) => void;
+}
+
+export function SandboxBottomChrome({
+  mode,
+  onModeToggle,
+  zoomLevel,
+  onZoomChange,
+}: SandboxBottomChromeProps) {
+  return (
+    <div className="absolute inset-x-0 bottom-0 z-30 pointer-events-none">
+      <DirIsland direction="ltr" className="relative h-[96px]">
+        <div className="absolute inset-x-3 top-8 h-1 rounded-full bg-slate-12/70">
+          <div className="h-full w-[18%] rounded-full bg-slate-12" />
+          <div className="absolute left-[18%] top-1/2 size-3 -translate-x-1/2 -translate-y-1/2 rounded-full bg-accent-info" />
+        </div>
+
+        <div className="absolute left-1/2 top-0 flex -translate-x-1/2 items-center gap-1.5">
+          <button
+            type="button"
+            className="pointer-events-auto rounded-sm border border-accent-danger/45 bg-surface-1/75 px-3 py-1 text-[10px] text-slate-11 backdrop-blur-sm"
+          >
+            חזרה לעגינה
+          </button>
+          <button
+            type="button"
+            className="pointer-events-auto rounded-sm border border-accent-danger/55 bg-accent-danger-tint px-3 py-1 text-[10px] text-accent-danger backdrop-blur-sm"
+          >
+            עצור
+          </button>
+        </div>
+
+        <div className="absolute inset-x-3 bottom-4 flex h-11 items-center justify-between gap-3">
+          <div className="pointer-events-auto flex items-center gap-2 text-slate-12/80">
+            <ControlGroup className="gap-0 px-1.5">
+              <IconButton label="Play">
+                <Play size={BOTTOM_ICON_SIZE} />
+              </IconButton>
+              <span className="px-2 font-mono text-[11px] tabular-nums text-slate-12/85">
+                0:06 / 4:00:05
+              </span>
+            </ControlGroup>
+
+            <ControlGroup className="px-0.5">
+              <button
+                type="button"
+                className="flex h-8 items-center gap-1.5 rounded-full border border-transparent px-2 text-[11px] text-slate-12/85 transition-colors duration-150 hover:bg-state-hover-overlay hover:text-slate-12 focus-visible:border-border-strong focus-visible:outline-none"
+              >
+                <TakeControl size={BOTTOM_ICON_SIZE} />
+                <span>Take control</span>
+              </button>
+            </ControlGroup>
+
+            <SandboxZoomControl zoom={zoomLevel} onChange={onZoomChange} />
+          </div>
+
+          <ControlGroup className="pointer-events-auto gap-1 px-0.5 text-slate-12/80">
+            <DayNightToggle mode={mode} onToggle={onModeToggle} />
+            <IconButton label="Designate">
+                <DesignateTarget size={BOTTOM_ICON_SIZE} />
+            </IconButton>
+            <IconButton label="Settings">
+              <Settings size={BOTTOM_ICON_SIZE} />
+            </IconButton>
+            <IconButton label="Fullscreen">
+              <Maximize2 size={BOTTOM_ICON_SIZE} />
+            </IconButton>
+          </ControlGroup>
+        </div>
+      </DirIsland>
+    </div>
+  );
+}
+
+function SandboxZoomControl({
+  zoom,
+  onChange,
+  disabled,
+}: {
+  zoom: number;
+  onChange: (next: number) => void;
+  disabled?: boolean;
+}) {
+  const [open, setOpen] = useState(false);
+  const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const sliderId = useId();
+
+  const cancelClose = useCallback(() => {
+    if (closeTimerRef.current !== null) {
+      clearTimeout(closeTimerRef.current);
+      closeTimerRef.current = null;
+    }
+  }, []);
+
+  const scheduleClose = useCallback(() => {
+    cancelClose();
+    closeTimerRef.current = setTimeout(() => {
+      closeTimerRef.current = null;
+      setOpen(false);
+    }, ZOOM_HOVER_CLOSE_DELAY_MS);
+  }, [cancelClose]);
+
+  useEffect(() => {
+    return () => {
+      if (closeTimerRef.current !== null) clearTimeout(closeTimerRef.current);
+    };
+  }, []);
+
+  const handleBlurCapture = useCallback(
+    (e: FocusEvent<HTMLDivElement>) => {
+      if (!e.currentTarget.contains(e.relatedTarget as Node | null)) {
+        scheduleClose();
+      }
+    },
+    [scheduleClose],
+  );
+
+  return (
+    <div
+      className="relative flex items-center"
+      onMouseEnter={() => {
+        cancelClose();
+        setOpen(true);
+      }}
+      onMouseLeave={scheduleClose}
+      onFocusCapture={() => {
+        cancelClose();
+        setOpen(true);
+      }}
+      onBlurCapture={handleBlurCapture}
+    >
+      <div
+        className={`flex h-9 items-center overflow-hidden ${CHROME_PILL} transition-[gap,padding] duration-150 ease-out motion-reduce:transition-none
+          ${open ? 'gap-2 pl-0 pr-2.5' : 'w-9'}`}
+      >
+        <button
+          type="button"
+          aria-label={`Zoom (${clampZoom(zoom).toFixed(1)}x)`}
+          aria-expanded={open}
+          aria-controls={sliderId}
+          onClick={() => setOpen(true)}
+          disabled={disabled}
+          className="flex size-9 shrink-0 items-center justify-center rounded-full text-slate-12/85 transition-colors duration-150 ease-out hover:bg-state-hover-overlay hover:text-slate-12 focus-visible:border-border-strong focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-40"
+        >
+          <Zoom size={BOTTOM_ICON_SIZE} aria-hidden="true" />
+        </button>
+
+        <div
+          id={sliderId}
+          role="group"
+          aria-label="Zoom level"
+          aria-hidden={!open}
+          className={`flex items-center overflow-hidden transition-[width,opacity] duration-150 ease-out motion-reduce:transition-none
+            ${open ? 'w-24 opacity-100' : 'w-0 opacity-0 pointer-events-none'}`}
+        >
+          <input
+            type="range"
+            min={MIN_ZOOM}
+            max={MAX_ZOOM}
+            step={0.1}
+            value={zoom}
+            disabled={disabled}
+            onChange={(e) => onChange(clampZoom(parseFloat(e.target.value)))}
+            aria-label="Zoom level"
+            className="h-1 w-24 shrink-0 cursor-pointer appearance-none rounded-full bg-slate-12/55 accent-slate-12 disabled:cursor-not-allowed disabled:opacity-50 [&::-webkit-slider-thumb]:size-3 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-slate-12"
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ControlGroup({
+  className,
+  children,
+}: {
+  className?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div
+      className={`flex h-9 items-center ${CHROME_PILL} ${className ?? ''}`}
+    >
+      {children}
+    </div>
+  );
+}
+
+function DayNightToggle({
+  mode,
+  onToggle,
+  disabled,
+}: {
+  mode: DayNightMode;
+  onToggle: () => void;
+  disabled?: boolean;
+}) {
+  const isNight = mode === 'night';
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={isNight}
+      aria-label={isNight ? 'Switch to day' : 'Switch to night'}
+      disabled={disabled}
+      onClick={onToggle}
+      className="flex h-6 w-11 shrink-0 items-center rounded-full bg-slate-12 p-0.5 transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-border-strong disabled:cursor-not-allowed disabled:opacity-40"
+    >
+      <span
+        className={`flex size-5 shrink-0 items-center justify-center rounded-full bg-surface-void text-slate-12 transition-[margin] duration-200 ease-out motion-reduce:transition-none ${isNight ? 'ms-auto' : ''}`}
+      >
+        {isNight ? <Moon size={DAY_NIGHT_ICON_SIZE} aria-hidden /> : <Sun size={DAY_NIGHT_ICON_SIZE} aria-hidden />}
+      </span>
+    </button>
+  );
+}
+
+function IconButton({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <button
+      type="button"
+      aria-label={label}
+      className="flex size-8 items-center justify-center border border-transparent text-slate-12/80 transition-colors duration-150 hover:bg-state-hover-overlay hover:text-slate-12 focus-visible:border-border-strong focus-visible:outline-none"
+    >
+      {children}
+    </button>
+  );
+}

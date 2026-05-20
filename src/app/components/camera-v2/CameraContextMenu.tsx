@@ -15,7 +15,7 @@ import {
   ContextMenuTrigger,
 } from '@/shared/components/ui/context-menu';
 import {
-  Crosshair,
+  DesignateTarget,
   Lock,
   LockOpen,
   Moon,
@@ -105,7 +105,7 @@ export function CameraContextMenu({
         </ContextMenuItem>
 
         <ContextMenuItem onClick={onDesignateModeToggle} className="rounded-none gap-2.5 text-xs">
-          <Crosshair size={14} className={designateMode ? 'text-accent-warning' : 'text-slate-12/80'} />
+          <DesignateTarget size={14} className={designateMode ? 'text-accent-warning' : 'text-slate-12/80'} />
           <span className="flex-1">{designateMode ? t.cancelDesignate : t.designateTarget}</span>
           <ContextMenuShortcut>X</ContextMenuShortcut>
         </ContextMenuItem>
