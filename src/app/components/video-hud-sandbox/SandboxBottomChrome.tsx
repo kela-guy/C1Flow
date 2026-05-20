@@ -10,6 +10,7 @@ import {
   Sun,
 } from '@/lib/icons/central';
 import type { DayNightMode } from '@/app/components/camera-v2/types';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/shared/components/ui/tooltip';
 import { DirIsland } from '@/lib/direction';
 
 const MIN_ZOOM = 1;
@@ -23,6 +24,10 @@ const CHROME_PILL =
 
 function clampZoom(z: number): number {
   return Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, Math.round(z * 10) / 10));
+}
+
+function fmtZoom(z: number): string {
+  return `${clampZoom(z).toFixed(1)}x`;
 }
 
 interface SandboxBottomChromeProps {
@@ -63,7 +68,7 @@ export function SandboxBottomChrome({
 
         <div className="absolute inset-x-3 bottom-4 flex h-11 items-center justify-between gap-3">
           <div className="pointer-events-auto flex items-center gap-2 text-slate-12/80">
-            <ControlGroup className="gap-0 px-1.5">
+            <ControlGroup className="gap-0 pl-0.5 pr-1.5">
               <IconButton label="Play">
                 <Play size={BOTTOM_ICON_SIZE} />
               </IconButton>
@@ -73,13 +78,16 @@ export function SandboxBottomChrome({
             </ControlGroup>
 
             <ControlGroup className="px-0.5">
-              <button
-                type="button"
-                className="flex h-8 items-center gap-1.5 rounded-full border border-transparent px-2 text-[11px] text-slate-12/85 transition-colors duration-150 hover:bg-state-hover-overlay hover:text-slate-12 focus-visible:border-border-strong focus-visible:outline-none"
-              >
-                <TakeControl size={BOTTOM_ICON_SIZE} />
-                <span>Take control</span>
-              </button>
+              <ChromeTooltip label="Take control">
+                <button
+                  type="button"
+                  aria-label="Take control"
+                  className="flex h-8 items-center gap-1.5 rounded-full border border-transparent px-2 text-[11px] text-slate-12/85 transition-colors duration-150 hover:bg-state-hover-overlay hover:text-slate-12 focus-visible:border-border-strong focus-visible:outline-none"
+                >
+                  <TakeControl size={BOTTOM_ICON_SIZE} />
+                  <span>Take control</span>
+                </button>
+              </ChromeTooltip>
             </ControlGroup>
 
             <SandboxZoomControl zoom={zoomLevel} onChange={onZoomChange} />
@@ -88,7 +96,7 @@ export function SandboxBottomChrome({
           <ControlGroup className="pointer-events-auto gap-1 px-0.5 text-slate-12/80">
             <DayNightToggle mode={mode} onToggle={onModeToggle} />
             <IconButton label="Designate">
-                <DesignateTarget size={BOTTOM_ICON_SIZE} />
+              <DesignateTarget size={BOTTOM_ICON_SIZE} />
             </IconButton>
             <IconButton label="Settings">
               <Settings size={BOTTOM_ICON_SIZE} />
@@ -113,8 +121,11 @@ function SandboxZoomControl({
   disabled?: boolean;
 }) {
   const [open, setOpen] = useState(false);
+  const scrubbingRef = useRef(false);
   const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const sliderId = useId();
+  const readoutId = useId();
+  const zoomLabel = fmtZoom(zoom);
 
   const cancelClose = useCallback(() => {
     if (closeTimerRef.current !== null) {
@@ -124,6 +135,7 @@ function SandboxZoomControl({
   }, []);
 
   const scheduleClose = useCallback(() => {
+    if (scrubbingRef.current) return;
     cancelClose();
     closeTimerRef.current = setTimeout(() => {
       closeTimerRef.current = null;
@@ -139,6 +151,7 @@ function SandboxZoomControl({
 
   const handleBlurCapture = useCallback(
     (e: FocusEvent<HTMLDivElement>) => {
+      if (scrubbingRef.current) return;
       if (!e.currentTarget.contains(e.relatedTarget as Node | null)) {
         scheduleClose();
       }
@@ -146,55 +159,94 @@ function SandboxZoomControl({
     [scheduleClose],
   );
 
+  const handleScrubStart = useCallback(() => {
+    cancelClose();
+    scrubbingRef.current = true;
+    setOpen(true);
+  }, [cancelClose]);
+
+  const handleScrubEnd = useCallback(() => {
+    scrubbingRef.current = false;
+    scheduleClose();
+  }, [scheduleClose]);
+
+  const handleZoomInput = useCallback(
+    (value: number) => {
+      onChange(clampZoom(value));
+    },
+    [onChange],
+  );
+
   return (
     <div
-      className="relative flex items-center"
+      className="relative flex items-center py-2 -my-2"
       onMouseEnter={() => {
         cancelClose();
         setOpen(true);
       }}
       onMouseLeave={scheduleClose}
       onFocusCapture={() => {
-        cancelClose();
-        setOpen(true);
+        if (!disabled) {
+          cancelClose();
+          setOpen(true);
+        }
       }}
       onBlurCapture={handleBlurCapture}
     >
       <div
-        className={`flex h-9 items-center overflow-hidden ${CHROME_PILL} transition-[gap,padding] duration-150 ease-out motion-reduce:transition-none
-          ${open ? 'gap-2 pl-0 pr-2.5' : 'w-9'}`}
+        className={`flex h-9 items-center gap-0 ${CHROME_PILL} transition-[gap,padding] duration-150 ease-out motion-reduce:transition-none
+          ${open ? 'overflow-visible pl-0 pr-2.5' : 'overflow-hidden pl-0 pr-2'}`}
       >
-        <button
-          type="button"
-          aria-label={`Zoom (${clampZoom(zoom).toFixed(1)}x)`}
-          aria-expanded={open}
-          aria-controls={sliderId}
-          onClick={() => setOpen(true)}
-          disabled={disabled}
-          className="flex size-9 shrink-0 items-center justify-center rounded-full text-slate-12/85 transition-colors duration-150 ease-out hover:bg-state-hover-overlay hover:text-slate-12 focus-visible:border-border-strong focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-40"
+        <ChromeTooltip label={`Zoom (${zoomLabel})`}>
+          <button
+            type="button"
+            aria-label={`Zoom (${zoomLabel})`}
+            aria-expanded={open}
+            aria-controls={sliderId}
+            onClick={() => setOpen(true)}
+            disabled={disabled}
+            className="flex size-9 shrink-0 items-center justify-center rounded-full text-slate-12/85 transition-colors duration-150 ease-out hover:bg-state-hover-overlay hover:text-slate-12 focus-visible:border-border-strong focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            <Zoom size={BOTTOM_ICON_SIZE} aria-hidden="true" />
+          </button>
+        </ChromeTooltip>
+
+        <span
+          id={readoutId}
+          aria-live="polite"
+          aria-atomic="true"
+          className="min-w-[2.25rem] shrink-0 font-mono text-[11px] leading-none tabular-nums text-slate-12/90"
         >
-          <Zoom size={BOTTOM_ICON_SIZE} aria-hidden="true" />
-        </button>
+          {zoomLabel}
+        </span>
 
         <div
           id={sliderId}
           role="group"
-          aria-label="Zoom level"
+          aria-labelledby={readoutId}
           aria-hidden={!open}
-          className={`flex items-center overflow-hidden transition-[width,opacity] duration-150 ease-out motion-reduce:transition-none
-            ${open ? 'w-24 opacity-100' : 'w-0 opacity-0 pointer-events-none'}`}
+          className={`flex items-center transition-[width,opacity] duration-150 ease-out motion-reduce:transition-none
+            ${open ? 'w-24 opacity-100' : 'w-0 overflow-hidden opacity-0 pointer-events-none'}`}
         >
-          <input
-            type="range"
-            min={MIN_ZOOM}
-            max={MAX_ZOOM}
-            step={0.1}
-            value={zoom}
-            disabled={disabled}
-            onChange={(e) => onChange(clampZoom(parseFloat(e.target.value)))}
-            aria-label="Zoom level"
-            className="h-1 w-24 shrink-0 cursor-pointer appearance-none rounded-full bg-slate-12/55 accent-slate-12 disabled:cursor-not-allowed disabled:opacity-50 [&::-webkit-slider-thumb]:size-3 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-slate-12"
-          />
+          <div
+            className="flex h-8 w-24 shrink-0 items-center"
+            onPointerDown={handleScrubStart}
+            onPointerUp={handleScrubEnd}
+            onPointerCancel={handleScrubEnd}
+          >
+            <input
+              type="range"
+              min={MIN_ZOOM}
+              max={MAX_ZOOM}
+              step={0.1}
+              value={zoom}
+              disabled={disabled}
+              onChange={(e) => handleZoomInput(parseFloat(e.target.value))}
+              onInput={(e) => handleZoomInput(parseFloat(e.currentTarget.value))}
+              aria-labelledby={readoutId}
+              className="h-1 w-full cursor-pointer appearance-none rounded-full bg-slate-12/55 accent-slate-12 disabled:cursor-not-allowed disabled:opacity-50 [&::-webkit-slider-thumb]:size-3.5 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-slate-12"
+            />
+          </div>
         </div>
       </div>
     </div>
@@ -209,11 +261,26 @@ function ControlGroup({
   children: React.ReactNode;
 }) {
   return (
-    <div
-      className={`flex h-9 items-center ${CHROME_PILL} ${className ?? ''}`}
-    >
+    <div className={`flex h-9 items-center ${CHROME_PILL} ${className ?? ''}`}>
       {children}
     </div>
+  );
+}
+
+function ChromeTooltip({
+  label,
+  children,
+}: {
+  label: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>{children}</TooltipTrigger>
+      <TooltipContent side="top" sideOffset={6} className="rounded-none text-[10px]">
+        {label}
+      </TooltipContent>
+    </Tooltip>
   );
 }
 
@@ -227,33 +294,38 @@ function DayNightToggle({
   disabled?: boolean;
 }) {
   const isNight = mode === 'night';
+  const label = isNight ? 'Switch to day' : 'Switch to night';
   return (
-    <button
-      type="button"
-      role="switch"
-      aria-checked={isNight}
-      aria-label={isNight ? 'Switch to day' : 'Switch to night'}
-      disabled={disabled}
-      onClick={onToggle}
-      className="flex h-6 w-11 shrink-0 items-center rounded-full bg-slate-12 p-0.5 transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-border-strong disabled:cursor-not-allowed disabled:opacity-40"
-    >
-      <span
-        className={`flex size-5 shrink-0 items-center justify-center rounded-full bg-surface-void text-slate-12 transition-[margin] duration-200 ease-out motion-reduce:transition-none ${isNight ? 'ms-auto' : ''}`}
+    <ChromeTooltip label={label}>
+      <button
+        type="button"
+        role="switch"
+        aria-checked={isNight}
+        aria-label={label}
+        disabled={disabled}
+        onClick={onToggle}
+        className="flex h-6 w-11 shrink-0 items-center rounded-full bg-slate-12 p-0.5 transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-border-strong disabled:cursor-not-allowed disabled:opacity-40"
       >
-        {isNight ? <Moon size={DAY_NIGHT_ICON_SIZE} aria-hidden /> : <Sun size={DAY_NIGHT_ICON_SIZE} aria-hidden />}
-      </span>
-    </button>
+        <span
+          className={`flex size-5 shrink-0 items-center justify-center rounded-full bg-surface-void text-slate-12 transition-[margin] duration-200 ease-out motion-reduce:transition-none ${isNight ? 'ms-auto' : ''}`}
+        >
+          {isNight ? <Moon size={DAY_NIGHT_ICON_SIZE} aria-hidden /> : <Sun size={DAY_NIGHT_ICON_SIZE} aria-hidden />}
+        </span>
+      </button>
+    </ChromeTooltip>
   );
 }
 
 function IconButton({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <button
-      type="button"
-      aria-label={label}
-      className="flex size-8 items-center justify-center border border-transparent text-slate-12/80 transition-colors duration-150 hover:bg-state-hover-overlay hover:text-slate-12 focus-visible:border-border-strong focus-visible:outline-none"
-    >
-      {children}
-    </button>
+    <ChromeTooltip label={label}>
+      <button
+        type="button"
+        aria-label={label}
+        className="flex size-8 items-center justify-center rounded-full border border-transparent text-slate-12/80 transition-colors duration-150 hover:bg-state-hover-overlay hover:text-slate-12 focus-visible:border-border-strong focus-visible:outline-none"
+      >
+        {children}
+      </button>
+    </ChromeTooltip>
   );
 }
