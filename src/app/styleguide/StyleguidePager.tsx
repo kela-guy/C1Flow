@@ -1,5 +1,5 @@
 import { ChevronLeft, ChevronRight } from '@/lib/icons/central';
-import { NAV } from './navConfig';
+import { flattenNavForSearch } from './navConfig';
 
 interface PagerEntry {
   id: string;
@@ -7,13 +7,10 @@ interface PagerEntry {
 }
 
 function buildEntries(): PagerEntry[] {
-  const entries: PagerEntry[] = [];
-  for (const group of NAV) {
-    for (const item of group.items) {
-      entries.push({ id: item.id, label: item.label });
-    }
-  }
-  return entries;
+  return flattenNavForSearch().map((entry) => ({
+    id: entry.id,
+    label: entry.label,
+  }));
 }
 
 const ENTRIES: PagerEntry[] = buildEntries();

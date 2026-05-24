@@ -213,7 +213,9 @@ function CameraTabItem({
           return (
             <div
               key={feed.cameraId || feedIndex}
-              className="flex max-w-[120px] min-w-0 items-center gap-1 border border-border-default bg-state-selected px-1.5 py-1 text-[11px] font-medium leading-none text-slate-12"
+              className={`flex max-w-[120px] min-w-0 items-center gap-1 border border-border-default px-1.5 py-1 text-[11px] font-medium leading-none text-slate-12 ${
+                isActive ? 'bg-surface-8' : 'bg-surface-7'
+              }`}
             >
               <StreamIcon type={deviceType} active={false} />
               <span className="min-w-0 flex-1 truncate">{label}</span>

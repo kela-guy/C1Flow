@@ -1,0 +1,31 @@
+C2 Hub uses a layered OKLCH token system built for dark tactical surfaces.
+
+<Callout>
+  The docs route intentionally uses the C2 token stack, not a separate shadcn neutral theme. See `docs/styleguide-theme-decision.md` for the measured CSS impact.
+</Callout>
+
+## Token layers
+
+The runtime CSS entry point imports the layers in order.
+
+```css
+@import "./fonts.css";
+@import "./palette.css";
+@import "./tailwind.css";
+@import "./theme.css";
+@import "../index.css";
+```
+
+## Palette
+
+`palette.css` owns raw OKLCH values. `tailwind.css` exposes utilities. `theme.css` maps those values onto shadcn-compatible semantic variables.
+
+## No hardcoded colors
+
+Use token utilities for CSS and `accentHex` only where a literal color string is required by SVG, Cesium, Mapbox, or canvas APIs.
+
+```tsx
+import { accentHex } from "@/primitives/accentHex";
+
+const warning = accentHex("warning");
+```

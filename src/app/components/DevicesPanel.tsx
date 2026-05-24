@@ -2,9 +2,8 @@ import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { createPortal } from 'react-dom';
 import { useDrag, useDragLayer } from 'react-dnd';
 import { getEmptyImage } from 'react-dnd-html5-backend';
-import { X, Camera, Plane, MapPin, BellOff, Wrench, Check, Loader2, Pin, PinFilled, PinOff } from '@/lib/icons/central';
+import { X, Camera, Plane, MapPin, BellOff, Wrench, Check, Loader2, Pin, PinFilled, PinOff, Square, ChevronsUpDown } from '@/lib/icons/central';
 import { GridblockPanel } from './gridblock';
-import { Square, ChevronsUpDown } from 'lucide-react';
 import { Tooltip, TooltipTrigger, TooltipContent } from './ui/tooltip';
 import { Tabs, TabsList, TabsTrigger } from './ui/tabs';
 import { Switch } from './ui/switch';

@@ -27,6 +27,8 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
+import { DndProvider } from "react-dnd";
+import { HTML5Backend } from "react-dnd-html5-backend";
 import {
   GridblockShell,
   GridblockHeader,
@@ -87,9 +89,11 @@ interface DashboardProps {
 
 export function Dashboard(props: DashboardProps = {}) {
   return (
-    <ViewedAtProvider>
-      <DashboardInner {...props} />
-    </ViewedAtProvider>
+    <DndProvider backend={HTML5Backend}>
+      <ViewedAtProvider>
+        <DashboardInner {...props} />
+      </ViewedAtProvider>
+    </DndProvider>
   );
 }
 

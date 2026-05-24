@@ -6,7 +6,7 @@ import {
   CheckIcon,
   ChevronDownIcon,
   ChevronUpIcon,
-} from "lucide-react";
+} from "@/lib/icons/central";
 
 import { MenuSurface } from "@/primitives/Substrate";
 import { cn } from "./utils";

@@ -104,10 +104,8 @@ export function DirectionProvider({ children, forceDirection }: DirectionProvide
     () => forceDirection ?? readInitialDirection(),
   );
 
-  // Mirror onto <html dir> + <html lang>. Done in an effect so that the
-  // attribute write happens after React has committed and other CSS
-  // engines (e.g. Cesium, Joyride portals appended outside #root) see a
-  // consistent state.
+  // Mirror onto <html dir> + <html lang>. Done in an effect so that
+  // engines outside #root, such as Cesium overlays, see a consistent state.
   useEffect(() => {
     const html = document.documentElement;
     if (html.getAttribute('dir') !== direction) {

@@ -8,7 +8,7 @@ import {
   SlidersHorizontal,
   Star,
   Triangle,
-} from 'lucide-react';
+} from '@/lib/icons/central';
 
 import { GridblockPanel } from '@/app/components/gridblock';
 import type { Detection } from '@/imports/ListOfSystems';

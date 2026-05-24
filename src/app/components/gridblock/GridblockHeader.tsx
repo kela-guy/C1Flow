@@ -33,13 +33,17 @@ import {
   type TimezoneOption,
 } from "@/app/hooks/useTimezone";
 
+export interface GridblockHeaderLabels {
+  settings?: string;
+}
+
 interface GridblockHeaderProps {
   /**
    * Brand cluster rendered in the inline-start corner. Pass your
-   * product logo here. The shell does not ship a default brand —
-   * leaving this out renders an empty cluster.
+   * product logo here. When omitted, the C2 Hub mark is shown.
    */
   brand?: ReactNode;
+  labels?: GridblockHeaderLabels;
   /**
    * Optional extra slot rendered between the brand and the
    * inline-end cluster. Useful for surface-level breadcrumbs or a
@@ -58,8 +62,10 @@ function GridblockHeaderImpl({
   brand,
   centerSlot,
   timezoneOptions,
+  labels,
 }: GridblockHeaderProps) {
   const t = useStrings();
+  const settingsLabel = labels?.settings ?? t.gridblock.settings;
   const { tz } = useTimezone(
     timezoneOptions ?? defaultTimezoneOptions(),
   );
@@ -71,9 +77,8 @@ function GridblockHeaderImpl({
       style={{ height: "var(--gridblock-header-height)" }}
     >
       <nav className="flex items-center gap-2">
-        {brand}
+        {brand ?? <KelaLogo size={16} className="text-slate-12" />}
         {centerSlot}
-        <KelaLogo size={16} className="text-slate-12" />
       </nav>
 
       <nav className="flex items-center gap-1">
@@ -86,13 +91,13 @@ function GridblockHeaderImpl({
             <button
               type="button"
               className="gridblock-iconbtn"
-              aria-label={t.gridblock.settings}
+              aria-label={settingsLabel}
             >
               <SettingsGear4 size={18} />
             </button>
           </TooltipTrigger>
           <TooltipContent side="bottom" sideOffset={6}>
-            {t.gridblock.settings}
+            {settingsLabel}
           </TooltipContent>
         </Tooltip>
       </nav>

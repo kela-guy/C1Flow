@@ -7,7 +7,14 @@
  * NOT inside this folder — the shell stays content-agnostic.
  */
 
+export { C2AppShell } from "./C2AppShell";
+export type {
+  C2AppShellTab,
+  C2AppShellLabels,
+  C2AppShellProps,
+} from "./C2AppShell";
 export { GridblockShell } from "./GridblockShell";
+export type { GridblockHeaderLabels } from "./GridblockHeader";
 export { GridblockHeader } from "./GridblockHeader";
 export {
   GridblockFooter,

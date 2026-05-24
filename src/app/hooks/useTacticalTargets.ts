@@ -29,7 +29,7 @@ import {
   type MutableRefObject,
   type SetStateAction,
 } from "react";
-import { showTacticalNotification } from "@/app/components/NotificationSystem";
+import { showTacticalNotification } from "@/app/components/tacticalNotifications";
 import type { Detection } from "@/imports/ListOfSystems";
 import { getPriorityBaseline } from "@/imports/useActivityStatus";
 import { useLocale, type Locale } from "@/lib/direction";
@@ -63,7 +63,7 @@ interface SpawnOptions {
   endLat: number;
   endLon: number;
   nameSuffix: string;
-  intervalRef: MutableRefObject<ReturnType<typeof setInterval> | null>;
+  intervalRef: MutableRefObject<SimTimer | null>;
   isBird?: boolean;
   isCar?: boolean;
   silent?: boolean;
@@ -102,15 +102,52 @@ export interface TacticalTargetsApi {
 const TELEMETRY_TICK_MS = 100;
 const PATROL_TICK_MS = TELEMETRY_TICK_MS;
 const PATROL_SPEED = 0.0032;
+const PATROL_REACT_COMMIT_EVERY_TICKS = 3;
 const TRAIL_SAMPLE_EVERY = 10;
 const TRAIL_MAX_POINTS = 40;
 
 const APPROACH_TOTAL_MS = 24000;
 const APPROACH_TICK_MS = TELEMETRY_TICK_MS;
 const APPROACH_STEPS = APPROACH_TOTAL_MS / APPROACH_TICK_MS;
+const APPROACH_REACT_COMMIT_EVERY_TICKS = 3;
 const APPROACH_MILESTONE_MAGOS = Math.round(APPROACH_STEPS * (2 / 12));
 const APPROACH_MILESTONE_ELTA = Math.round(APPROACH_STEPS * (3 / 12));
 const APPROACH_MILESTONE_CLASSIFY = Math.round(APPROACH_STEPS * (5 / 12));
+
+interface SimTimer {
+  cancel: () => void;
+}
+
+function startVisibilityAwareInterval(callback: () => void, intervalMs: number): SimTimer {
+  let intervalId: ReturnType<typeof setInterval> | null = null;
+  const start = () => {
+    if (intervalId != null) return;
+    intervalId = setInterval(callback, intervalMs);
+  };
+  const stop = () => {
+    if (intervalId == null) return;
+    clearInterval(intervalId);
+    intervalId = null;
+  };
+  const onVisibility = () => {
+    if (document.hidden) stop();
+    else start();
+  };
+
+  if (typeof document === "undefined" || !document.hidden) start();
+  if (typeof document !== "undefined") {
+    document.addEventListener("visibilitychange", onVisibility);
+  }
+
+  return {
+    cancel: () => {
+      stop();
+      if (typeof document !== "undefined") {
+        document.removeEventListener("visibilitychange", onVisibility);
+      }
+    },
+  };
+}
 
 function formatMovingCoord(lat: number, lon: number): string {
   return `${lat.toFixed(6)}, ${lon.toFixed(6)}`;
@@ -293,11 +330,11 @@ export function useTacticalTargets(): TacticalTargetsApi {
   const approachingTargetIds = useRef<Set<string>>(new Set());
 
   // Scenario interval refs.
-  const cuasIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const cuasIntervalRef2 = useRef<ReturnType<typeof setInterval> | null>(null);
-  const cuasIntervalRef3 = useRef<ReturnType<typeof setInterval> | null>(null);
-  const cuasIntervalRef4 = useRef<ReturnType<typeof setInterval> | null>(null);
-  const cuasMassRefs = useRef<ReturnType<typeof setInterval>[]>([]);
+  const cuasIntervalRef = useRef<SimTimer | null>(null);
+  const cuasIntervalRef2 = useRef<SimTimer | null>(null);
+  const cuasIntervalRef3 = useRef<SimTimer | null>(null);
+  const cuasIntervalRef4 = useRef<SimTimer | null>(null);
+  const cuasMassRefs = useRef<SimTimer[]>([]);
   // Bare `setTimeout` calls scheduled outside the main timer refs.
   const pendingTimeoutsRef = useRef<Set<ReturnType<typeof setTimeout>>>(
     new Set(),
@@ -331,6 +368,10 @@ export function useTacticalTargets(): TacticalTargetsApi {
             const next = p + PATROL_SPEED;
             return next >= friendlyPatrolRoutes[0].waypoints.length ? 0 : next;
           });
+
+          if (!sampleTrail && trailTickRef.current % PATROL_REACT_COMMIT_EVERY_TICKS !== 0) {
+            return;
+          }
 
           setFriendlyDrones(
             friendlyPatrolRoutes.map((route, i) => {
@@ -416,12 +457,10 @@ export function useTacticalTargets(): TacticalTargetsApi {
     const pending = pendingTimeoutsRef;
     return () => {
       for (const ref of cuasRefs) {
-        if (ref.current) {
-          clearInterval(ref.current);
-          ref.current = null;
-        }
+        ref.current?.cancel();
+        ref.current = null;
       }
-      for (const id of massRefs.current) clearInterval(id);
+      for (const timer of massRefs.current) timer.cancel();
       massRefs.current = [];
       for (const id of pending.current) clearTimeout(id);
       pending.current.clear();
@@ -514,13 +553,22 @@ export function useTacticalTargets(): TacticalTargetsApi {
       }
 
       let step = 0;
-      opts.intervalRef.current = setInterval(() => {
+      opts.intervalRef.current = startVisibilityAwareInterval(() => {
         step++;
         const tnow = now();
         const progress = smoothstep01(Math.min(step / APPROACH_STEPS, 1));
         const curLat = opts.startLat + (opts.endLat - opts.startLat) * progress;
         const curLon = opts.startLon + (opts.endLon - opts.startLon) * progress;
         const distKm = (3.2 - progress * 2.5).toFixed(1);
+        const isMilestone =
+          step === APPROACH_MILESTONE_MAGOS ||
+          step === APPROACH_MILESTONE_ELTA ||
+          step === APPROACH_MILESTONE_CLASSIFY ||
+          step >= APPROACH_STEPS;
+
+        if (step !== 1 && !isMilestone && step % APPROACH_REACT_COMMIT_EVERY_TICKS !== 0) {
+          return;
+        }
 
         setTargets((prev) =>
           prev.map((tgt) => {
@@ -657,7 +705,8 @@ export function useTacticalTargets(): TacticalTargetsApi {
         );
 
         if (step >= APPROACH_STEPS) {
-          if (opts.intervalRef.current) clearInterval(opts.intervalRef.current);
+          opts.intervalRef.current?.cancel();
+          opts.intervalRef.current = null;
           approachingTargetIds.current.delete(targetId);
         }
       }, APPROACH_TICK_MS);
@@ -674,11 +723,11 @@ export function useTacticalTargets(): TacticalTargetsApi {
       cuasIntervalRef3,
       cuasIntervalRef4,
     ].forEach((ref) => {
-      if (ref.current) {
-        clearInterval(ref.current);
-        ref.current = null;
-      }
+      ref.current?.cancel();
+      ref.current = null;
     });
+    cuasMassRefs.current.forEach((timer) => timer.cancel());
+    cuasMassRefs.current = [];
   }, []);
 
   const runFullScenario = useCallback(() => {
@@ -751,7 +800,8 @@ export function useTacticalTargets(): TacticalTargetsApi {
   }, [resetScenarioTimers, spawnCuasTarget]);
 
   const runSingleScenario = useCallback((): string => {
-    if (cuasIntervalRef.current) clearInterval(cuasIntervalRef.current);
+    cuasIntervalRef.current?.cancel();
+    cuasIntervalRef.current = null;
 
     const isCar = Math.random() < 0.3;
     return spawnCuasTarget({
@@ -766,7 +816,7 @@ export function useTacticalTargets(): TacticalTargetsApi {
   }, [spawnCuasTarget]);
 
   const runSwarmScenario = useCallback(() => {
-    cuasMassRefs.current.forEach((ref) => clearInterval(ref));
+    cuasMassRefs.current.forEach((timer) => timer.cancel());
     cuasMassRefs.current = [];
 
     const baseLat = 32.4666;
@@ -789,7 +839,7 @@ export function useTacticalTargets(): TacticalTargetsApi {
         : baseLon + (Math.random() - 0.5) * endOffset;
 
       const id = setTimeout(() => {
-        const ref: MutableRefObject<ReturnType<typeof setInterval> | null> = {
+        const ref: MutableRefObject<SimTimer | null> = {
           current: null,
         };
         spawnCuasTarget({

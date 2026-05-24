@@ -59,3 +59,13 @@ These are the behaviors that burn my time. Avoid all of them:
 - Component handoff docs live as colocated `.spec.ts` next to components (see `.cursor/rules/handoff-system.mdc`)
 
 When in doubt, read the surrounding code first — match it.
+
+## Agent skills
+
+Project skills live in `.agents/skills/`. Read the relevant `SKILL.md` when the task matches — don't load every reference file upfront.
+
+| Skill | When to activate |
+| --- | --- |
+| **performance-guardrails** | New project setup (deps, architecture, CI/deploy), or explicit perf work: Core Web Vitals, LCP/INP/TTFB, bundle size, latency, P95/P99, "slow", "jank", "optimize", "audit perf", "apply guardrails". Not for unrelated bug fixes. |
+
+Path: [`.agents/skills/performance-guardrails/SKILL.md`](.agents/skills/performance-guardrails/SKILL.md) — load layered refs under `references/` only as needed (see skill TOC).

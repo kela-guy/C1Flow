@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { NAV, type NavChild } from './navConfig';
+import { sgFadeBottom } from './styleguideSurfaces';
 
 interface StyleguideTocProps {
   activeItem: string;
@@ -83,7 +84,7 @@ export function StyleguideToc({
       </div>
       <div
         aria-hidden
-        className="sticky bottom-0 -mb-8 z-10 h-12 shrink-0 pointer-events-none bg-linear-to-t from-[#111] to-transparent"
+        className={`${sgFadeBottom} -mb-8`}
       />
     </aside>
   );

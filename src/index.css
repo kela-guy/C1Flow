@@ -2,11 +2,9 @@
  * src/index.css
  *
  * This file is no longer the source of truth for design tokens.
- * It is rendered as a `?raw` source in the styleguide so contributors
- * can see the runtime global rules (sonner toasts, joyride hover,
- * keyframes, resets). The actual runtime entrypoint is
- * `src/styles/index.css`, which imports — in order — palette.css,
- * tailwind.css, and theme.css.
+ * It is rendered as `?raw` source in the styleguide. Runtime-only
+ * global rules live in `src/styles/runtime-globals.css`; broad resets
+ * from this file are intentionally not imported into the app.
  *
  * Anything color-related routes through:
  *   1. palette.css     — OKLCH token primaries
@@ -14,8 +12,8 @@
  *   3. theme.css       — shadcn semantic token mapping
  *   4. accentHex.ts    — JS-side hex mirror for SVG / Mapbox / Cesium
  *
- * Keep this file for global resets + framework-specific overrides
- * (Sonner, Joyride, Mapbox marker z-index) only.
+ * Keep this file for historical source display only until the
+ * styleguide content is migrated to the runtime file.
  */
 
 /* ── Reset ── */

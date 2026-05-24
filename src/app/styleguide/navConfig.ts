@@ -26,6 +26,7 @@ export const NAV: NavGroup[] = [
     label: 'Getting Started',
     items: [
       { id: 'quick-start', label: 'Quick Start' },
+      { id: 'app-shell', label: 'App Shell' },
       { id: 'releases', label: 'Releases' },
     ],
   },

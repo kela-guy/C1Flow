@@ -375,6 +375,7 @@ export function CameraFeedTile({
             loop
             muted
             playsInline
+            preload={isThumb ? "none" : "metadata"}
             draggable={false}
             className="absolute inset-0 w-full h-full object-cover pointer-events-none"
             style={

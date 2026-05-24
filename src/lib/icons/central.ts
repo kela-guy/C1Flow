@@ -21,11 +21,9 @@
  *      should be the filled variant (currently just `Pin`/`PinFilled` for
  *      the DevicesPanel pinned-to-feed toggle).
  *
- *   3. lucide pass-throughs - a small set of icons where Central has no
- *      clean equivalent (Crosshair, Wrench, Copy, Download, etc.) or where
- *      the lucide rendering is meaningfully better (Loader2's spinner). Each
- *      of these is annotated with the reason. The hybrid is intentional;
- *      replacing them with weak Central matches would regress the UI.
+ *   3. Local fallback glyphs - small SVGs for icons where Central has no
+ *      clean equivalent. Keeping them local prevents `lucide-react` from
+ *      entering the production icon chunk.
  *
  * Note for shadcn/ui primitives: the files under `src/app/components/ui/*`
  * keep their original `lucide-react` imports unchanged. Forking each shadcn
@@ -287,6 +285,180 @@ const IconExpandCustom = ({ size = 24, ...props }: SVGAttributes<SVGSVGElement> 
     }),
   );
 
+const strokeAttrs = {
+  fill: 'none',
+  stroke: 'currentColor',
+  strokeWidth: 2,
+  strokeLinecap: 'round',
+  strokeLinejoin: 'round',
+} as const;
+
+const IconCrosshairCustom = ({ size = 24, ...props }: SVGAttributes<SVGSVGElement> & { size?: number | string }) =>
+  createElement(
+    'svg',
+    { xmlns: 'http://www.w3.org/2000/svg', viewBox: '0 0 24 24', width: size, height: size, ...props },
+    createElement('circle', { cx: 12, cy: 12, r: 6, ...strokeAttrs }),
+    createElement('path', { d: 'M12 2v4M12 18v4M2 12h4M18 12h4', ...strokeAttrs }),
+  );
+
+const IconLoaderCustom = ({ size = 24, ...props }: SVGAttributes<SVGSVGElement> & { size?: number | string }) =>
+  createElement(
+    'svg',
+    { xmlns: 'http://www.w3.org/2000/svg', viewBox: '0 0 24 24', width: size, height: size, ...props },
+    createElement('path', { d: 'M21 12a9 9 0 1 1-6.2-8.6', ...strokeAttrs }),
+  );
+
+const IconScanLineCustom = ({ size = 24, ...props }: SVGAttributes<SVGSVGElement> & { size?: number | string }) =>
+  createElement(
+    'svg',
+    { xmlns: 'http://www.w3.org/2000/svg', viewBox: '0 0 24 24', width: size, height: size, ...props },
+    createElement('path', { d: 'M4 7V4h3M17 4h3v3M20 17v3h-3M7 20H4v-3M7 12h10', ...strokeAttrs }),
+  );
+
+const IconScanSearchCustom = ({ size = 24, ...props }: SVGAttributes<SVGSVGElement> & { size?: number | string }) =>
+  createElement(
+    'svg',
+    { xmlns: 'http://www.w3.org/2000/svg', viewBox: '0 0 24 24', width: size, height: size, ...props },
+    createElement('path', { d: 'M4 7V4h3M17 4h3v3M7 20H4v-3', ...strokeAttrs }),
+    createElement('circle', { cx: 14, cy: 14, r: 4, ...strokeAttrs }),
+    createElement('path', { d: 'm17 17 3 3', ...strokeAttrs }),
+  );
+
+const IconWrenchCustom = ({ size = 24, ...props }: SVGAttributes<SVGSVGElement> & { size?: number | string }) =>
+  createElement(
+    'svg',
+    { xmlns: 'http://www.w3.org/2000/svg', viewBox: '0 0 24 24', width: size, height: size, ...props },
+    createElement('path', { d: 'M14.7 6.3a4 4 0 0 0 5 5L11 20a2.8 2.8 0 0 1-4-4l8.7-8.7Z', ...strokeAttrs }),
+  );
+
+const IconCopyCustom = ({ size = 24, ...props }: SVGAttributes<SVGSVGElement> & { size?: number | string }) =>
+  createElement(
+    'svg',
+    { xmlns: 'http://www.w3.org/2000/svg', viewBox: '0 0 24 24', width: size, height: size, ...props },
+    createElement('rect', { x: 8, y: 8, width: 11, height: 11, rx: 2, ...strokeAttrs }),
+    createElement('path', { d: 'M5 15H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v1', ...strokeAttrs }),
+  );
+
+const IconDownloadCustom = ({ size = 24, ...props }: SVGAttributes<SVGSVGElement> & { size?: number | string }) =>
+  createElement(
+    'svg',
+    { xmlns: 'http://www.w3.org/2000/svg', viewBox: '0 0 24 24', width: size, height: size, ...props },
+    createElement('path', { d: 'M12 3v12M7 10l5 5 5-5M5 21h14', ...strokeAttrs }),
+  );
+
+const IconNavigationCustom = ({ size = 24, ...props }: SVGAttributes<SVGSVGElement> & { size?: number | string }) =>
+  createElement(
+    'svg',
+    { xmlns: 'http://www.w3.org/2000/svg', viewBox: '0 0 24 24', width: size, height: size, ...props },
+    createElement('path', { d: 'm3 11 18-8-8 18-2-8-8-2Z', ...strokeAttrs }),
+  );
+
+const IconHelpCircleCustom = ({ size = 24, ...props }: SVGAttributes<SVGSVGElement> & { size?: number | string }) =>
+  createElement(
+    'svg',
+    { xmlns: 'http://www.w3.org/2000/svg', viewBox: '0 0 24 24', width: size, height: size, ...props },
+    createElement('circle', { cx: 12, cy: 12, r: 9, ...strokeAttrs }),
+    createElement('path', { d: 'M9.5 9a2.7 2.7 0 1 1 4.4 2.1c-1 .7-1.9 1.3-1.9 2.9M12 17h.01', ...strokeAttrs }),
+  );
+
+const IconActivityCustom = ({ size = 24, ...props }: SVGAttributes<SVGSVGElement> & { size?: number | string }) =>
+  createElement(
+    'svg',
+    { xmlns: 'http://www.w3.org/2000/svg', viewBox: '0 0 24 24', width: size, height: size, ...props },
+    createElement('path', { d: 'M3 12h4l3-8 4 16 3-8h4', ...strokeAttrs }),
+  );
+
+const IconBirdCustom = ({ size = 24, ...props }: SVGAttributes<SVGSVGElement> & { size?: number | string }) =>
+  createElement(
+    'svg',
+    { xmlns: 'http://www.w3.org/2000/svg', viewBox: '0 0 24 24', width: size, height: size, ...props },
+    createElement('path', { d: 'M16 7c2.5.5 4 2 5 4-3 0-5.2.8-7 2.5L9 18l1.5-5C8 11.8 6 10 4 7c3.5.2 6.3 1.2 8.3 3C13 8.2 14.2 7.2 16 7Z', ...strokeAttrs }),
+  );
+
+const IconPinOffCustom = ({ size = 24, ...props }: SVGAttributes<SVGSVGElement> & { size?: number | string }) =>
+  createElement(
+    'svg',
+    { xmlns: 'http://www.w3.org/2000/svg', viewBox: '0 0 24 24', width: size, height: size, ...props },
+    createElement('path', { d: 'm3 3 18 18M14 4l6 6-4 1-2 5-2-2M8 8 4 10l6 6-1 4 4-4', ...strokeAttrs }),
+  );
+
+const IconMessageSquareCustom = ({ size = 24, ...props }: SVGAttributes<SVGSVGElement> & { size?: number | string }) =>
+  createElement(
+    'svg',
+    { xmlns: 'http://www.w3.org/2000/svg', viewBox: '0 0 24 24', width: size, height: size, ...props },
+    createElement('path', { d: 'M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4v8Z', ...strokeAttrs }),
+  );
+
+const IconImageCustom = ({ size = 24, ...props }: SVGAttributes<SVGSVGElement> & { size?: number | string }) =>
+  createElement(
+    'svg',
+    { xmlns: 'http://www.w3.org/2000/svg', viewBox: '0 0 24 24', width: size, height: size, ...props },
+    createElement('rect', { x: 3, y: 5, width: 18, height: 14, rx: 2, ...strokeAttrs }),
+    createElement('circle', { cx: 8, cy: 10, r: 1.5, ...strokeAttrs }),
+    createElement('path', { d: 'm21 16-5-5L5 19', ...strokeAttrs }),
+  );
+
+const IconTimerResetCustom = ({ size = 24, ...props }: SVGAttributes<SVGSVGElement> & { size?: number | string }) =>
+  createElement(
+    'svg',
+    { xmlns: 'http://www.w3.org/2000/svg', viewBox: '0 0 24 24', width: size, height: size, ...props },
+    createElement('path', { d: 'M10 2h4M12 14l3-3M19 5l-2 2M6.5 7A7 7 0 1 0 19 11', ...strokeAttrs }),
+    createElement('path', { d: 'M3 7h3V4', ...strokeAttrs }),
+  );
+
+const IconScanCustom = ({ size = 24, ...props }: SVGAttributes<SVGSVGElement> & { size?: number | string }) =>
+  createElement(
+    'svg',
+    { xmlns: 'http://www.w3.org/2000/svg', viewBox: '0 0 24 24', width: size, height: size, ...props },
+    createElement('path', { d: 'M4 7V4h3M17 4h3v3M20 17v3h-3M7 20H4v-3M4 12h16', ...strokeAttrs }),
+  );
+
+const IconMountainCustom = ({ size = 24, ...props }: SVGAttributes<SVGSVGElement> & { size?: number | string }) =>
+  createElement(
+    'svg',
+    { xmlns: 'http://www.w3.org/2000/svg', viewBox: '0 0 24 24', width: size, height: size, ...props },
+    createElement('path', { d: 'm3 20 7-12 4 6 2-3 5 9H3Z', ...strokeAttrs }),
+  );
+
+const IconRouteCustom = ({ size = 24, ...props }: SVGAttributes<SVGSVGElement> & { size?: number | string }) =>
+  createElement(
+    'svg',
+    { xmlns: 'http://www.w3.org/2000/svg', viewBox: '0 0 24 24', width: size, height: size, ...props },
+    createElement('circle', { cx: 6, cy: 19, r: 2, ...strokeAttrs }),
+    createElement('circle', { cx: 18, cy: 5, r: 2, ...strokeAttrs }),
+    createElement('path', { d: 'M8 19h5a3 3 0 0 0 0-6h-2a3 3 0 0 1 0-6h5', ...strokeAttrs }),
+  );
+
+const IconSquareCustom = ({ size = 24, ...props }: SVGAttributes<SVGSVGElement> & { size?: number | string }) =>
+  createElement('svg', { xmlns: 'http://www.w3.org/2000/svg', viewBox: '0 0 24 24', width: size, height: size, ...props }, createElement('rect', { x: 5, y: 5, width: 14, height: 14, rx: 2, ...strokeAttrs }));
+
+const IconRows2Custom = ({ size = 24, ...props }: SVGAttributes<SVGSVGElement> & { size?: number | string }) =>
+  createElement('svg', { xmlns: 'http://www.w3.org/2000/svg', viewBox: '0 0 24 24', width: size, height: size, ...props }, createElement('rect', { x: 4, y: 5, width: 16, height: 5, rx: 1, ...strokeAttrs }), createElement('rect', { x: 4, y: 14, width: 16, height: 5, rx: 1, ...strokeAttrs }));
+
+const IconGrid2x2Custom = ({ size = 24, ...props }: SVGAttributes<SVGSVGElement> & { size?: number | string }) =>
+  createElement('svg', { xmlns: 'http://www.w3.org/2000/svg', viewBox: '0 0 24 24', width: size, height: size, ...props }, createElement('rect', { x: 4, y: 4, width: 6, height: 6, rx: 1, ...strokeAttrs }), createElement('rect', { x: 14, y: 4, width: 6, height: 6, rx: 1, ...strokeAttrs }), createElement('rect', { x: 4, y: 14, width: 6, height: 6, rx: 1, ...strokeAttrs }), createElement('rect', { x: 14, y: 14, width: 6, height: 6, rx: 1, ...strokeAttrs }));
+
+const IconLayoutPanelTopCustom = ({ size = 24, ...props }: SVGAttributes<SVGSVGElement> & { size?: number | string }) =>
+  createElement('svg', { xmlns: 'http://www.w3.org/2000/svg', viewBox: '0 0 24 24', width: size, height: size, ...props }, createElement('rect', { x: 4, y: 4, width: 16, height: 9, rx: 1, ...strokeAttrs }), createElement('path', { d: 'M4 17h4M10 17h4M16 17h4', ...strokeAttrs }));
+
+const IconMoreHorizontalCustom = ({ size = 24, ...props }: SVGAttributes<SVGSVGElement> & { size?: number | string }) =>
+  createElement('svg', { xmlns: 'http://www.w3.org/2000/svg', viewBox: '0 0 24 24', width: size, height: size, ...props }, createElement('path', { d: 'M5 12h.01M12 12h.01M19 12h.01', ...strokeAttrs }));
+
+const IconCircleCustom = ({ size = 24, ...props }: SVGAttributes<SVGSVGElement> & { size?: number | string }) =>
+  createElement('svg', { xmlns: 'http://www.w3.org/2000/svg', viewBox: '0 0 24 24', width: size, height: size, ...props }, createElement('circle', { cx: 12, cy: 12, r: 7, ...strokeAttrs }));
+
+const IconPanelLeftCustom = ({ size = 24, ...props }: SVGAttributes<SVGSVGElement> & { size?: number | string }) =>
+  createElement('svg', { xmlns: 'http://www.w3.org/2000/svg', viewBox: '0 0 24 24', width: size, height: size, ...props }, createElement('rect', { x: 4, y: 4, width: 16, height: 16, rx: 2, ...strokeAttrs }), createElement('path', { d: 'M10 4v16', ...strokeAttrs }));
+
+const IconGripVerticalCustom = ({ size = 24, ...props }: SVGAttributes<SVGSVGElement> & { size?: number | string }) =>
+  createElement('svg', { xmlns: 'http://www.w3.org/2000/svg', viewBox: '0 0 24 24', width: size, height: size, ...props }, createElement('path', { d: 'M9 6h.01M9 12h.01M9 18h.01M15 6h.01M15 12h.01M15 18h.01', ...strokeAttrs }));
+
+const IconStarCustom = ({ size = 24, ...props }: SVGAttributes<SVGSVGElement> & { size?: number | string }) =>
+  createElement('svg', { xmlns: 'http://www.w3.org/2000/svg', viewBox: '0 0 24 24', width: size, height: size, ...props }, createElement('path', { d: 'm12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2L12 17.3l-5.6 2.9 1.1-6.2L3 9.6l6.2-.9L12 3Z', ...strokeAttrs }));
+
+const IconTriangleCustom = ({ size = 24, ...props }: SVGAttributes<SVGSVGElement> & { size?: number | string }) =>
+  createElement('svg', { xmlns: 'http://www.w3.org/2000/svg', viewBox: '0 0 24 24', width: size, height: size, ...props }, createElement('path', { d: 'M12 4 21 20H3L12 4Z', ...strokeAttrs }));
+
 // =====================================================================
 // 1. Direct Central mappings (outlined / line variant)
 // =====================================================================
@@ -411,113 +583,50 @@ export const ExternalLink = asIcon(IconSquareArrowOutTopLeftRaw);
 export const PinFilled = asIcon(IconPinFilledRaw);
 
 // =====================================================================
-// 3. Lucide pass-throughs (no clean Central equivalent)
+// 3. Local fallback glyphs (no clean Central equivalent)
 // =====================================================================
 
-// Each icon below is intentionally re-exported from lucide-react. The
-// trailing comment explains why we did not pick a Central icon. We re-cast
-// each through `asIcon` for the same reason as Central icons - to give
-// consumers a project-local React type and avoid the same cross-version
-// `ElementType` mismatch we get on lucide's `ForwardRefExoticComponent`.
-import {
-  Crosshair as CrosshairRaw,
-  Loader2 as Loader2Raw,
-  ScanLine as ScanLineRaw,
-  ScanSearch as ScanSearchRaw,
-  Wrench as WrenchRaw,
-  Copy as CopyRaw,
-  Download as DownloadRaw,
-  Navigation as NavigationRaw,
-  HelpCircle as HelpCircleRaw,
-  Activity as ActivityRaw,
-  Bird as BirdRaw,
-  PinOff as PinOffRaw,
-  MessageSquare as MessageSquareRaw,
-  Image as ImageRaw,
-  TimerReset as TimerResetRaw,
-  Scan as ScanRaw,
-  Mountain as MountainRaw,
-  Route as RouteRaw,
-  Square as SquareRaw,
-  Rows2 as Rows2Raw,
-  Grid2x2 as Grid2x2Raw,
-  LayoutPanelTop as LayoutPanelTopRaw,
-} from 'lucide-react';
+export const Crosshair = asIcon(IconCrosshairCustom);
+export const Loader2 = asIcon(IconLoaderCustom);
+export const ScanLine = asIcon(IconScanLineCustom);
+export const ScanSearch = asIcon(IconScanSearchCustom);
+export const Wrench = asIcon(IconWrenchCustom);
+export const Copy = asIcon(IconCopyCustom);
+export const Download = asIcon(IconDownloadCustom);
+export const Navigation = asIcon(IconNavigationCustom);
+export const HelpCircle = asIcon(IconHelpCircleCustom);
+export const Activity = asIcon(IconActivityCustom);
+export const Bird = asIcon(IconBirdCustom);
+export const PinOff = asIcon(IconPinOffCustom);
+export const MessageSquare = asIcon(IconMessageSquareCustom);
+export const Image = asIcon(IconImageCustom);
+export const TimerReset = asIcon(IconTimerResetCustom);
+export const Scan = asIcon(IconScanCustom);
+export const Mountain = asIcon(IconMountainCustom);
+export const Route = asIcon(IconRouteCustom);
+export const Square = asIcon(IconSquareCustom);
+export const Rows2 = asIcon(IconRows2Custom);
+export const Grid2x2 = asIcon(IconGrid2x2Custom);
+export const LayoutPanelTop = asIcon(IconLayoutPanelTopCustom);
+export const MoreHorizontal = asIcon(IconMoreHorizontalCustom);
+export const Circle = asIcon(IconCircleCustom);
+export const PanelLeft = asIcon(IconPanelLeftCustom);
+export const GripVertical = asIcon(IconGripVerticalCustom);
+export const Star = asIcon(IconStarCustom);
+export const Triangle = asIcon(IconTriangleCustom);
 
-// Crosshair: Central has no aim/target-reticle glyph. IconTarget would be
-// too heavy and reads as "bullseye", not "crosshair".
-export const Crosshair = asIcon(CrosshairRaw);
-
-// Loader2: lucide's circular spinner is purpose-drawn for `animate-spin`
-// (incomplete arc reads as motion). IconLoader is a full circle and looks
-// static when spun.
-export const Loader2 = asIcon(Loader2Raw);
-
-// ScanLine, ScanSearch: Central has no scanning-overlay variants.
-export const ScanLine = asIcon(ScanLineRaw);
-export const ScanSearch = asIcon(ScanSearchRaw);
-
-// Wrench: Central only ships IconHammer / IconToolbox; neither matches
-// the maintenance-wrench visual we want for "device under service".
-export const Wrench = asIcon(WrenchRaw);
-
-// Copy: Central has IconFiles (multi-file) but no two-overlapping-pages
-// copy glyph.
-export const Copy = asIcon(CopyRaw);
-
-// Download: Central's only download-shaped icon is IconCloudDownload,
-// which adds an unwanted cloud connotation.
-export const Download = asIcon(DownloadRaw);
-
-// Navigation: lucide's paper-airplane Navigation icon has no Central
-// equivalent. IconLocationArrow does not exist.
-export const Navigation = asIcon(NavigationRaw);
-
-// HelpCircle: Central has no question-mark-in-circle glyph.
-export const HelpCircle = asIcon(HelpCircleRaw);
-
-// Activity: lucide draws a pulse line; Central's IconHeartBeat reads as
-// a literal heart, not a generic activity sparkline.
-export const Activity = asIcon(ActivityRaw);
-
-// Bird: domain-specific glyph used for hostile UAV cards. No Central
-// equivalent.
-export const Bird = asIcon(BirdRaw);
-
-// PinOff: Central has no PinOff variant. We use Pin / PinFilled for the
-// feed-pin toggle, but the legacy DevicesPanel context-menu "unpin"
-// action keeps using lucide's PinOff for now.
-export const PinOff = asIcon(PinOffRaw);
-
-// MessageSquare: chat bubble disambiguation between Central's many
-// bubble variants would be guesswork; keep lucide.
-export const MessageSquare = asIcon(MessageSquareRaw);
-
-// Image: lucide-react's `Image` icon (we alias as `ImageIcon` at the
-// call site). Central has IconImageAvatar etc. but nothing as neutral.
-export const Image = asIcon(ImageRaw);
-
-// TimerReset: Central has no timer-with-reset arrow combo glyph.
-export const TimerReset = asIcon(TimerResetRaw);
-
-// Scan: Central only ships IconScanCode / IconScanTextSparkle / etc.,
-// no plain "scan over content" line variant.
-export const Scan = asIcon(ScanRaw);
-
-// Mountain: Central ships IconMountainBike (with bike) only.
-export const Mountain = asIcon(MountainRaw);
-
-// Route: Central has no route/path-of-travel glyph.
-export const Route = asIcon(RouteRaw);
-
-// Layout picker glyphs (Single / Stack / Grid / Hero+filmstrip). Central
-// has no purpose-drawn layout-preset family; lucide ships a coherent set
-// where each icon clearly schematises the cell arrangement of the layout
-// it represents — important since the picker is icon-only.
-export const Square = asIcon(SquareRaw);
-export const Rows2 = asIcon(Rows2Raw);
-export const Grid2x2 = asIcon(Grid2x2Raw);
-export const LayoutPanelTop = asIcon(LayoutPanelTopRaw);
+export const CheckIcon = Check;
+export const ChevronDownIcon = ChevronDown;
+export const ChevronUpIcon = ChevronUp;
+export const ChevronLeftIcon = ChevronLeft;
+export const ChevronRightIcon = ChevronRight;
+export const CircleIcon = Circle;
+export const XIcon = X;
+export const SearchIcon = Search;
+export const PanelLeftIcon = PanelLeft;
+export const GripVerticalIcon = GripVertical;
+export const MoreHorizontalIcon = MoreHorizontal;
+export const ChevronsUpDown = ArrowUpDown;
 
 // --- Brand / product logos ---
 export const KelaLogo = asIcon(IconKelaLogo);

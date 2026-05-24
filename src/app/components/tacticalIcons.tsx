@@ -123,3 +123,11 @@ export const SpeakerIcon = ({ size = 24, fill = 'white' }: { size?: number; fill
     <path d="M16.502 12.001C16.502 10.7581 15.999 9.63379 15.1836 8.81836L16.5977 7.4043C17.7729 8.57947 18.502 10.2063 18.502 12.001L18.4932 12.335C18.4088 13.9966 17.6994 15.4949 16.5977 16.5967L15.1836 15.1826C15.948 14.4182 16.4378 13.3828 16.4961 12.2324L16.502 12.001Z" fill="black"/>
   </svg>
 );
+
+export const RegulusIcon = () => (
+  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="10" cy="10" r="8" stroke="currentColor" strokeWidth="1.5" fill="none" />
+    <path d="M10 2 L10 5 M10 15 L10 18 M2 10 L5 10 M15 10 L18 10" stroke="currentColor" strokeWidth="1.5" />
+    <circle cx="10" cy="10" r="3" fill="currentColor" />
+  </svg>
+);

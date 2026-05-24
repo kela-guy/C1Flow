@@ -1,23 +1,27 @@
-import { useState, useEffect, useMemo, useCallback, useRef, lazy, Suspense } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef, useId, lazy, Suspense } from 'react';
 import {
   Eye, Radio, ShieldAlert, Zap, Crosshair, Ban, AlertTriangle,
   Trash2, Send, Compass, Gauge, Navigation, MapPin, CheckCircle2,
   Bird, Activity, History, Radar, Hand, Copy, Check, Download,
   BellOff, Camera, Wrench, Loader2, Search, X, Lock,
-  SlidersHorizontal, Tag,
+  SlidersHorizontal, Tag, ChevronsUpDown, Square,
 } from '@/lib/icons/central';
-import { ChevronsUpDown, Square } from 'lucide-react';
 import { toast } from 'sonner';
 import { Toaster } from '@/shared/components/ui/sonner';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { TooltipProvider } from '@/shared/components/ui/tooltip';
-import { NAV, findGroupForId, findParentItemForChild } from '@/app/styleguide/navConfig';
+import { DndProvider } from 'react-dnd';
+import { HTML5Backend } from 'react-dnd-html5-backend';
+import { NAV, findParentItemForChild } from '@/app/styleguide/navConfig';
 import { CHANGELOG } from '@/app/styleguide/changelog';
 import { StyleguideSidebar } from '@/app/styleguide/StyleguideSidebar';
 import { StyleguideSearch } from '@/app/styleguide/StyleguideSearch';
 import { StyleguideHeader } from '@/app/styleguide/StyleguideHeader';
+import { sgBlock, sgCanvas, sgInset, sgSeparator } from '@/app/styleguide/styleguideSurfaces';
 import { StyleguideToc } from '@/app/styleguide/StyleguideToc';
 import { StyleguidePager } from '@/app/styleguide/StyleguidePager';
+import { DevicesPanelHost } from '@/app/components/dashboard/DevicesPanelHost';
+import { C2AppShell } from '@/app/components/gridblock';
 import {
   CARD_TOKENS, ELEVATION, SURFACE, LAYOUT_TOKENS, surfaceAt, overlayAt,
   StatusChip, STATUS_CHIP_COLORS, type StatusChipColor,
@@ -36,7 +40,7 @@ import {
   CameraIcon, SensorIcon, RadarIcon, DroneIcon, DroneHiveIcon,
   LidarIcon, LauncherIcon, MissileIcon,
   FloodlightIcon, SpeakerIcon,
-} from '@/shared/components/TacticalMap';
+} from '@/shared/components/tacticalIcons';
 import { DroneCardIcon, JamWaveIcon, MissileCardIcon, CarIcon } from '@/primitives/MapIcons';
 import { MapMarker } from '@/primitives/MapMarker';
 import winterTheme from './winter-is-coming-theme.json';
@@ -60,49 +64,63 @@ import {
 import type { Detection, RegulusEffector } from '@/imports/ListOfSystems';
 import { getActivityStatus } from '@/imports/useActivityStatus';
 
-import themeCssSrc from '@/styles/theme.css?raw';
-import indexCssSrc from '@/index.css?raw';
-import paletteCssSrc from '@/styles/palette.css?raw';
-import substrateSrc from '@/primitives/Substrate.tsx?raw';
-import accentHexSrc from '@/primitives/accentHex.ts?raw';
 import { Elevated, PopoverSurface } from '@/primitives/Substrate';
 import { ACCENT_HEX, SLATE_HEX, DISPOSITION_HEX, accentHex, slateHex } from '@/primitives/accentHex';
 
-import statusChipSrc from '@/primitives/StatusChip.tsx?raw';
-import actionButtonSrc from '@/primitives/ActionButton.tsx?raw';
-import splitActionButtonSrc from '@/primitives/SplitActionButton.tsx?raw';
-import accordionSectionSrc from '@/primitives/AccordionSection.tsx?raw';
-import telemetryRowSrc from '@/primitives/TelemetryRow.tsx?raw';
-import targetCardSrc from '@/primitives/TargetCard.tsx?raw';
-import cardHeaderSrc from '@/primitives/CardHeader.tsx?raw';
-import cardActionsSrc from '@/primitives/CardActions.tsx?raw';
-import cardDetailsSrc from '@/primitives/CardDetails.tsx?raw';
-import cardSensorsSrc from '@/primitives/CardSensors.tsx?raw';
-import cardMediaSrc from '@/primitives/CardMedia.tsx?raw';
-import cardLogSrc from '@/primitives/CardLog.tsx?raw';
-import cardClosureSrc from '@/primitives/CardClosure.tsx?raw';
-import filterBarSrc from '@/primitives/FilterBar.tsx?raw';
-import newUpdatesPillSrc from '@/primitives/NewUpdatesPill.tsx?raw';
-import devicesPanelSrc from '@/shared/components/DevicesPanel.tsx?raw';
-import popoverSrc from '@/shared/components/ui/popover.tsx?raw';
-import commandSrc from '@/shared/components/ui/command.tsx?raw';
-import buttonSrc from '@/shared/components/ui/button.tsx?raw';
-import switchSrc from '@/shared/components/ui/switch.tsx?raw';
-import mapMarkerSrc from '@/primitives/MapMarker.tsx?raw';
-import mapIconsSrc from '@/primitives/MapIcons.tsx?raw';
-import tokensSrc from '@/primitives/tokens.ts?raw';
-import markerStylesSrc from '@/primitives/markerStyles.ts?raw';
-import barrelIndexSrc from '@/primitives/index.ts?raw';
+type RawSource = string | (() => Promise<string>);
 
 interface RelatedFile {
   file: string;
-  code: string;
+  code: RawSource;
 }
+
+const rawSource = (loader: () => Promise<{ default: string }>): RawSource => (
+  () => loader().then((module) => module.default)
+);
+
+const themeCssSrc = rawSource(() => import('@/styles/theme.css?raw'));
+const indexCssSrc = rawSource(() => import('@/index.css?raw'));
+const paletteCssSrc = rawSource(() => import('@/styles/palette.css?raw'));
+const substrateSrc = rawSource(() => import('@/primitives/Substrate.tsx?raw'));
+const accentHexSrc = rawSource(() => import('@/primitives/accentHex.ts?raw'));
+const statusChipSrc = rawSource(() => import('@/primitives/StatusChip.tsx?raw'));
+const actionButtonSrc = rawSource(() => import('@/primitives/ActionButton.tsx?raw'));
+const splitActionButtonSrc = rawSource(() => import('@/primitives/SplitActionButton.tsx?raw'));
+const accordionSectionSrc = rawSource(() => import('@/primitives/AccordionSection.tsx?raw'));
+const telemetryRowSrc = rawSource(() => import('@/primitives/TelemetryRow.tsx?raw'));
+const targetCardSrc = rawSource(() => import('@/primitives/TargetCard.tsx?raw'));
+const cardHeaderSrc = rawSource(() => import('@/primitives/CardHeader.tsx?raw'));
+const cardActionsSrc = rawSource(() => import('@/primitives/CardActions.tsx?raw'));
+const cardDetailsSrc = rawSource(() => import('@/primitives/CardDetails.tsx?raw'));
+const cardSensorsSrc = rawSource(() => import('@/primitives/CardSensors.tsx?raw'));
+const cardMediaSrc = rawSource(() => import('@/primitives/CardMedia.tsx?raw'));
+const cardLogSrc = rawSource(() => import('@/primitives/CardLog.tsx?raw'));
+const cardClosureSrc = rawSource(() => import('@/primitives/CardClosure.tsx?raw'));
+const filterBarSrc = rawSource(() => import('@/primitives/FilterBar.tsx?raw'));
+const newUpdatesPillSrc = rawSource(() => import('@/primitives/NewUpdatesPill.tsx?raw'));
+const devicesPanelSrc = rawSource(() => import('@/shared/components/DevicesPanel.tsx?raw'));
+const c2AppShellSrc = rawSource(() => import('@/app/components/gridblock/C2AppShell.tsx?raw'));
+const gridblockShellSrc = rawSource(() => import('@/app/components/gridblock/GridblockShell.tsx?raw'));
+const popoverSrc = rawSource(() => import('@/shared/components/ui/popover.tsx?raw'));
+const commandSrc = rawSource(() => import('@/shared/components/ui/command.tsx?raw'));
+const buttonSrc = rawSource(() => import('@/shared/components/ui/button.tsx?raw'));
+const switchSrc = rawSource(() => import('@/shared/components/ui/switch.tsx?raw'));
+const mapMarkerSrc = rawSource(() => import('@/primitives/MapMarker.tsx?raw'));
+const mapIconsSrc = rawSource(() => import('@/primitives/MapIcons.tsx?raw'));
+const tokensSrc = rawSource(() => import('@/primitives/tokens.ts?raw'));
+const markerStylesSrc = rawSource(() => import('@/primitives/markerStyles.ts?raw'));
+const barrelIndexSrc = rawSource(() => import('@/primitives/index.ts?raw'));
 
 const BARREL_FILE: RelatedFile = { file: 'index.ts', code: barrelIndexSrc };
 const TOKENS_FILE: RelatedFile = { file: 'tokens.ts', code: tokensSrc };
 
 const COMMON_FILES: RelatedFile[] = [TOKENS_FILE, BARREL_FILE];
+
+const APP_SHELL_FILES: RelatedFile[] = [
+  { file: 'GridblockShell.tsx', code: gridblockShellSrc },
+  { file: 'gridblock.css', code: rawSource(() => import('@/app/components/gridblock/gridblock.css?raw')) },
+  TOKENS_FILE,
+];
 
 const CARD_ACTIONS_FILES: RelatedFile[] = [
   { file: 'ActionButton.tsx', code: actionButtonSrc },
@@ -281,7 +299,7 @@ function PlaybackLayoutMockup() {
       <div className="text-[11px] font-medium text-n-12">
         50/50 split — live on top, playback on the bottom
       </div>
-      <div className="relative aspect-video rounded-md overflow-hidden bg-black ring-1 ring-border-default">
+      <div className="relative aspect-video rounded-md overflow-hidden bg-black ring-[1px] ring-border-default">
         {/* Live frame (top half) — hosts the live HUD so its bottom
             control bar sits just above the red divider on hover. */}
         <div className="absolute top-0 inset-x-0 h-1/2 bg-[radial-gradient(circle_at_30%_40%,#1f2937,#0a0a0a_70%)]">
@@ -292,8 +310,8 @@ function PlaybackLayoutMockup() {
             </span>
           </div>
           <div className="absolute inset-x-1.5 bottom-1 flex items-center gap-1">
-            <div className="h-3 flex-1 rounded-sm bg-black/55 ring-1 ring-border-default" />
-            <div className="size-3 rounded-sm bg-black/55 ring-1 ring-border-default" />
+            <div className="h-3 flex-1 rounded-sm bg-black/55 ring-[1px] ring-border-default" />
+            <div className="size-3 rounded-sm bg-black/55 ring-[1px] ring-border-default" />
           </div>
         </div>
 
@@ -350,7 +368,7 @@ function PlaybackStatusMockup({ variant }: { variant: PlaybackStatusVariant }) {
   return (
     <div className="space-y-2">
       <div className="text-[11px] font-medium text-n-12">{meta.title}</div>
-      <div className="relative aspect-video rounded-md overflow-hidden bg-black ring-1 ring-border-default">
+      <div className="relative aspect-video rounded-md overflow-hidden bg-black ring-[1px] ring-border-default">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,#3f1d1d,#1a0a0a_70%)]" />
         <div className="absolute top-1.5 start-1.5 inline-flex items-center gap-1 bg-accent-danger/90 px-1.5 py-0.5">
           <span className="size-1 rounded-full bg-slate-12" />
@@ -516,6 +534,54 @@ const devicesPanelDemoDevices: Device[] = [
   },
 ];
 
+function AppShellStyleguideDemo() {
+  return (
+    <div className="h-[560px] w-full [&_.gridblock-root]:!h-full [&_.gridblock-root]:min-h-0">
+      <C2AppShell
+        main={
+          <div className="flex flex-1 min-h-0 items-center justify-center bg-surface-1 text-[13px] text-slate-9">
+            Main canvas — map, video, or custom content
+          </div>
+        }
+        leftTabs={[
+          {
+            id: 'overview',
+            label: 'Overview',
+            icon: <Radar size={16} />,
+            panel: (
+              <p className="p-4 text-[13px] text-slate-11">
+                Left panel body. Put search and filters in the tab&apos;s toolbar slot.
+              </p>
+            ),
+          },
+          {
+            id: 'devices',
+            label: 'Devices',
+            icon: <Radio size={16} />,
+            panel: (
+              <p className="p-4 text-[13px] text-slate-11">
+                Rail tabs are exclusive per side — opening one replaces the previous panel.
+              </p>
+            ),
+          },
+        ]}
+        rightTabs={[
+          {
+            id: 'cameras',
+            label: 'Cameras',
+            icon: <Camera size={16} />,
+            panel: (
+              <p className="p-4 text-[13px] text-slate-11">
+                Drag the panel seam to resize; release below the close threshold to collapse.
+              </p>
+            ),
+          },
+        ]}
+      />
+    </div>
+  );
+}
+
 // ─── Layout primitives ───────────────────────────────────────────────────────
 
 function ComponentSection({
@@ -561,7 +627,8 @@ function PreviewPanel({
   const isCenter = align === 'center';
   const gridStyle = grid
     ? {
-        backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.05) 1px, transparent 1px)',
+        backgroundImage:
+          'radial-gradient(circle, color-mix(in oklch, var(--slate-12) 5%, transparent) 1px, transparent 1px)',
         backgroundSize: '16px 16px',
         backgroundPosition: '0 0',
       }
@@ -570,8 +637,8 @@ function PreviewPanel({
   return (
     <div
       dir="rtl"
-      className={`rounded-xl shadow-[0_0_0_1px_var(--border-default)] ${tight ? 'p-6' : 'p-10'} ${isCenter ? 'flex items-center justify-center min-h-[200px]' : ''} ${className}`}
-      style={{ backgroundColor: SURFACE.level0, ...gridStyle }}
+      className={`${sgBlock} ${tight ? 'p-6' : 'p-10'} ${isCenter ? 'flex items-center justify-center min-h-[200px]' : ''} ${className}`}
+      style={gridStyle}
     >
       {children}
     </div>
@@ -613,7 +680,7 @@ function IconCatalogTile({ name, icon }: { name: string; icon: React.ReactNode }
   const downloadHref = iconPublicUrl('tactical', `${name}.svg`);
 
   return (
-    <div className="group flex flex-col items-center gap-3 rounded-xl border border-border-default bg-state-hover p-5">
+    <div className="group flex flex-col items-center gap-3 rounded-xl bg-surface-3 shadow-[var(--shadow-2)] p-5">
       <div ref={svgRef} className="flex items-center justify-center size-12">
         {icon}
       </div>
@@ -623,7 +690,7 @@ function IconCatalogTile({ name, icon }: { name: string; icon: React.ReactNode }
           type="button"
           onClick={copySvg}
           aria-label={copied ? 'Copied' : 'Copy SVG'}
-          className="p-2.5 rounded-md text-n-120 hover:text-n-11 hover:bg-state-pressed active:scale-[0.98] transition-[color,background-color,transform] duration-150 ease-out cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-border-strong"
+          className="p-2.5 rounded-md text-n-120 hover:text-n-11 hover:bg-state-pressed active:scale-[0.98] transition-[color,background-color,transform] duration-150 ease-out cursor-pointer focus-visible:outline-none focus-visible:ring-[2px] focus-visible:ring-border-strong"
         >
           {copied ? <Check size={14} className="text-accent-success" /> : <Copy size={14} />}
         </button>
@@ -631,7 +698,7 @@ function IconCatalogTile({ name, icon }: { name: string; icon: React.ReactNode }
           href={downloadHref}
           download={`${name}.svg`}
           aria-label="Download SVG"
-          className="p-2.5 rounded-md text-n-120 hover:text-n-11 hover:bg-state-pressed active:scale-[0.98] transition-[color,background-color,transform] duration-150 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-border-strong"
+          className="p-2.5 rounded-md text-n-120 hover:text-n-11 hover:bg-state-pressed active:scale-[0.98] transition-[color,background-color,transform] duration-150 ease-out focus-visible:outline-none focus-visible:ring-[2px] focus-visible:ring-border-strong"
         >
           <Download size={14} />
         </a>
@@ -1493,7 +1560,7 @@ function DeviceCardFlows() {
               onPointerDown={flow7HandlePointerDown}
             >
               <div
-                className="rounded-full border-2 border-sky-400"
+                className="rounded-full border-[2px] border-sky-400"
                 style={{
                   width: 10,
                   height: 10,
@@ -1871,7 +1938,7 @@ function InlineCopyButton({ text }: { text: string }) {
     <button
       onClick={handleCopy}
       aria-label={copied ? 'Copied' : 'Copy code'}
-      className="p-1.5 rounded cursor-pointer text-n-7 hover:text-n-10 hover:bg-state-pressed active:scale-[0.98] transition-[color,background-color,transform] duration-150 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-border-strong"
+      className="p-1.5 rounded cursor-pointer text-n-7 hover:text-n-10 hover:bg-state-pressed active:scale-[0.98] transition-[color,background-color,transform] duration-150 ease-out focus-visible:outline-none focus-visible:ring-[2px] focus-visible:ring-border-strong"
     >
       {copied ? <Check size={13} className="text-accent-success" /> : <Copy size={13} />}
     </button>
@@ -1881,7 +1948,7 @@ function InlineCopyButton({ text }: { text: string }) {
 function ImportBlock({ path, names }: { path: string; names: string[] }) {
   const code = `import { ${names.join(', ')} } from '${path}'`;
   return (
-    <div className="flex items-center rounded-lg shadow-[0_0_0_1px_var(--border-default)] overflow-hidden" style={{ backgroundColor: SURFACE.level0 }}>
+    <div className={`flex items-center ${sgInset} shadow-[0_0_0_1px_var(--border-default)]`}>
       <div className="flex-1 min-w-0 px-4 py-3 overflow-x-auto">
         <HighlightedCode code={code} />
       </div>
@@ -1912,7 +1979,7 @@ function ChangelogLine({ text }: { text: string }) {
 
 function QuickStartCodeBlock({ code }: { code: string }) {
   return (
-    <div className="flex items-start rounded-lg shadow-[0_0_0_1px_var(--border-default)] overflow-hidden" style={{ backgroundColor: SURFACE.level0 }}>
+    <div className={`flex items-start ${sgInset}`}>
       <div className="flex-1 min-w-0 px-4 py-3 overflow-x-auto">
         <HighlightedCode code={code} />
       </div>
@@ -1923,12 +1990,38 @@ function QuickStartCodeBlock({ code }: { code: string }) {
   );
 }
 
-function UsageBlock({ code, name }: { code: string; name: string }) {
+function useRawSource(source: RawSource): string {
+  const [code, setCode] = useState(() => (typeof source === 'string' ? source : '// Loading source...'));
+
+  useEffect(() => {
+    let cancelled = false;
+    if (typeof source === 'string') {
+      setCode(source);
+      return;
+    }
+
+    setCode('// Loading source...');
+    source().then((next) => {
+      if (!cancelled) setCode(next);
+    }).catch(() => {
+      if (!cancelled) setCode('// Failed to load source.');
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [source]);
+
+  return code;
+}
+
+function UsageBlock({ code, name }: { code: RawSource; name: string }) {
+  const codeText = useRawSource(code);
   const snippet = useMemo(() => {
-    const exportMatch = code.match(/export\s+(?:function|const)\s+(\w+)/);
+    const exportMatch = codeText.match(/export\s+(?:function|const)\s+(\w+)/);
     const componentName = exportMatch?.[1] ?? name;
 
-    const propsBlock = extractPropsInterface(code);
+    const propsBlock = extractPropsInterface(codeText);
     if (!propsBlock) return `<${componentName} />`;
 
     const lines = propsBlock.split('\n').map(l => l.trim()).filter(Boolean);
@@ -1956,10 +2049,10 @@ function UsageBlock({ code, name }: { code: string; name: string }) {
     if (requiredProps.length === 0) return `<${componentName} />`;
     if (requiredProps.length <= 2) return `<${componentName} ${requiredProps.join(' ')} />`;
     return `<${componentName}\n  ${requiredProps.join('\n  ')}\n/>`;
-  }, [code, name]);
+  }, [codeText, name]);
 
   return (
-    <div className="flex items-start rounded-lg shadow-[0_0_0_1px_var(--border-default)] overflow-hidden" style={{ backgroundColor: SURFACE.level0 }}>
+    <div className={`flex items-start ${sgInset} shadow-[0_0_0_1px_var(--border-default)]`}>
       <div className="flex-1 min-w-0 px-4 py-3 overflow-x-auto">
         <HighlightedCode code={snippet} />
       </div>
@@ -2109,7 +2202,7 @@ function CopyIconButton({ text }: { text: string }) {
     <button
       onClick={handleCopy}
       aria-label={copied ? 'Copied' : 'Copy component as markdown'}
-      className="flex items-center gap-1.5 h-7 px-2.5 rounded-[10px_4px_4px_4px] cursor-pointer text-n-120 hover:text-n-11 hover:bg-state-hover-strong active:scale-[0.98] transition-[color,background-color] duration-150 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-border-strong"
+      className="flex items-center gap-1.5 h-7 px-2.5 rounded-[10px_4px_4px_4px] cursor-pointer text-n-120 hover:text-n-11 hover:bg-state-hover-strong active:scale-[0.98] transition-[color,background-color] duration-150 ease-out focus-visible:outline-none focus-visible:ring-[2px] focus-visible:ring-inset focus-visible:ring-border-strong"
     >
       <AnimatePresence mode="wait" initial={false}>
         {copied ? (
@@ -2142,9 +2235,26 @@ function CopyIconButton({ text }: { text: string }) {
   );
 }
 
-// ─── Code preview with tabs ───────────────────────────────────────────────────
+// ─── Code preview block ───────────────────────────────────────────────────────
 
-type CodeTab = 'preview' | 'source' | 'files';
+type CodePreviewBlockProps = {
+  name: string;
+  description: string;
+  code: RawSource;
+  children?: React.ReactNode;
+  tight?: boolean;
+  relatedFiles?: RelatedFile[];
+  dir?: 'rtl' | 'ltr';
+};
+
+function LtrCodePreviewBlock(props: Omit<CodePreviewBlockProps, 'dir'>) {
+  return (
+    <>
+      <SectionHeading>LTR</SectionHeading>
+      <CodePreviewBlock {...props} dir="ltr" />
+    </>
+  );
+}
 
 function CodePreviewBlock({
   name,
@@ -2153,53 +2263,35 @@ function CodePreviewBlock({
   children,
   tight = false,
   relatedFiles,
-}: {
-  name: string;
-  description: string;
-  code: string;
-  children?: React.ReactNode;
-  tight?: boolean;
-  relatedFiles?: RelatedFile[];
-}) {
+  dir = 'rtl',
+}: CodePreviewBlockProps) {
   const hasPreview = !!children;
-  const hasFiles = relatedFiles && relatedFiles.length > 0;
-  const [tab, setTab] = useState<CodeTab>(hasPreview ? 'preview' : 'source');
+  const fileTabs = relatedFiles ?? [];
+  const hasFiles = fileTabs.length > 0;
+  const [isCodeExpanded, setIsCodeExpanded] = useState(!hasPreview);
   const [activeFile, setActiveFile] = useState(0);
-
-  const tabs: { id: CodeTab; label: string }[] = [
-    ...(hasPreview ? [{ id: 'preview' as CodeTab, label: 'Preview' }] : []),
-    { id: 'source', label: 'Source' },
-    ...(hasFiles ? [{ id: 'files' as CodeTab, label: 'Files' }] : []),
-  ];
+  const sourceId = useId();
+  const codeText = useRawSource(code);
+  const sourceCount = hasFiles ? fileTabs.length + 1 : 1;
+  const clampedActiveFile = Math.min(Math.max(activeFile, 0), sourceCount - 1);
+  const activeRelatedFile = hasFiles && clampedActiveFile > 0 ? fileTabs[clampedActiveFile - 1] : null;
+  const activeRelatedCode = useRawSource(activeRelatedFile?.code ?? '');
+  const activeCode = activeRelatedFile ? activeRelatedCode : codeText;
 
   const markdown = useMemo(
-    () => generateComponentMarkdown(name, description, code),
-    [name, description, code],
+    () => generateComponentMarkdown(name, description, codeText),
+    [name, description, codeText],
   );
 
   return (
-    <div className="rounded-xl shadow-[0_0_0_1px_var(--border-default)] overflow-hidden" style={{ backgroundColor: SURFACE.level0 }}>
-      <div className="flex items-center border-b border-border-default">
-        {tabs.map((t) => (
-          <button
-            key={t.id}
-            onClick={() => setTab(t.id)}
-            className={`px-3 py-2.5 text-[13px] font-medium cursor-pointer transition-[color,border-color] duration-150 ease-out active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-border-strong ${
-              tab === t.id
-                ? 'text-n-12 border-b-2 border-n-12'
-                : 'text-n-9 hover:text-n-11 border-b-2 border-transparent'
-            }`}
-          >
-            {t.label}
-          </button>
-        ))}
-        <div className="ml-auto flex items-center pl-1.5">
-          <CopyIconButton text={markdown} />
-        </div>
+    <div className={sgBlock}>
+      <div className="flex items-center justify-end bg-surface-4 px-2 py-1.5">
+        <CopyIconButton text={markdown} />
       </div>
-      {tab === 'preview' && (
+      <div className={sgSeparator} />
+      {hasPreview && (
         <div
-          dir="rtl"
+          dir={dir}
           className={
             tight
               ? 'p-6'
@@ -2209,23 +2301,27 @@ function CodePreviewBlock({
           {children}
         </div>
       )}
-      {tab === 'source' && (
-        <div className="relative p-4 overflow-x-auto max-h-[600px] overflow-y-auto rounded-b-xl text-[13px]">
-          <div className="absolute top-2 right-2 z-10">
-            <InlineCopyButton text={code} />
-          </div>
-          <HighlightedCode code={code} />
-        </div>
-      )}
-      {tab === 'files' && hasFiles && (
-        <div className="flex">
-          <div className="shrink-0 border-r border-border-default py-3 min-w-[200px] max-w-[240px]">
-            {relatedFiles.map((f, i) => (
+      <div className="relative border-t border-border-default/70">
+        {hasFiles && (
+          <div className="flex gap-1 overflow-x-auto border-b border-border-default/70 bg-surface-4 px-3 py-2">
+            <button
+              type="button"
+              onClick={() => setActiveFile(0)}
+              className={`shrink-0 rounded-md px-2.5 py-1.5 text-[12px] font-mono cursor-pointer transition-colors duration-100 focus-visible:outline-none focus-visible:ring-[2px] focus-visible:ring-border-strong ${
+                clampedActiveFile === 0
+                  ? 'text-accent-info/90 bg-state-hover-strong'
+                  : 'text-slate-9 hover:text-slate-11 hover:bg-state-hover'
+              }`}
+            >
+              Source
+            </button>
+            {fileTabs.map((f, i) => (
               <button
                 key={f.file}
-                onClick={() => setActiveFile(i)}
-                className={`block w-full text-left px-4 py-2 text-[13px] font-mono cursor-pointer transition-colors duration-100 ${
-                  activeFile === i
+                type="button"
+                onClick={() => setActiveFile(i + 1)}
+                className={`shrink-0 rounded-md px-2.5 py-1.5 text-[12px] font-mono cursor-pointer transition-colors duration-100 focus-visible:outline-none focus-visible:ring-[2px] focus-visible:ring-border-strong ${
+                  clampedActiveFile === i + 1
                     ? 'text-accent-info/90 bg-state-hover-strong'
                     : 'text-slate-9 hover:text-slate-11 hover:bg-state-hover'
                 }`}
@@ -2234,14 +2330,50 @@ function CodePreviewBlock({
               </button>
             ))}
           </div>
-          <div className="relative flex-1 p-4 overflow-x-auto max-h-[600px] overflow-y-auto">
-            <div className="absolute top-2 right-2 z-10">
-              <InlineCopyButton text={relatedFiles[activeFile].code} />
+        )}
+        <div
+          id={sourceId}
+          dir="ltr"
+          className={`relative p-4 text-[13px] ${
+            isCodeExpanded
+              ? 'max-h-72 overflow-x-auto overflow-y-auto'
+              : 'max-h-[160px] overflow-hidden'
+          }`}
+        >
+          <div className="sticky top-2 z-10 flex h-0 justify-end pr-2 pointer-events-none">
+            <div className="pointer-events-auto">
+              <InlineCopyButton text={activeCode} />
             </div>
-            <HighlightedCode code={relatedFiles[activeFile].code} />
           </div>
+          <HighlightedCode code={activeCode} />
         </div>
-      )}
+        {!isCodeExpanded && (
+          <div className="absolute inset-x-0 bottom-0 flex h-24 items-end justify-center bg-linear-to-t from-surface-3 via-surface-3/80 to-transparent pb-4">
+            <button
+              type="button"
+              aria-expanded={isCodeExpanded}
+              aria-controls={sourceId}
+              onClick={() => setIsCodeExpanded(true)}
+              className="relative z-10 inline-flex h-8 items-center justify-center rounded-lg border border-border-default bg-surface-2 px-3 text-sm font-medium text-slate-12 shadow-[var(--shadow-1)] cursor-pointer transition-[color,background-color,transform,opacity] duration-150 ease-out hover:bg-state-hover active:scale-[0.98] focus-visible:outline-none focus-visible:ring-[2px] focus-visible:ring-border-strong"
+            >
+              View Code
+            </button>
+          </div>
+        )}
+        {isCodeExpanded && hasPreview && (
+          <div className="flex justify-center border-t border-border-default/70 bg-surface-4 px-3 py-2">
+            <button
+              type="button"
+              aria-expanded={isCodeExpanded}
+              aria-controls={sourceId}
+              onClick={() => setIsCodeExpanded(false)}
+              className="inline-flex h-8 items-center justify-center rounded-lg border border-border-default bg-surface-2 px-3 text-sm font-medium text-slate-12 cursor-pointer transition-[color,background-color,transform,opacity] duration-150 ease-out hover:bg-state-hover active:scale-[0.98] focus-visible:outline-none focus-visible:ring-[2px] focus-visible:ring-border-strong"
+            >
+              Hide Code
+            </button>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
@@ -2852,14 +2984,22 @@ export default function StyleguidePage() {
 
   const navigateTo = useCallback((id: string) => {
     const parent = findParentItemForChild(id);
-    setActiveItem(parent ? parent.id : id);
-    setActiveAnchor(id);
+    const topLevelItem = NAV.flatMap((g) => g.items).find((item) => item.id === id);
+    if (!parent && !topLevelItem) return;
 
-    if (parent) {
-      requestAnimationFrame(() => {
+    const nextItem = parent ? parent.id : id;
+    setActiveItem(nextItem);
+    setActiveAnchor(parent ? id : null);
+    window.history.replaceState(null, '', `#${id}`);
+
+    requestAnimationFrame(() => {
+      if (parent) {
         document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      });
-    }
+        return;
+      }
+
+      document.getElementById('main-content')?.scrollTo({ top: 0, behavior: 'smooth' });
+    });
   }, []);
 
   useEffect(() => {
@@ -2960,6 +3100,7 @@ export default function StyleguidePage() {
 
   const [devicesPanelFloodlightOnIds, setDevicesPanelFloodlightOnIds] = useState<Set<string>>(() => new Set(['floodlight-01']));
   const [devicesPanelSpeakerPlayingIds, setDevicesPanelSpeakerPlayingIds] = useState<Set<string>>(() => new Set(['speaker-01']));
+  const [devicesPanelPinnedDeviceIds, setDevicesPanelPinnedDeviceIds] = useState<Set<string>>(() => new Set(['cam-01']));
   const handleDevicesPanelFloodlightToggle = useCallback((floodlightId: string, next: boolean) => {
     setDevicesPanelFloodlightOnIds((prev) => {
       const nextSet = new Set(prev);
@@ -2974,23 +3115,38 @@ export default function StyleguidePage() {
       return nextSet;
     });
   }, []);
+  const handleDevicesPanelPin = useCallback((deviceId: string) => {
+    setDevicesPanelPinnedDeviceIds((prev) => new Set(prev).add(deviceId));
+  }, []);
+  const handleDevicesPanelUnpin = useCallback((deviceId: string) => {
+    setDevicesPanelPinnedDeviceIds((prev) => {
+      const next = new Set(prev);
+      next.delete(deviceId);
+      return next;
+    });
+  }, []);
 
   const [comboboxDemoTrack, setComboboxDemoTrack] = useState('air-raid');
   const [comboboxDemoOpen, setComboboxDemoOpen] = useState(false);
 
-  const handleSelectPage = useCallback((id: string) => {
-    setActiveItem(id);
-    window.history.replaceState(null, '', `#${id}`);
-  }, []);
+  const handleSelectPage = navigateTo;
 
   const prefersReducedMotionRoot = useReducedMotion();
 
   return (
+    <DndProvider backend={HTML5Backend}>
     <TooltipProvider>
       <div dir="ltr" className="flex min-h-screen bg-surface-1 text-slate-12 font-sans antialiased">
+        <a
+          href="#main-content"
+          className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-slate-12 focus:px-3 focus:py-2 focus:text-surface-1"
+        >
+          Skip to content
+        </a>
 
         <StyleguideSidebar
           activeItem={activeItem}
+          activeAnchor={activeAnchor}
           onSelectPage={handleSelectPage}
         />
 
@@ -3001,11 +3157,12 @@ export default function StyleguidePage() {
           />
 
           <div className="flex flex-1">
-            <main id="top" className="flex-1 min-w-0 overflow-y-auto py-4 pr-4">
-              <div
-                className="rounded-2xl bg-[#0c0c0e] min-h-[calc(100vh-2rem)]"
-                style={{ boxShadow: '0 0 0 1px var(--border-default), 0 2px 8px rgba(0,0,0,0.2)' }}
-              >
+            <main
+              id="main-content"
+              className="flex-1 min-w-0 overflow-y-auto py-4 pr-4"
+              tabIndex={-1}
+            >
+              <div className={sgCanvas}>
               <div className="px-8 py-10 sm:px-10 lg:px-14 lg:py-12 pb-24">
               <motion.div
                 key={activeItem}
@@ -3022,7 +3179,7 @@ export default function StyleguidePage() {
             >
               <Suspense
                 fallback={
-                  <div className="flex items-center justify-center min-h-[240px] rounded-xl bg-state-hover shadow-[0_0_0_1px_var(--border-default)] text-[13px] text-n-9">
+                  <div className={`flex items-center justify-center min-h-[240px] ${sgBlock} text-[13px] text-n-9`}>
                     Loading icon library…
                   </div>
                 }
@@ -3041,11 +3198,11 @@ export default function StyleguidePage() {
                   <p className="text-[16px] font-normal leading-relaxed text-slate-9 tracking-wide">
                     Install every component, token, and icon in one command:
                   </p>
-                  <QuickStartCodeBlock code="npx shadcn@latest add @c2/all" />
+                  <QuickStartCodeBlock code="pnpm dlx shadcn@latest add @c2/c2-base" />
                   <p className="text-[16px] font-normal leading-relaxed text-slate-9 tracking-wide mt-2">
                     Or pick only what you need:
                   </p>
-                  <QuickStartCodeBlock code="npx shadcn@latest add @c2/button @c2/target-card @c2/status-chip" />
+                  <QuickStartCodeBlock code="pnpm dlx shadcn@latest add @c2/button @c2/target-card @c2/status-chip" />
                   <p className="text-[16px] font-normal leading-relaxed text-slate-9 tracking-wide mt-2">
                     Dependencies are resolved automatically — installing <code className="text-[13px] font-mono text-accent-info/80 bg-state-hover px-1.5 py-0.5 rounded">target-card</code> pulls in <code className="text-[13px] font-mono text-accent-info/80 bg-state-hover px-1.5 py-0.5 rounded">tokens</code>, <code className="text-[13px] font-mono text-accent-info/80 bg-state-hover px-1.5 py-0.5 rounded">utils</code>, and any other internal dependencies.
                   </p>
@@ -3079,7 +3236,7 @@ export function DetectionRow() {
                   <p className="text-[16px] font-normal leading-relaxed text-slate-9 tracking-wide mt-4">
                     <span className="text-n-11 font-medium">2.</span>{' '}Initialize shadcn if you don't have a <code className="text-[13px] font-mono text-accent-info/80 bg-state-hover px-1.5 py-0.5 rounded">components.json</code> yet:
                   </p>
-                  <QuickStartCodeBlock code="npx shadcn@latest init" />
+                  <QuickStartCodeBlock code="pnpm dlx shadcn@latest init" />
 
                   <p className="text-[16px] font-normal leading-relaxed text-slate-9 tracking-wide mt-4">
                     <span className="text-n-11 font-medium">3.</span>{' '}Add the C2 registry to your <code className="text-[13px] font-mono text-accent-info/80 bg-state-hover px-1.5 py-0.5 rounded">components.json</code>:
@@ -3095,11 +3252,12 @@ export function DetectionRow() {
                     <span className="text-n-11 font-medium">4.</span>{' '}Import the C2 theme in your CSS entry point:
                   </p>
                   <QuickStartCodeBlock code={`/* src/styles/index.css */
-@import "tailwindcss";
-@import "./theme.css";
-@import "./fonts.css";`} />
+@import "./fonts.css";
+@import "./palette.css";
+@import "./tailwind.css";
+@import "./theme.css";`} />
                   <p className="text-[16px] font-normal leading-relaxed text-slate-9 tracking-wide mt-1.5">
-                    Copy <code className="text-[13px] font-mono text-accent-info/80 bg-state-hover px-1.5 py-0.5 rounded">theme.css</code> and <code className="text-[13px] font-mono text-accent-info/80 bg-state-hover px-1.5 py-0.5 rounded">fonts.css</code> from the C2 Hub repo into your project's styles directory.
+                    Copy <code className="text-[13px] font-mono text-accent-info/80 bg-state-hover px-1.5 py-0.5 rounded">fonts.css</code>, <code className="text-[13px] font-mono text-accent-info/80 bg-state-hover px-1.5 py-0.5 rounded">palette.css</code>, <code className="text-[13px] font-mono text-accent-info/80 bg-state-hover px-1.5 py-0.5 rounded">tailwind.css</code>, and <code className="text-[13px] font-mono text-accent-info/80 bg-state-hover px-1.5 py-0.5 rounded">theme.css</code> from the C2 Hub repo into your project's styles directory.
                   </p>
                 </div>
 
@@ -3108,12 +3266,88 @@ export function DetectionRow() {
                   <p className="text-[16px] font-normal leading-relaxed text-slate-9 tracking-wide">
                     Preview changes before updating:
                   </p>
-                  <QuickStartCodeBlock code="npx shadcn@latest diff @c2/button" />
+                  <QuickStartCodeBlock code="pnpm dlx shadcn@latest diff @c2/button" />
                   <p className="text-[16px] font-normal leading-relaxed text-slate-9 tracking-wide mt-3">
                     Apply the update:
                   </p>
-                  <QuickStartCodeBlock code="npx shadcn@latest add @c2/button --overwrite" />
+                  <QuickStartCodeBlock code="pnpm dlx shadcn@latest add @c2/button --overwrite" />
                 </div>
+
+              </div>
+            </ComponentSection>
+            )}
+
+            {activeItem === 'app-shell' && (
+            <ComponentSection
+              id="app-shell"
+              name="App Shell"
+              description="Install the tactical chrome layout — header, icon rails, resizable side panels, and a main canvas slot. Use C2AppShell for fast setup; drop to GridblockShell when you need custom geometry."
+            >
+              <CodePreviewBlock
+                name="C2AppShell"
+                description="Try the rails — open Overview, Devices, or Cameras, resize a panel, then drag to close."
+                tight
+                code={c2AppShellSrc}
+                relatedFiles={APP_SHELL_FILES}
+              >
+                <AppShellStyleguideDemo />
+              </CodePreviewBlock>
+
+              <div className="space-y-8">
+                <div className="space-y-3">
+                  <SectionHeading>Install</SectionHeading>
+                  <QuickStartCodeBlock code="pnpm dlx shadcn@latest add @c2/app-shell" />
+                  <p className="text-[16px] font-normal leading-relaxed text-slate-9 tracking-wide">
+                    Pulls in <code className="text-[13px] font-mono text-accent-info/80 bg-state-hover px-1.5 py-0.5 rounded">GridblockShell</code>, rails, panels, resize handles, and panel-width persistence. Install <code className="text-[13px] font-mono text-accent-info/80 bg-state-hover px-1.5 py-0.5 rounded">@c2/c2-base</code> first if the project does not have C2 tokens yet.
+                  </p>
+                </div>
+
+                <div className="space-y-3">
+                  <SectionHeading>Starter</SectionHeading>
+                  <QuickStartCodeBlock code={`import { C2AppShell } from "@/app/components/gridblock"
+import { Radar, Camera } from "@/lib/icons/central"
+
+export function OperationsPage() {
+  return (
+    <C2AppShell
+      main={<YourMapOrCanvas />}
+      leftTabs={[
+        {
+          id: "targets",
+          label: "Targets",
+          icon: <Radar size={16} />,
+          panel: <TargetsPanel />,
+        },
+      ]}
+      rightTabs={[
+        {
+          id: "cameras",
+          label: "Cameras",
+          icon: <Camera size={16} />,
+          panel: <CamerasPanel />,
+        },
+      ]}
+    />
+  )
+}`} />
+                </div>
+
+                <div className="space-y-3">
+                  <SectionHeading>When to use GridblockShell</SectionHeading>
+                  <p className="text-[16px] font-normal leading-relaxed text-slate-9 tracking-wide">
+                    <code className="text-[13px] font-mono text-accent-info/80 bg-state-hover px-1.5 py-0.5 rounded">C2AppShell</code> owns tab state, rails, and panel chrome. Use <code className="text-[13px] font-mono text-accent-info/80 bg-state-hover px-1.5 py-0.5 rounded">GridblockShell</code> directly when you need a custom header, asymmetric rails, history footers in the map slot, or domain-specific panel wiring — the production dashboard at <code className="text-[13px] font-mono text-accent-info/80 bg-state-hover px-1.5 py-0.5 rounded">/</code> is the reference.
+                  </p>
+                </div>
+
+                <LtrCodePreviewBlock
+                  name="C2AppShell"
+                  description="Try the rails — open Overview, Devices, or Cameras, resize a panel, then drag to close."
+                  tight
+                  code={c2AppShellSrc}
+                  relatedFiles={APP_SHELL_FILES}
+                >
+                  <AppShellStyleguideDemo />
+                </LtrCodePreviewBlock>
 
               </div>
             </ComponentSection>
@@ -3277,10 +3511,17 @@ export function DetectionRow() {
             {activeItem === 'status-chip' && (
             <ComponentSection id="status-chip" name="StatusChip" description="Compact colored badge indicating operational status of a target or system.">
               <CodePreviewBlock name="StatusChip" description="Compact colored badge indicating operational status of a target or system." code={statusChipSrc} relatedFiles={COMMON_FILES}>
-                <div className="flex flex-wrap items-center gap-3">
-                  {(Object.keys(STATUS_CHIP_COLORS) as StatusChipColor[]).map((color) => (
-                    <StatusChip key={color} label={color} color={color} />
-                  ))}
+                <div className="space-y-4">
+                  <div className="flex flex-wrap items-center gap-3">
+                    <StatusChip label="Active" color="green" />
+                    <StatusChip label="Pending" color="orange" />
+                    <StatusChip label="Offline" color="gray" />
+                  </div>
+                  <div className="flex flex-wrap items-center gap-3">
+                    {(Object.keys(STATUS_CHIP_COLORS) as StatusChipColor[]).map((color) => (
+                      <StatusChip key={color} label={color} color={color} />
+                    ))}
+                  </div>
                 </div>
               </CodePreviewBlock>
 
@@ -3297,17 +3538,35 @@ export function DetectionRow() {
                 { name: 'className', type: 'string', description: 'Additional Tailwind classes' },
               ]} />
 
+              <LtrCodePreviewBlock name="StatusChip" description="Compact colored badge indicating operational status of a target or system." code={statusChipSrc} relatedFiles={COMMON_FILES}>
+                <div className="space-y-4">
+                  <div className="flex flex-wrap items-center gap-3">
+                    <StatusChip label="Active" color="green" />
+                    <StatusChip label="Pending" color="orange" />
+                    <StatusChip label="Offline" color="gray" />
+                  </div>
+                  <div className="flex flex-wrap items-center gap-3">
+                    {(Object.keys(STATUS_CHIP_COLORS) as StatusChipColor[]).map((color) => (
+                      <StatusChip key={color} label={color} color={color} />
+                    ))}
+                  </div>
+                </div>
+              </LtrCodePreviewBlock>
+
             </ComponentSection>
             )}
 
             {activeItem === 'new-updates' && (
             <ComponentSection id="new-updates" name="NewUpdatesPill" description="Floating pill that appears above the list to surface new incoming detections.">
               <CodePreviewBlock name="NewUpdatesPill" description="Floating pill that appears above the list to surface new incoming detections." code={newUpdatesPillSrc} relatedFiles={COMMON_FILES}>
-                <div className="flex flex-wrap items-center gap-4">
-                  <NewUpdatesPill count={1} onClick={noop} />
-                  <NewUpdatesPill count={5} onClick={noop} />
-                  <NewUpdatesPill count={42} onClick={noop} />
-                  <NewUpdatesPill count={147} onClick={noop} />
+                <div className="space-y-4">
+                  <NewUpdatesPill count={3} onClick={noop} />
+                  <div className="flex flex-wrap items-center gap-4">
+                    <NewUpdatesPill count={1} onClick={noop} />
+                    <NewUpdatesPill count={5} onClick={noop} />
+                    <NewUpdatesPill count={42} onClick={noop} />
+                    <NewUpdatesPill count={147} onClick={noop} />
+                  </div>
                 </div>
               </CodePreviewBlock>
 
@@ -3322,6 +3581,18 @@ export function DetectionRow() {
                 { name: 'count', type: 'number', description: 'Number of new updates to display' },
                 { name: 'onClick', type: '() => void', description: 'Scroll-to-top handler' },
               ]} />
+
+              <LtrCodePreviewBlock name="NewUpdatesPill" description="Floating pill that appears above the list to surface new incoming detections." code={newUpdatesPillSrc} relatedFiles={COMMON_FILES}>
+                <div className="space-y-4">
+                  <NewUpdatesPill count={3} onClick={noop} />
+                  <div className="flex flex-wrap items-center gap-4">
+                    <NewUpdatesPill count={1} onClick={noop} />
+                    <NewUpdatesPill count={5} onClick={noop} />
+                    <NewUpdatesPill count={42} onClick={noop} />
+                    <NewUpdatesPill count={147} onClick={noop} />
+                  </div>
+                </div>
+              </LtrCodePreviewBlock>
             </ComponentSection>
             )}
 
@@ -3332,11 +3603,18 @@ export function DetectionRow() {
             {activeItem === 'action-button' && (
             <ComponentSection id="action-button" name="ActionButton" description="Tactical action trigger with variant, size, icon, and loading states. Used in card action rows and standalone controls.">
               <CodePreviewBlock name="ActionButton" description="Tactical action trigger with variant, size, icon, and loading states. Used in card action rows and standalone controls." code={actionButtonSrc} relatedFiles={COMMON_FILES}>
-                <div className="flex flex-wrap items-center gap-2">
-                  <ActionButton label="הפנה מצלמה" icon={Eye} variant="fill" size="md" />
-                  <ActionButton label="ביטול" icon={Ban} variant="ghost" size="md" />
-                  <ActionButton label="מחק" icon={Trash2} variant="danger" size="md" />
-                  <ActionButton label="אזהרה" icon={AlertTriangle} variant="warning" size="md" />
+                <div className="space-y-4">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <ActionButton label="Save" icon={Check} variant="fill" size="md" />
+                    <ActionButton label="Cancel" icon={Ban} variant="ghost" size="md" />
+                    <ActionButton label="Delete" icon={Trash2} variant="danger" size="md" />
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <ActionButton label="הפנה מצלמה" icon={Eye} variant="fill" size="md" />
+                    <ActionButton label="ביטול" icon={Ban} variant="ghost" size="md" />
+                    <ActionButton label="מחק" icon={Trash2} variant="danger" size="md" />
+                    <ActionButton label="אזהרה" icon={AlertTriangle} variant="warning" size="md" />
+                  </div>
                 </div>
               </CodePreviewBlock>
 
@@ -3417,28 +3695,54 @@ export function DetectionRow() {
                   <ActionButton label="מוחק..." icon={Trash2} variant="danger" size="sm" loading={loading === 'ab-danger'} onClick={() => simulateLoading('ab-danger')} />
                 </div>
               </ExampleBlock>
+
+              <LtrCodePreviewBlock name="ActionButton" description="Tactical action trigger with variant, size, icon, and loading states. Used in card action rows and standalone controls." code={actionButtonSrc} relatedFiles={COMMON_FILES}>
+                <div className="space-y-4">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <ActionButton label="Save" icon={Check} variant="fill" size="md" />
+                    <ActionButton label="Cancel" icon={Ban} variant="ghost" size="md" />
+                    <ActionButton label="Delete" icon={Trash2} variant="danger" size="md" />
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <ActionButton label="הפנה מצלמה" icon={Eye} variant="fill" size="md" />
+                    <ActionButton label="ביטול" icon={Ban} variant="ghost" size="md" />
+                    <ActionButton label="מחק" icon={Trash2} variant="danger" size="md" />
+                    <ActionButton label="אזהרה" icon={AlertTriangle} variant="warning" size="md" />
+                  </div>
+                </div>
+              </LtrCodePreviewBlock>
             </ComponentSection>
             )}
 
             {activeItem === 'split-action' && (
             <ComponentSection id="split-action" name="SplitActionButton" description="Two-segment button: primary action on the left, dropdown menu on the right. Used for effector controls with sub-options.">
               <CodePreviewBlock name="SplitActionButton" description="Two-segment button: primary action on the left, dropdown menu on the right. Used for effector controls with sub-options." code={splitActionButtonSrc} relatedFiles={COMMON_FILES}>
-                <div className="flex flex-wrap items-center gap-3">
-                  <div className="w-48">
-                    <SplitActionButton label="שיגור" icon={Zap} variant="fill" size="sm" onClick={noop} dropdownItems={[
-                      { id: '1', label: 'אפשרות א׳', icon: Radio, onClick: noop },
-                      { id: '2', label: 'אפשרות ב׳', icon: Crosshair, onClick: noop },
-                    ]} />
+                <div className="space-y-4">
+                  <div className="flex flex-wrap items-center gap-3">
+                    <div className="w-48">
+                      <SplitActionButton label="Run" icon={Zap} variant="fill" size="sm" onClick={noop} dropdownItems={[
+                        { id: '1', label: 'Option A', icon: Radio, onClick: noop },
+                        { id: '2', label: 'Option B', icon: Crosshair, onClick: noop },
+                      ]} />
+                    </div>
+                    <div className="w-48">
+                      <SplitActionButton label="Delete" icon={Trash2} variant="danger" size="sm" onClick={noop} dropdownItems={[
+                        { id: '1', label: 'Remove', icon: Trash2, onClick: noop },
+                      ]} />
+                    </div>
                   </div>
-                  <div className="w-48">
-                    <SplitActionButton label="מחק" icon={Trash2} variant="danger" size="sm" onClick={noop} dropdownItems={[
-                      { id: '1', label: 'מחק לצמיתות', icon: Trash2, onClick: noop },
-                    ]} />
-                  </div>
-                  <div className="w-48">
-                    <SplitActionButton label="אזהרה" icon={AlertTriangle} variant="warning" size="sm" onClick={noop} dropdownItems={[
-                      { id: '1', label: 'פעולה', onClick: noop },
-                    ]} />
+                  <div className="flex flex-wrap items-center gap-3">
+                    <div className="w-48">
+                      <SplitActionButton label="שיגור" icon={Zap} variant="fill" size="sm" onClick={noop} dropdownItems={[
+                        { id: '1', label: 'אפשרות א׳', icon: Radio, onClick: noop },
+                        { id: '2', label: 'אפשרות ב׳', icon: Crosshair, onClick: noop },
+                      ]} />
+                    </div>
+                    <div className="w-48">
+                      <SplitActionButton label="מחק" icon={Trash2} variant="danger" size="sm" onClick={noop} dropdownItems={[
+                        { id: '1', label: 'מחק לצמיתות', icon: Trash2, onClick: noop },
+                      ]} />
+                    </div>
                   </div>
                 </div>
               </CodePreviewBlock>
@@ -3555,6 +3859,37 @@ export function DetectionRow() {
                   </div>
                 </div>
               </ExampleBlock>
+
+              <LtrCodePreviewBlock name="SplitActionButton" description="Two-segment button: primary action on the left, dropdown menu on the right. Used for effector controls with sub-options." code={splitActionButtonSrc} relatedFiles={COMMON_FILES}>
+                <div className="space-y-4">
+                  <div className="flex flex-wrap items-center gap-3">
+                    <div className="w-48">
+                      <SplitActionButton label="Run" icon={Zap} variant="fill" size="sm" onClick={noop} dropdownItems={[
+                        { id: '1', label: 'Option A', icon: Radio, onClick: noop },
+                        { id: '2', label: 'Option B', icon: Crosshair, onClick: noop },
+                      ]} />
+                    </div>
+                    <div className="w-48">
+                      <SplitActionButton label="Delete" icon={Trash2} variant="danger" size="sm" onClick={noop} dropdownItems={[
+                        { id: '1', label: 'Remove', icon: Trash2, onClick: noop },
+                      ]} />
+                    </div>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-3">
+                    <div className="w-48">
+                      <SplitActionButton label="שיגור" icon={Zap} variant="fill" size="sm" onClick={noop} dropdownItems={[
+                        { id: '1', label: 'אפשרות א׳', icon: Radio, onClick: noop },
+                        { id: '2', label: 'אפשרות ב׳', icon: Crosshair, onClick: noop },
+                      ]} />
+                    </div>
+                    <div className="w-48">
+                      <SplitActionButton label="מחק" icon={Trash2} variant="danger" size="sm" onClick={noop} dropdownItems={[
+                        { id: '1', label: 'מחק לצמיתות', icon: Trash2, onClick: noop },
+                      ]} />
+                    </div>
+                  </div>
+                </div>
+              </LtrCodePreviewBlock>
             </ComponentSection>
             )}
 
@@ -3565,16 +3900,23 @@ export function DetectionRow() {
             {activeItem === 'accordion' && (
             <ComponentSection id="accordion" name="AccordionSection" description="Collapsible section with animated expand/collapse. Used inside cards for details, logs, and sensors.">
               <CodePreviewBlock name="AccordionSection" description="Collapsible section with animated expand/collapse. Used inside cards for details, logs, and sensors." tight code={accordionSectionSrc} relatedFiles={COMMON_FILES}>
-                <div className="max-w-sm rounded-lg overflow-hidden" style={{ backgroundColor: SURFACE.level1 }}>
-                  <AccordionSection title="ברירת מחדל (סגור)" icon={Eye}>
-                    <div className="p-3 text-xs text-n-9">תוכן AccordionSection</div>
-                  </AccordionSection>
-                  <AccordionSection title="פתוח כברירת מחדל" icon={History} defaultOpen>
-                    <div className="p-3 text-xs text-n-9">תוכן AccordionSection שנפתח אוטומטית.</div>
-                  </AccordionSection>
-                  <AccordionSection title="עם פעולת כותרת" icon={Activity} headerAction={<StatusChip label="3" color="orange" />}>
-                    <div className="p-3 text-xs text-n-9">AccordionSection עם badge בכותרת</div>
-                  </AccordionSection>
+                <div className="max-w-sm rounded-lg overflow-hidden space-y-4">
+                  <div className="rounded-lg overflow-hidden" style={{ backgroundColor: SURFACE.level1 }}>
+                    <AccordionSection title="Details" icon={Eye}>
+                      <div className="p-3 text-xs text-n-9">Section content</div>
+                    </AccordionSection>
+                    <AccordionSection title="History" icon={History} defaultOpen>
+                      <div className="p-3 text-xs text-n-9">Expanded by default.</div>
+                    </AccordionSection>
+                  </div>
+                  <div className="rounded-lg overflow-hidden" style={{ backgroundColor: SURFACE.level1 }}>
+                    <AccordionSection title="ברירת מחדל (סגור)" icon={Eye}>
+                      <div className="p-3 text-xs text-n-9">תוכן AccordionSection</div>
+                    </AccordionSection>
+                    <AccordionSection title="פתוח כברירת מחדל" icon={History} defaultOpen>
+                      <div className="p-3 text-xs text-n-9">תוכן AccordionSection שנפתח אוטומטית.</div>
+                    </AccordionSection>
+                  </div>
                 </div>
               </CodePreviewBlock>
 
@@ -3591,17 +3933,45 @@ export function DetectionRow() {
                 { name: 'defaultOpen', type: 'boolean', default: 'false', description: 'Start expanded' },
                 { name: 'headerAction', type: 'ReactNode', description: 'Right-side action slot (badge, button)' },
               ]} />
+
+              <LtrCodePreviewBlock name="AccordionSection" description="Collapsible section with animated expand/collapse. Used inside cards for details, logs, and sensors." tight code={accordionSectionSrc} relatedFiles={COMMON_FILES}>
+                <div className="max-w-sm rounded-lg overflow-hidden space-y-4">
+                  <div className="rounded-lg overflow-hidden" style={{ backgroundColor: SURFACE.level1 }}>
+                    <AccordionSection title="Details" icon={Eye}>
+                      <div className="p-3 text-xs text-n-9">Section content</div>
+                    </AccordionSection>
+                    <AccordionSection title="History" icon={History} defaultOpen>
+                      <div className="p-3 text-xs text-n-9">Expanded by default.</div>
+                    </AccordionSection>
+                  </div>
+                  <div className="rounded-lg overflow-hidden" style={{ backgroundColor: SURFACE.level1 }}>
+                    <AccordionSection title="ברירת מחדל (סגור)" icon={Eye}>
+                      <div className="p-3 text-xs text-n-9">תוכן AccordionSection</div>
+                    </AccordionSection>
+                    <AccordionSection title="פתוח כברירת מחדל" icon={History} defaultOpen>
+                      <div className="p-3 text-xs text-n-9">תוכן AccordionSection שנפתח אוטומטית.</div>
+                    </AccordionSection>
+                  </div>
+                </div>
+              </LtrCodePreviewBlock>
             </ComponentSection>
             )}
 
             {activeItem === 'telemetry' && (
             <ComponentSection id="telemetry" name="TelemetryRow" description="Single telemetry metric display with icon, label, and monospace value. Laid out in a 3-column grid — rows wrap automatically based on item count.">
               <CodePreviewBlock name="TelemetryRow" description="Single telemetry metric display with icon, label, and monospace value. Laid out in a 3-column grid." tight code={telemetryRowSrc} relatedFiles={COMMON_FILES}>
-                <div className="grid grid-cols-3 gap-x-4 gap-y-2 rounded-lg p-3" style={{ backgroundColor: SURFACE.level1 }}>
-                  <TelemetryRow label="גובה" value="120m" icon={Navigation} />
-                  <TelemetryRow label="מהירות" value="45 km/h" icon={Gauge} />
-                  <TelemetryRow label="כיוון" value="270°" icon={Compass} />
-                  <TelemetryRow label="מרחק" value="1.2 km" icon={MapPin} />
+                <div className="space-y-4">
+                  <div className="grid grid-cols-3 gap-x-4 gap-y-2 rounded-lg p-3" style={{ backgroundColor: SURFACE.level1 }}>
+                    <TelemetryRow label="Height" value="120m" icon={Navigation} />
+                    <TelemetryRow label="Speed" value="45 km/h" icon={Gauge} />
+                    <TelemetryRow label="Heading" value="270°" icon={Compass} />
+                  </div>
+                  <div className="grid grid-cols-3 gap-x-4 gap-y-2 rounded-lg p-3" style={{ backgroundColor: SURFACE.level1 }}>
+                    <TelemetryRow label="גובה" value="120m" icon={Navigation} />
+                    <TelemetryRow label="מהירות" value="45 km/h" icon={Gauge} />
+                    <TelemetryRow label="כיוון" value="270°" icon={Compass} />
+                    <TelemetryRow label="מרחק" value="1.2 km" icon={MapPin} />
+                  </div>
                 </div>
               </CodePreviewBlock>
 
@@ -3644,6 +4014,22 @@ export function DetectionRow() {
                   <TelemetryRow label="מהירות" value="45 km/h" icon={Gauge} />
                 </div>
               </ExampleBlock>
+
+              <LtrCodePreviewBlock name="TelemetryRow" description="Single telemetry metric display with icon, label, and monospace value. Laid out in a 3-column grid." tight code={telemetryRowSrc} relatedFiles={COMMON_FILES}>
+                <div className="space-y-4">
+                  <div className="grid grid-cols-3 gap-x-4 gap-y-2 rounded-lg p-3" style={{ backgroundColor: SURFACE.level1 }}>
+                    <TelemetryRow label="Height" value="120m" icon={Navigation} />
+                    <TelemetryRow label="Speed" value="45 km/h" icon={Gauge} />
+                    <TelemetryRow label="Heading" value="270°" icon={Compass} />
+                  </div>
+                  <div className="grid grid-cols-3 gap-x-4 gap-y-2 rounded-lg p-3" style={{ backgroundColor: SURFACE.level1 }}>
+                    <TelemetryRow label="גובה" value="120m" icon={Navigation} />
+                    <TelemetryRow label="מהירות" value="45 km/h" icon={Gauge} />
+                    <TelemetryRow label="כיוון" value="270°" icon={Compass} />
+                    <TelemetryRow label="מרחק" value="1.2 km" icon={MapPin} />
+                  </div>
+                </div>
+              </LtrCodePreviewBlock>
             </ComponentSection>
             )}
 
@@ -3653,7 +4039,7 @@ export function DetectionRow() {
                 <div className="rounded-lg p-2" style={{ backgroundColor: SURFACE.level1 }}>
                   <CardHeader
                     icon={ShieldAlert}
-                    iconColor="#ef4444"
+                    iconColor={accentHex('danger')}
                     iconBgActive
                     title="רחפן DJI Mavic 3"
                     subtitle="TGT-0042"
@@ -3693,6 +4079,20 @@ export function DetectionRow() {
                   <CardHeader title="יעד בסיסי" subtitle="TGT-0001" open={false} />
                 </div>
               </ExampleBlock>
+
+              <LtrCodePreviewBlock name="CardHeader" description="Top row of a TargetCard — icon, title, subtitle, status chip, badge, and chevron." tight code={cardHeaderSrc} relatedFiles={COMMON_FILES}>
+                <div className="rounded-lg p-2" style={{ backgroundColor: SURFACE.level1 }}>
+                  <CardHeader
+                    icon={ShieldAlert}
+                    iconColor={accentHex('danger')}
+                    iconBgActive
+                    title="רחפן DJI Mavic 3"
+                    subtitle="TGT-0042"
+                    status={<StatusChip label="פעיל" color="red" />}
+                    open={false}
+                  />
+                </div>
+              </LtrCodePreviewBlock>
             </ComponentSection>
             )}
 
@@ -3743,6 +4143,27 @@ export function DetectionRow() {
                   return <Icon size={20} className={bc.color} />;
                 }}
               />
+
+              <LtrCodePreviewBlock name="CardMedia" description="Image or video slot for target surveillance feed. Supports live badge, playback controls, and lightbox expansion." code={cardMediaSrc} relatedFiles={COMMON_FILES}>
+                <div className="flex flex-wrap gap-4">
+                  <div className="w-64 rounded-lg overflow-hidden" style={{ backgroundColor: SURFACE.level0 }}>
+                    <CardMedia
+                      src="https://images.unsplash.com/photo-1473968512647-3e447244af8f?w=400&h=200&fit=crop"
+                      type="image"
+                      badge="threat"
+                      alt="Drone surveillance image"
+                    />
+                  </div>
+                  <div className="w-64 rounded-lg overflow-hidden" style={{ backgroundColor: SURFACE.level0 }}>
+                    <CardMedia
+                      src="https://images.unsplash.com/photo-1473968512647-3e447244af8f?w=400&h=200&fit=crop"
+                      type="image"
+                      badge="bird"
+                      alt="Bird detection image"
+                    />
+                  </div>
+                </div>
+              </LtrCodePreviewBlock>
             </ComponentSection>
             )}
 
@@ -3789,6 +4210,12 @@ export function DetectionRow() {
                   ]} />
                 </div>
               </ExampleBlock>
+
+              <LtrCodePreviewBlock name="CardActions" description="Action bar for TargetCard. Composes ActionButton, SplitActionButton, and the confirm pattern." tight code={cardActionsSrc} relatedFiles={CARD_ACTIONS_FILES}>
+                <div className="max-w-sm rounded-lg overflow-hidden" style={{ backgroundColor: SURFACE.level1 }}>
+                  <CardActions actions={sampleActions} />
+                </div>
+              </LtrCodePreviewBlock>
             </ComponentSection>
             )}
 
@@ -3811,6 +4238,12 @@ export function DetectionRow() {
                 { name: 'rows', type: 'DetailRow[]', description: 'Array of { label, value, icon }' },
                 { name: 'defaultOpen', type: 'boolean', default: 'false', description: 'Start expanded' },
               ]} />
+
+              <LtrCodePreviewBlock name="CardDetails" description="Collapsible telemetry accordion with a copy-all button; uses AccordionSection and TelemetryRow." tight code={cardDetailsSrc} relatedFiles={CARD_DETAILS_FILES}>
+                <div className="max-w-sm rounded-lg overflow-hidden" style={{ backgroundColor: SURFACE.level1 }}>
+                  <CardDetails rows={sampleDetailRows} defaultOpen />
+                </div>
+              </LtrCodePreviewBlock>
             </ComponentSection>
             )}
 
@@ -3841,6 +4274,12 @@ export function DetectionRow() {
                   <CardSensors sensors={sampleSensors} onSensorClick={(id) => console.log('sensor clicked:', id)} />
                 </div>
               </ExampleBlock>
+
+              <LtrCodePreviewBlock name="CardSensors" description="Lists detecting sensors for a target with type, distance, and timestamp. Supports read-only and interactive modes." tight code={cardSensorsSrc} relatedFiles={COMMON_FILES}>
+                <div className="max-w-sm rounded-lg overflow-hidden p-1" style={{ backgroundColor: SURFACE.level1 }}>
+                  <CardSensors sensors={sampleSensors} />
+                </div>
+              </LtrCodePreviewBlock>
             </ComponentSection>
             )}
 
@@ -3864,6 +4303,12 @@ export function DetectionRow() {
                 { name: 'maxVisible', type: 'number', default: '5', description: 'Entries shown before "show more"' },
                 { name: 'defaultOpen', type: 'boolean', default: 'false', description: 'Start accordion expanded' },
               ]} />
+
+              <LtrCodePreviewBlock name="CardLog" description="Chronological event log accordion with newest-first ordering and expand-all." tight code={cardLogSrc} relatedFiles={CARD_LOG_FILES}>
+                <div className="max-w-sm rounded-lg overflow-hidden" style={{ backgroundColor: SURFACE.level1 }}>
+                  <CardLog entries={sampleLogEntries} maxVisible={4} defaultOpen />
+                </div>
+              </LtrCodePreviewBlock>
             </ComponentSection>
             )}
 
@@ -3887,6 +4332,12 @@ export function DetectionRow() {
                 { name: 'onSelect', type: '(outcomeId: string) => void', description: 'Selection handler' },
                 { name: 'title', type: 'string', default: '"סגירת אירוע — בחר סיבה"', description: 'Section heading' },
               ]} />
+
+              <LtrCodePreviewBlock name="CardClosure" description="Outcome selection grid for closing a detection event. Operator picks the resolution reason." tight code={cardClosureSrc} relatedFiles={COMMON_FILES}>
+                <div className="max-w-sm rounded-lg overflow-hidden" style={{ backgroundColor: SURFACE.level1 }}>
+                  <CardClosure outcomes={sampleClosureOutcomes} onSelect={(id) => console.log('closure:', id)} />
+                </div>
+              </LtrCodePreviewBlock>
             </ComponentSection>
             )}
 
@@ -3932,6 +4383,12 @@ export function DetectionRow() {
                   <StyleguideUnifiedCard detection={cuas_bda_complete} defaultOpen={false} />
                 </div>
               </ExampleBlock>
+
+              <LtrCodePreviewBlock name="TargetCard" description="The core card shell. Composes CardHeader with slot children via the useCardSlots hook." tight code={targetCardSrc} relatedFiles={COMMON_FILES}>
+                <div className="w-96 mx-auto">
+                  <StyleguideUnifiedCard detection={cuas_classified} defaultOpen />
+                </div>
+              </LtrCodePreviewBlock>
             </ComponentSection>
             )}
 
@@ -3973,14 +4430,58 @@ export function DetectionRow() {
                 { name: 'resetLabel', type: 'string', default: '"Reset"', description: 'Reset button text.' },
                 { name: 'emptyOptionsLabel', type: 'string', default: '"No options"', description: 'Shown when a filter has no options.' },
               ]} />
+
+              <LtrCodePreviewBlock name="FilterBar" description="Data-driven multi-filter bar." tight code={filterBarSrc} relatedFiles={COMMON_FILES}>
+                <div className="w-96 mx-auto rounded-lg overflow-hidden" style={{ backgroundColor: SURFACE.level1 }}>
+                  <FilterBar
+                    query={filterBarQuery}
+                    onQueryChange={setFilterBarQuery}
+                    filters={FILTER_BAR_DEMO_DEFS}
+                    selections={filterBarSelections}
+                    onFilterChange={(filterId, next) =>
+                      setFilterBarSelections((prev) => ({ ...prev, [filterId]: next }))
+                    }
+                    onReset={() => {
+                      setFilterBarQuery('');
+                      setFilterBarSelections({});
+                    }}
+                  />
+                </div>
+              </LtrCodePreviewBlock>
             </ComponentSection>
             )}
 
             {activeItem === 'devices-panel' && (
             <ComponentSection id="devices-panel" name="DevicesPanel" description="Right-hand sidebar listing all connected field devices grouped by type. Supports search, type-filter isolation, device expansion with stats grid, camera preview with presets, ECM jam activation, mute with 30-min countdown, drone wipers/calibration, and drag-to-camera-viewer for camera rows.">
               <CodePreviewBlock name="DevicesPanel" description="Full interactive panel — try searching, filtering by type, expanding rows, toggling the floodlight Switch, and pressing Play on a speaker." tight code={devicesPanelSrc} relatedFiles={DEVICES_PANEL_FILES}>
-                <div className="relative mx-auto overflow-hidden rounded-lg border border-border-default" style={{ width: LAYOUT_TOKENS.sidebarWidthPx, height: 520 }}>
-                  <DevicesPanel
+                <div
+                  className="gridblock-root mx-auto bg-[var(--gridblock-floor)] p-[var(--gridblock-map-inset)] text-[var(--gridblock-text-primary)]"
+                  style={{ width: LAYOUT_TOKENS.panelWidthPx + 8, height: 560 }}
+                >
+                  <div className="gridblock-block h-full overflow-hidden bg-[var(--gridblock-panel)]">
+                    <DevicesPanelHost
+                      devices={devicesPanelDemoDevices}
+                      open
+                      onClose={noop}
+                      onFlyTo={noop}
+                      onDeviceHover={noop}
+                      onSelectAsset={noop}
+                      focusedDeviceId={null}
+                      onPinToFeed={handleDevicesPanelPin}
+                      onUnpinFromFeed={handleDevicesPanelUnpin}
+                      pinnedDeviceIds={devicesPanelPinnedDeviceIds}
+                    />
+                  </div>
+                </div>
+              </CodePreviewBlock>
+
+              <CodePreviewBlock name="DevicesPanel raw states" description="Raw component demo with optional simulator controls enabled for floodlight and speaker rows." tight code={devicesPanelSrc} relatedFiles={DEVICES_PANEL_FILES}>
+                <div
+                  className="gridblock-root mx-auto bg-[var(--gridblock-floor)] p-[var(--gridblock-map-inset)] text-[var(--gridblock-text-primary)]"
+                  style={{ width: LAYOUT_TOKENS.panelWidthPx + 8, height: 560 }}
+                >
+                  <div className="gridblock-block h-full overflow-hidden bg-[var(--gridblock-panel)]">
+                    <DevicesPanel
                     devices={devicesPanelDemoDevices}
                     open
                     onClose={noop}
@@ -3994,6 +4495,7 @@ export function DetectionRow() {
                     speakerPlayingIds={devicesPanelSpeakerPlayingIds}
                     noTransition
                   />
+                  </div>
                 </div>
               </CodePreviewBlock>
 
@@ -4188,7 +4690,7 @@ export function DetectionRow() {
                     <div className="flex items-center justify-center gap-2.5 px-4 py-2.5 text-right border-b border-border-default hover:bg-state-hover cursor-pointer">
                       <div className="relative w-8 h-8 rounded flex items-center justify-center shrink-0 bg-accent-warning-soft/40">
                         <SensorIcon size={20} fill={accentHex('warning')} />
-                        <span className="absolute -bottom-0.5 -right-0.5 size-2 rounded-full ring-2 ring-n-1 bg-accent-warning" />
+                        <span className="absolute -bottom-0.5 -right-0.5 size-2 rounded-full ring-[2px] ring-n-1 bg-accent-warning" />
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-1.5">
@@ -4225,7 +4727,7 @@ export function DetectionRow() {
                         <span className="text-[13px] font-medium text-n-10">Regulus North</span>
                         <div className="text-[11px] font-mono tabular-nums text-slate-9">1.5km</div>
                       </div>
-                      <button className="shrink-0 flex items-center gap-1.5 px-2 py-1 rounded text-[11px] font-medium bg-accent-danger-soft text-slate-12 ring-1 ring-inset ring-accent-danger-soft/40">
+                      <button className="shrink-0 flex items-center gap-1.5 px-2 py-1 rounded text-[11px] font-medium bg-accent-danger-soft text-slate-12 ring-[1px] ring-inset ring-accent-danger-soft/40">
                         <StyleguideJamIcon size={12} />
                         הפעל
                       </button>
@@ -4245,7 +4747,7 @@ export function DetectionRow() {
                     <div key={label} className="flex flex-col items-center gap-2 rounded-lg border border-border-default bg-black/20 p-4">
                       <div className="relative w-8 h-8 rounded flex items-center justify-center bg-state-hover-strong">
                         <SensorIcon size={20} fill={slateHex(12)} />
-                        <span className={`absolute -bottom-0.5 -right-0.5 size-2 rounded-full ring-2 ring-n-1 ${color}`} />
+                        <span className={`absolute -bottom-0.5 -right-0.5 size-2 rounded-full ring-[2px] ring-n-1 ${color}`} />
                       </div>
                       <span className="text-[10px] font-mono text-n-9">{label}</span>
                     </div>
@@ -4347,7 +4849,7 @@ export function DetectionRow() {
                         <span className="text-[13px] font-medium text-n-10">Regulus North</span>
                         <div className="text-[11px] font-mono tabular-nums text-slate-9">1.5km</div>
                       </div>
-                      <button className="shrink-0 flex items-center gap-1.5 px-2 py-1 rounded text-[11px] font-medium bg-accent-danger-soft text-slate-12 ring-1 ring-inset ring-accent-danger-soft/40">
+                      <button className="shrink-0 flex items-center gap-1.5 px-2 py-1 rounded text-[11px] font-medium bg-accent-danger-soft text-slate-12 ring-[1px] ring-inset ring-accent-danger-soft/40">
                         <StyleguideJamIcon size={12} />
                         הפעל
                       </button>
@@ -4386,7 +4888,7 @@ export function DetectionRow() {
                       <div className="flex-1 min-w-0">
                         <span className="text-[13px] font-medium text-n-10">Regulus East</span>
                       </div>
-                      <button disabled className="shrink-0 flex items-center gap-1.5 px-2 py-1 rounded text-[11px] font-medium opacity-40 cursor-not-allowed bg-accent-danger-soft text-slate-12 ring-1 ring-inset ring-accent-danger-soft/40">
+                      <button disabled className="shrink-0 flex items-center gap-1.5 px-2 py-1 rounded text-[11px] font-medium opacity-40 cursor-not-allowed bg-accent-danger-soft text-slate-12 ring-[1px] ring-inset ring-accent-danger-soft/40">
                         <StyleguideJamIcon size={12} />
                         שיבוש פעיל
                       </button>
@@ -4397,7 +4899,7 @@ export function DetectionRow() {
                     <div className="flex items-center justify-center gap-2.5 px-4 py-2.5 text-right bg-state-hover border-b border-border-default">
                       <div className="relative w-8 h-8 rounded flex items-center justify-center shrink-0 bg-accent-warning-soft/40">
                         <SensorIcon size={20} fill={accentHex('warning')} />
-                        <span className="absolute -bottom-0.5 -right-0.5 size-2 rounded-full ring-2 ring-n-1 bg-accent-danger" />
+                        <span className="absolute -bottom-0.5 -right-0.5 size-2 rounded-full ring-[2px] ring-n-1 bg-accent-danger" />
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-1.5">
@@ -4405,7 +4907,7 @@ export function DetectionRow() {
                           <AlertTriangle size={11} className="text-accent-warning shrink-0" />
                         </div>
                       </div>
-                      <button disabled className="shrink-0 flex items-center gap-1.5 px-2 py-1 rounded text-[11px] font-medium opacity-40 cursor-not-allowed bg-accent-danger-soft text-slate-12 ring-1 ring-inset ring-accent-danger-soft/40">
+                      <button disabled className="shrink-0 flex items-center gap-1.5 px-2 py-1 rounded text-[11px] font-medium opacity-40 cursor-not-allowed bg-accent-danger-soft text-slate-12 ring-[1px] ring-inset ring-accent-danger-soft/40">
                         <StyleguideJamIcon size={12} />
                         הפעל
                       </button>
@@ -4533,7 +5035,7 @@ export function DetectionRow() {
                         <div className="flex items-center gap-2 min-w-0 h-7 rounded bg-state-hover text-slate-12/[0.64]">
                           <button
                             type="button"
-                            className="inline-flex items-center justify-between gap-2 h-7 min-w-0 max-w-[160px] px-2 rounded text-[11px] font-medium text-slate-12/[0.64] bg-transparent transition-[background-color,color,transform] duration-150 ease-out active:scale-[0.98] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-border-strong"
+                            className="inline-flex items-center justify-between gap-2 h-7 min-w-0 max-w-[160px] px-2 rounded text-[11px] font-medium text-slate-12/[0.64] bg-transparent transition-[background-color,color,transform] duration-150 ease-out active:scale-[0.98] focus-visible:outline-none focus-visible:ring-[1px] focus-visible:ring-border-strong"
                           >
                             <span className="truncate">אזעקת אש</span>
                             <ChevronsUpDown size={12} className="shrink-0 opacity-60" />
@@ -4671,7 +5173,7 @@ export function DetectionRow() {
                       <PopoverTrigger asChild>
                         <button
                           type="button"
-                          className="inline-flex items-center justify-between gap-2 h-7 min-w-[160px] max-w-[220px] px-2 rounded text-[11px] font-medium text-slate-12/[0.64] bg-state-hover transition-[background-color,color,transform] duration-150 ease-out active:scale-[0.98] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-border-strong"
+                          className="inline-flex items-center justify-between gap-2 h-7 min-w-[160px] max-w-[220px] px-2 rounded text-[11px] font-medium text-slate-12/[0.64] bg-state-hover transition-[background-color,color,transform] duration-150 ease-out active:scale-[0.98] focus-visible:outline-none focus-visible:ring-[1px] focus-visible:ring-border-strong"
                         >
                           <span className="truncate">
                             {DEFAULT_SPEAKER_TRACKS.find((t) => t.id === comboboxDemoTrack)?.label ?? 'Track'}
@@ -4716,6 +5218,52 @@ export function DetectionRow() {
                   </p>
                 </div>
               </ExampleBlock>
+
+              <LtrCodePreviewBlock name="DevicesPanel" description="Full interactive panel — try searching, filtering by type, expanding rows, toggling the floodlight Switch, and pressing Play on a speaker." tight code={devicesPanelSrc} relatedFiles={DEVICES_PANEL_FILES}>
+                <div
+                  className="gridblock-root mx-auto bg-[var(--gridblock-floor)] p-[var(--gridblock-map-inset)] text-[var(--gridblock-text-primary)]"
+                  style={{ width: LAYOUT_TOKENS.panelWidthPx + 8, height: 560 }}
+                >
+                  <div className="gridblock-block h-full overflow-hidden bg-[var(--gridblock-panel)]">
+                    <DevicesPanelHost
+                      devices={devicesPanelDemoDevices}
+                      open
+                      onClose={noop}
+                      onFlyTo={noop}
+                      onDeviceHover={noop}
+                      onSelectAsset={noop}
+                      focusedDeviceId={null}
+                      onPinToFeed={handleDevicesPanelPin}
+                      onUnpinFromFeed={handleDevicesPanelUnpin}
+                      pinnedDeviceIds={devicesPanelPinnedDeviceIds}
+                    />
+                  </div>
+                </div>
+              </LtrCodePreviewBlock>
+
+              <LtrCodePreviewBlock name="DevicesPanel raw states" description="Raw component demo with optional simulator controls enabled for floodlight and speaker rows." tight code={devicesPanelSrc} relatedFiles={DEVICES_PANEL_FILES}>
+                <div
+                  className="gridblock-root mx-auto bg-[var(--gridblock-floor)] p-[var(--gridblock-map-inset)] text-[var(--gridblock-text-primary)]"
+                  style={{ width: LAYOUT_TOKENS.panelWidthPx + 8, height: 560 }}
+                >
+                  <div className="gridblock-block h-full overflow-hidden bg-[var(--gridblock-panel)]">
+                    <DevicesPanel
+                      devices={devicesPanelDemoDevices}
+                      open
+                      onClose={noop}
+                      onFlyTo={noop}
+                      onDeviceHover={noop}
+                      onDeviceSelect={noop}
+                      onJamActivate={noop}
+                      onFloodlightToggle={handleDevicesPanelFloodlightToggle}
+                      onSpeakerToggle={handleDevicesPanelSpeakerToggle}
+                      floodlightOnIds={devicesPanelFloodlightOnIds}
+                      speakerPlayingIds={devicesPanelSpeakerPlayingIds}
+                      noTransition
+                    />
+                  </div>
+                </div>
+              </LtrCodePreviewBlock>
             </ComponentSection>
             )}
 
@@ -4759,7 +5307,7 @@ export function DetectionRow() {
               <div className="space-y-2">
                 <ImportBlock path="@/primitives/MapMarker" names={['MapMarker']} />
                 <ImportBlock path="@/primitives/markerStyles" names={['resolveMarkerStyle', 'INTERACTION_STATES', 'AFFILIATIONS']} />
-                <ImportBlock path="@/shared/components/TacticalMap" names={['CameraIcon', 'RadarIcon', 'SensorIcon', 'DroneIcon', 'DroneHiveIcon', 'LidarIcon', 'LauncherIcon', 'MissileIcon', 'FloodlightIcon', 'SpeakerIcon']} />
+                <ImportBlock path="@/app/components/tacticalIcons" names={['CameraIcon', 'RadarIcon', 'SensorIcon', 'DroneIcon', 'DroneHiveIcon', 'LidarIcon', 'LauncherIcon', 'MissileIcon', 'FloodlightIcon', 'SpeakerIcon']} />
               </div>
 
               {/* ── Layer Anatomy ── */}
@@ -4918,7 +5466,7 @@ export function DetectionRow() {
                     href="#icon-library"
                     onClick={(e) => {
                       e.preventDefault();
-                      setActiveItem('icon-library');
+                      navigateTo('icon-library');
                     }}
                     className="inline-flex items-center gap-1 text-[13px] text-accent-info/90 hover:text-accent-info transition-colors duration-150"
                   >
@@ -5072,6 +5620,20 @@ export function DetectionRow() {
                   <li>Wire <code className="font-mono text-[13px] bg-state-hover-strong px-1 rounded">CesiumMap</code> into <code className="font-mono text-[13px] bg-state-hover-strong px-1 rounded">Dashboard</code> behind a feature flag, then deprecate <code className="font-mono text-[13px] bg-state-hover-strong px-1 rounded">TacticalMap</code> when parity is full.</li>
                 </ol>
               </div>
+
+              <LtrCodePreviewBlock name="MapMarker" description="Composites 4 visual layers controlled by a style+affiliation matrix" code={mapMarkerSrc} relatedFiles={MARKER_FILES}>
+                <div className="flex items-center justify-start gap-6">
+                  {AFFILIATIONS.map(aff => {
+                    const s = resolveMarkerStyle('default', aff);
+                    return (
+                      <div key={aff} className="flex flex-col items-center gap-2">
+                        <MapMarker icon={<SensorIcon size={34} fill={s.glyphColor} />} style={s} surfaceSize={48} ringSize={38} />
+                        <span className="text-xs font-mono font-normal text-slate-12">{aff}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </LtrCodePreviewBlock>
             </ComponentSection>
             )}
 
@@ -5124,7 +5686,7 @@ export function DetectionRow() {
             </ComponentSection>
             )}
 
-            <StyleguidePager activeItem={activeItem} onNavigate={navigateTo} />
+            <StyleguidePager activeItem={activeAnchor ?? activeItem} onNavigate={navigateTo} />
           </motion.div>
           </div>
           </div>
@@ -5150,5 +5712,6 @@ export function DetectionRow() {
       </div>
       <Toaster />
     </TooltipProvider>
+    </DndProvider>
   );
 }

@@ -5,8 +5,7 @@
  * to mount, we'd rather show a small overlay (and let the rest of the
  * dashboard keep running) than crash the entire app.
  *
- * Wraps `<CesiumTacticalMap>` only — Mapbox renders without this boundary so
- * its error semantics are unchanged.
+ * Wraps `<CesiumTacticalMap>` only so a WebGL failure stays scoped to the map.
  */
 
 import React from 'react';
@@ -45,19 +44,13 @@ export class CesiumErrorBoundary extends React.Component<
             <div className="mb-1 text-[13px] font-semibold text-accent-danger">
               Cesium failed to mount
             </div>
-            <div className="mb-3 text-[12px] text-slate-11">
-              The Cesium parity backend hit a runtime error. The Mapbox dashboard
-              still works — switch back via the link below.
+            <div className="text-[12px] text-slate-11">
+              The Cesium map hit a runtime error. The rest of the dashboard is
+              still running.
             </div>
             <pre className="mb-3 max-h-40 overflow-auto rounded bg-black/40 p-2 text-[11px] leading-snug text-accent-danger">
               {message}
             </pre>
-            <a
-              href="?map=mapbox"
-              className="inline-flex items-center rounded-md bg-state-pressed px-3 py-1.5 text-[12px] font-medium text-slate-12 hover:bg-state-selected"
-            >
-              Reload with Mapbox
-            </a>
           </div>
         </div>
       );

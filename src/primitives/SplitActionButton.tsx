@@ -1,7 +1,6 @@
 import React from 'react';
 import { ChevronDown, Loader2 } from '@/lib/icons/central';
 import { useIsRtl } from '@/lib/direction';
-import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { cn } from '@/shared/components/ui/utils';
 import {
   DropdownMenu,
@@ -110,7 +109,6 @@ export function SplitActionButton({
 }: SplitActionButtonProps) {
   const isRtl = useIsRtl();
   const dir: 'rtl' | 'ltr' = isRtl ? 'rtl' : 'ltr';
-  const prefersReducedMotion = useReducedMotion();
   const [menuOpen, setMenuOpen] = React.useState(false);
   const shellRef = React.useRef<HTMLDivElement>(null);
   const [shellWidth, setShellWidth] = React.useState(0);
@@ -194,35 +192,26 @@ export function SplitActionButton({
           )}
           {...(loading ? { 'aria-live': 'polite' as const } : {})}
         >
-          <AnimatePresence mode="popLayout" initial={false}>
-            <motion.span
-              key={label}
-              className={cn('flex items-center gap-2', hasSubtitle && 'py-1')}
-              transition={prefersReducedMotion ? { duration: 0 } : { type: 'spring', duration: 0.3, bounce: 0 }}
-              initial={prefersReducedMotion ? false : { opacity: 0, y: -25 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={prefersReducedMotion ? undefined : { opacity: 0, y: 25 }}
-            >
-              {loading ? (
-                <Loader2 size={sz.icon} className={cn('shrink-0', prefersReducedMotion ? 'opacity-90' : 'animate-spin opacity-90')} aria-hidden="true" />
-              ) : (
-                Icon && <Icon size={sz.icon} className="shrink-0 opacity-95" aria-hidden="true" />
-              )}
-              {hasSubtitle ? (
-                <span className="flex flex-col items-start leading-tight">
-                  <span>{label}</span>
-                  <span className="text-[10px] opacity-60 font-normal">{subtitle}</span>
-                </span>
-              ) : (
+          <span className={cn('flex items-center gap-2', hasSubtitle && 'py-1')}>
+            {loading ? (
+              <Loader2 size={sz.icon} className="shrink-0 animate-spin opacity-90 motion-reduce:animate-none" aria-hidden="true" />
+            ) : (
+              Icon && <Icon size={sz.icon} className="shrink-0 opacity-95" aria-hidden="true" />
+            )}
+            {hasSubtitle ? (
+              <span className="flex flex-col items-start leading-tight">
                 <span>{label}</span>
-              )}
-              {hasBadge && (
-                <span className="text-[10px] font-medium bg-state-selected px-1.5 py-0.5 rounded leading-none whitespace-nowrap">
-                  {badge}
-                </span>
-              )}
-            </motion.span>
-          </AnimatePresence>
+                <span className="text-[10px] opacity-60 font-normal">{subtitle}</span>
+              </span>
+            ) : (
+              <span>{label}</span>
+            )}
+            {hasBadge && (
+              <span className="text-[10px] font-medium bg-state-selected px-1.5 py-0.5 rounded leading-none whitespace-nowrap">
+                {badge}
+              </span>
+            )}
+          </span>
         </button>
 
         <DropdownMenuTrigger asChild disabled={isDisabled}>
@@ -262,7 +251,7 @@ export function SplitActionButton({
         }}
         className={cn(
           'rounded-[2px] border-none p-1 data-no-rtl-flip text-slate-12',
-          prefersReducedMotion && 'data-[state=open]:animate-none data-[state=closed]:animate-none',
+          'motion-reduce:data-[state=open]:animate-none motion-reduce:data-[state=closed]:animate-none',
         )}
         onCloseAutoFocus={(e) => e.preventDefault()}
       >

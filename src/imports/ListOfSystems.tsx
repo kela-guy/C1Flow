@@ -1,21 +1,18 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { motion, AnimatePresence, useReducedMotion } from 'motion/react';
-import {
-  TargetCard,
-  CardHeader,
-  CardActions,
-  CardTimeline,
-  CardDetails,
-  CardSensors,
-  CardMedia,
-  CardLog,
-  CardClosure,
-  StatusChip,
-  FilterBar,
-  NewUpdatesPill,
-  AccordionSection,
-  TelemetryRow,
-} from '@/primitives';
+import { TargetCard } from '@/primitives/TargetCard';
+import { CardHeader } from '@/primitives/CardHeader';
+import { CardActions } from '@/primitives/CardActions';
+import { CardTimeline } from '@/primitives/CardTimeline';
+import { CardDetails } from '@/primitives/CardDetails';
+import { CardSensors } from '@/primitives/CardSensors';
+import { CardMedia } from '@/primitives/CardMedia';
+import { CardLog } from '@/primitives/CardLog';
+import { CardClosure } from '@/primitives/CardClosure';
+import { StatusChip } from '@/primitives/StatusChip';
+import { FilterBar } from '@/primitives/FilterBar';
+import { NewUpdatesPill } from '@/primitives/NewUpdatesPill';
+import { AccordionSection } from '@/primitives/AccordionSection';
+import { TelemetryRow } from '@/primitives/TelemetryRow';
 import {
   Crosshair,
   Radar,
@@ -26,6 +23,10 @@ import { useCardSlots, type CardCallbacks, type CardContext } from './useCardSlo
 import { useTargetFilters } from './useTargetFilters';
 import { getActivityStatus, isCompletedActivityStatus, useActivityStatus } from './useActivityStatus';
 import { useStrings, type Strings } from '@/lib/intl';
+
+function scrollBehaviorForMotionPreference(): ScrollBehavior {
+  return window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth';
+}
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -552,7 +553,6 @@ export default function ListOfSystems({
   onTargetHover,
   thinMode,
 }: ListOfSystemsProps) {
-  const prefersReducedMotion = useReducedMotion();
   const i18n = useStrings();
   const los = i18n.listOfSystems;
   const [activeTab, setActiveTab] = useState<'active' | 'completed'>('active');
@@ -647,9 +647,9 @@ export default function ListOfSystems({
   useEffect(() => {
     if (!activeTargetId && newArrivalIds.length > 0) {
       setNewArrivalIds([]);
-      listScrollRef.current?.scrollTo({ top: 0, behavior: prefersReducedMotion ? 'auto' : 'smooth' });
+      listScrollRef.current?.scrollTo({ top: 0, behavior: scrollBehaviorForMotionPreference() });
     }
-  }, [activeTargetId, newArrivalIds.length, prefersReducedMotion]);
+  }, [activeTargetId, newArrivalIds.length]);
 
   const visibleArrivalTargets = useMemo(() => {
     const filteredIds = new Set(filteredActiveTargets.map((target) => target.id));
@@ -746,17 +746,12 @@ export default function ListOfSystems({
     }
 
     return (
-      <AnimatePresence mode={disableLayout ? undefined : 'popLayout'}>
+      <>
         {list.map((target, idx) => {
           const isActive = target.id === activeTargetId;
           return (
-            <motion.div
+            <div
               key={target.id}
-              layout={disableLayout ? false : 'position'}
-              initial={prefersReducedMotion ? { opacity: 0 } : { opacity: 0, y: -8, filter: 'blur(4px)' }}
-              animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-              exit={prefersReducedMotion ? { opacity: 0 } : { opacity: 0, y: 6 }}
-              transition={{ duration: 0.25, ease: [0.25, 0.1, 0.25, 1] }}
               className="cursor-pointer"
               id={`detection-card-${target.id}`}
               {...(idx === 0 ? { 'data-tour': 'first-card' } : {})}
@@ -772,10 +767,10 @@ export default function ListOfSystems({
                 onFocus={onTargetFocus ? () => onTargetFocus(target.id) : undefined}
                 thinMode={thinMode}
               />
-            </motion.div>
+            </div>
           );
         })}
-      </AnimatePresence>
+      </>
     );
   };
 
@@ -834,25 +829,23 @@ export default function ListOfSystems({
       </div>
 
       <div className="relative flex-1 min-h-0">
-        <AnimatePresence>
-          {showNewUpdatesPill && (
-            <div className="pointer-events-none absolute inset-x-0 top-2 z-20 flex justify-center px-3">
-              <div className="pointer-events-auto">
-                <NewUpdatesPill
-                  count={visibleArrivalTargets.length}
-                  label={los.newUpdates}
-                  onClick={() => {
-                    setNewArrivalIds([]);
-                    listScrollRef.current?.scrollTo({
-                      top: 0,
-                      behavior: prefersReducedMotion ? 'auto' : 'smooth',
-                    });
-                  }}
-                />
-              </div>
+        {showNewUpdatesPill && (
+          <div className="pointer-events-none absolute inset-x-0 top-2 z-20 flex justify-center px-3">
+            <div className="pointer-events-auto">
+              <NewUpdatesPill
+                count={visibleArrivalTargets.length}
+                label={los.newUpdates}
+                onClick={() => {
+                  setNewArrivalIds([]);
+                  listScrollRef.current?.scrollTo({
+                    top: 0,
+                    behavior: scrollBehaviorForMotionPreference(),
+                  });
+                }}
+              />
             </div>
-          )}
-        </AnimatePresence>
+          </div>
+        )}
 
         <div
           ref={listScrollRef}

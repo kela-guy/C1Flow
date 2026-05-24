@@ -13,3 +13,9 @@ declare module 'react-dom/server' {
   export function renderToStaticMarkup(element: ReactElement): string;
   export function renderToString(element: ReactElement): string;
 }
+
+declare module '*.mdx' {
+  import type { ComponentType } from 'react';
+  const Component: ComponentType;
+  export default Component;
+}

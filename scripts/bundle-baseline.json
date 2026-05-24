@@ -1,0 +1,20 @@
+{
+  "capturedAt": "2026-05-22",
+  "command": "pnpm build && pnpm perf:budget",
+  "notes": "Re-baselined after restoring DndProvider + production DialRoot in App.tsx. The prior baseline (249.2 KB) was captured against a build missing those providers — Dashboard would crash on react-dnd hooks and the production dial was absent.",
+  "metrics": {
+    "appShellJsKb": 303.0,
+    "cssKb": 33.9,
+    "totalInitialKb": 336.9
+  },
+  "chunks": {
+    "shiki.js": 1674.5,
+    "main.js": 178.7,
+    "icons.js": 146.7,
+    "radix.js": 79.6,
+    "StyleguidePage.js": 56.6,
+    "motion.js": 46.0,
+    "IconLibrary.js": 30.4,
+    "main.css": 28.5
+  }
+}

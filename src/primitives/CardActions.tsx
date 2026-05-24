@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { ActionButton } from './ActionButton';
 import { SplitActionButton, type SplitDropdownGroup } from './SplitActionButton';
 import { CARD_TOKENS } from './tokens';
@@ -98,7 +97,6 @@ export function CardActions({
   finalConfirmTitle = 'Final confirmation',
   finalConfirmLabel = 'Activate',
 }: CardActionsProps) {
-  const prefersReducedMotion = useReducedMotion();
   const [confirmingId, setConfirmingId] = useState<string | null>(null);
   const [confirmStep, setConfirmStep] = useState(1);
 
@@ -149,69 +147,52 @@ export function CardActions({
     return (
       <div className={`px-2 py-2 bg-surface-2 ${className}`}>
         <div className="flex flex-col gap-1.5">
-          {/* Primary row */}
           {primaryActions.length > 0 && (
             <div className="flex flex-col gap-1.5 relative">
-              <AnimatePresence mode="popLayout" initial={false}>
-                {primaryActions.map((action) => {
-                  const motionKey = action.statusStrip ? `${action.id}-strip` : action.id;
-                  const springTransition = prefersReducedMotion
-                    ? { duration: 0 }
-                    : { type: 'spring' as const, duration: 0.3, bounce: 0 };
-
-                  return (
-                    <motion.div
-                      key={motionKey}
-                      className="w-full"
-                      transition={springTransition}
-                      initial={prefersReducedMotion ? false : { opacity: 0, y: -20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={prefersReducedMotion ? undefined : { opacity: 0, y: 20 }}
-                    >
-                      {action.statusStrip ? (
-                        <StatusStrip strip={action.statusStrip} dataTour={action.dataTour} />
-                      ) : action.dropdownActions || action.dropdownGroups ? (
-                        <SplitActionButton
-                          label={action.label}
-                          subtitle={action.subtitle}
-                          badge={action.badge}
-                          icon={action.icon}
-                          variant={action.variant as 'fill' | 'ghost' | 'danger' | 'warning'}
-                          size={action.size ?? 'sm'}
-                          disabled={action.disabled}
-                          loading={action.loading}
-                          dimDisabledShell={action.dimSplitWhenDisabled !== false}
-                          onClick={(e) => handleClick(action, e)}
-                          onHover={action.onHover}
-                          className={action.className ?? ''}
-                          dataTour={action.dataTour}
-                          dropdownItems={(action.dropdownActions ?? []).map(da => ({
-                            id: da.id,
-                            label: da.label,
-                            icon: da.icon,
-                            disabled: da.disabled,
-                            onClick: (e: React.MouseEvent) => handleClick(da, e),
-                          }))}
-                          dropdownGroups={action.dropdownGroups}
-                        />
-                      ) : (
-                        <ActionButton
-                          label={action.label}
-                          icon={action.icon}
-                          variant={action.variant ?? 'fill'}
-                          size={action.size ?? 'md'}
-                          onClick={(e) => handleClick(action, e!)}
-                          disabled={action.disabled}
-                          loading={action.loading}
-                          title={action.title}
-                          className={`w-full ${action.className ?? ''}`}
-                          dataTour={action.dataTour}
-                        />
-                      )}
-                    </motion.div>
-                  );
-                })}
-              </AnimatePresence>
+              {primaryActions.map((action) => (
+                <div key={action.statusStrip ? `${action.id}-strip` : action.id} className="w-full">
+                  {action.statusStrip ? (
+                    <StatusStrip strip={action.statusStrip} dataTour={action.dataTour} />
+                  ) : action.dropdownActions || action.dropdownGroups ? (
+                    <SplitActionButton
+                      label={action.label}
+                      subtitle={action.subtitle}
+                      badge={action.badge}
+                      icon={action.icon}
+                      variant={action.variant as 'fill' | 'ghost' | 'danger' | 'warning'}
+                      size={action.size ?? 'sm'}
+                      disabled={action.disabled}
+                      loading={action.loading}
+                      dimDisabledShell={action.dimSplitWhenDisabled !== false}
+                      onClick={(e) => handleClick(action, e)}
+                      onHover={action.onHover}
+                      className={action.className ?? ''}
+                      dataTour={action.dataTour}
+                      dropdownItems={(action.dropdownActions ?? []).map(da => ({
+                        id: da.id,
+                        label: da.label,
+                        icon: da.icon,
+                        disabled: da.disabled,
+                        onClick: (e: React.MouseEvent) => handleClick(da, e),
+                      }))}
+                      dropdownGroups={action.dropdownGroups}
+                    />
+                  ) : (
+                    <ActionButton
+                      label={action.label}
+                      icon={action.icon}
+                      variant={action.variant ?? 'fill'}
+                      size={action.size ?? 'md'}
+                      onClick={(e) => handleClick(action, e!)}
+                      disabled={action.disabled}
+                      loading={action.loading}
+                      title={action.title}
+                      className={`w-full ${action.className ?? ''}`}
+                      dataTour={action.dataTour}
+                    />
+                  )}
+                </div>
+              ))}
             </div>
           )}
 
@@ -352,7 +333,7 @@ function renderConfirmDialog(
           <div className="flex gap-2">
             <button
               onClick={handleConfirm}
-              className="flex-1 h-8 rounded bg-accent-danger-soft hover:bg-accent-danger text-slate-12 ring-1 ring-inset ring-accent-danger-soft/40 text-[11px] font-semibold transition-[background-color,transform] duration-150 ease-out active:scale-[0.98] focus-visible:outline-none focus-visible:ring-border-strong"
+              className="flex-1 h-8 rounded bg-accent-danger-soft hover:bg-accent-danger text-slate-12 ring-[1px] ring-inset ring-accent-danger-soft/40 text-[11px] font-semibold transition-[background-color,transform] duration-150 ease-out active:scale-[0.98] focus-visible:outline-none focus-visible:ring-border-strong"
               aria-label={primaryConfirm}
             >
               {primaryConfirm}
@@ -372,7 +353,7 @@ function renderConfirmDialog(
           <div className="flex gap-2">
             <button
               onClick={handleConfirm}
-              className="flex-1 h-8 rounded bg-accent-danger-soft hover:bg-accent-danger text-slate-12 ring-1 ring-inset ring-accent-danger-soft/40 text-[11px] font-bold transition-[background-color,transform] duration-150 ease-out active:scale-[0.98] focus-visible:outline-none focus-visible:ring-border-strong"
+              className="flex-1 h-8 rounded bg-accent-danger-soft hover:bg-accent-danger text-slate-12 ring-[1px] ring-inset ring-accent-danger-soft/40 text-[11px] font-bold transition-[background-color,transform] duration-150 ease-out active:scale-[0.98] focus-visible:outline-none focus-visible:ring-border-strong"
               aria-label={finalConfirm}
             >
               {finalConfirm}

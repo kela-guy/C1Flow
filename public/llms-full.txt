@@ -1,0 +1,184 @@
+---
+title: Introduction
+description: Install components into the consuming app and own the source. The registry ships files, dependencies, and token layers instead of hiding behavior behind a runtime package.
+url: /docs
+---
+
+# Introduction
+
+> C2 Hub is the source package and registry for tactical interface components.
+
+## Open code
+
+Install components into the consuming app and own the source. The registry ships files, dependencies, and token layers instead of hiding behavior behind a runtime package.
+
+## Distribution
+
+The live registry is served from `/r/{name}.json`. Start with the base bundle when a product needs the full token and primitive foundation.
+
+```bash
+pnpm dlx shadcn@latest add @c2/c2-base
+```
+
+## AI-ready docs
+
+Every docs page is designed to become markdown. The generated `/llms.txt` and `/llms-full.txt` files are the source an agent should ingest before changing the component system.
+
+Source: /docs
+
+---
+title: Installation
+description: Install C2 Hub components into a Vite, React, TypeScript, and Tailwind CSS v4 project.
+url: /docs/installation
+---
+
+# Installation
+
+Install C2 Hub components into a Vite, React, TypeScript, and Tailwind CSS v4 project.
+
+> Recommended for new work: install `@c2/c2-base` first, then add individual registry items as needed.
+
+  - [Base bundle](#base-bundle): Install tokens, primitives, and registry config in one command.
+  - [Single component](#single-component): Pull only the component and dependencies you need.
+  - [Styles](#styles): Import the C2 token layers in the consuming app.
+
+## Base bundle
+
+Run the registry command from the app that will consume C2 Hub components.
+
+```bash
+pnpm dlx shadcn@latest add @c2/c2-base
+```
+
+## Single component
+
+Use the same registry namespace for individual components.
+
+```bash
+pnpm dlx shadcn@latest add @c2/button @c2/status-chip
+```
+
+## Styles
+
+Import the C2 style layers in the app CSS entry point.
+
+```css
+@import "./fonts.css";
+@import "./palette.css";
+@import "./tailwind.css";
+@import "./theme.css";
+```
+
+Source: /docs/installation
+
+---
+title: Theming
+description: C2 Hub uses a layered OKLCH token system built for dark tactical surfaces.
+url: /docs/theming
+---
+
+# Theming
+
+C2 Hub uses a layered OKLCH token system built for dark tactical surfaces.
+
+> The docs route intentionally uses the C2 token stack, not a separate shadcn neutral theme. See `docs/styleguide-theme-decision.md` for the measured CSS impact.
+
+## Token layers
+
+The runtime CSS entry point imports the layers in order.
+
+```css
+@import "./fonts.css";
+@import "./palette.css";
+@import "./tailwind.css";
+@import "./theme.css";
+@import "../index.css";
+```
+
+## Palette
+
+`palette.css` owns raw OKLCH values. `tailwind.css` exposes utilities. `theme.css` maps those values onto shadcn-compatible semantic variables.
+
+## No hardcoded colors
+
+Use token utilities for CSS and `accentHex` only where a literal color string is required by SVG, Cesium, Mapbox, or canvas APIs.
+
+```tsx
+import { accentHex } from "@/primitives/accentHex";
+
+const warning = accentHex("warning");
+```
+
+Source: /docs/theming
+
+---
+title: Components
+description: Installable primitives and C2-specific assemblies published through the registry.
+url: /docs/components
+---
+
+# Components
+
+Installable primitives and C2-specific assemblies published through the registry.
+
+## Catalog
+
+  - [Button](/docs/components/button): Actions, links, and icon-only controls.
+  - [StatusChip](/styleguide#status-chip): Operational status labels for dense tactical UI.
+  - [TargetCard](/styleguide#target-card): Threat and track summaries for map-linked workflows.
+
+## Source of truth
+
+The current registry contains the full installable set. The `/docs/components` route starts with the smallest page set and expands from registry metadata.
+
+Source: /docs/components
+
+---
+title: Button
+description: Buttons trigger actions, navigation, and icon-only controls.
+url: /docs/components/button
+---
+
+# Button
+
+Buttons trigger actions, navigation, and icon-only controls.
+
+## Installation
+
+```bash
+pnpm dlx shadcn@latest add @c2/button
+```
+
+## Usage
+
+```tsx
+import { Button } from "@/components/ui/button";
+
+export function Example() {
+  return <Button>Track target</Button>;
+}
+```
+
+## Examples
+
+### Default
+
+Use the default variant for primary actions in a local workflow.
+
+```tsx
+<Button>Track target</Button>
+```
+
+### Outline
+
+Use outline for secondary actions that still need a clear target.
+
+```tsx
+<Button variant="outline">Open details</Button>
+```
+
+## API Reference
+
+_API table available on the rendered docs page._
+
+Source: /docs/components/button

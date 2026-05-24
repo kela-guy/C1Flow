@@ -13,8 +13,7 @@
  */
 
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Pause, Play, ChevronDown } from "lucide-react";
-import { Check, Radar, Crosshair, Zap, CheckCircle2 } from "@/lib/icons/central";
+import { Pause, Play, ChevronDown, Check, Radar, Crosshair, Zap, CheckCircle2 } from "@/lib/icons/central";
 import { useStrings } from "@/lib/intl";
 
 import {

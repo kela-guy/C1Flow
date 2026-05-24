@@ -4,6 +4,120 @@
   "homepage": "https://c2-hub-three.vercel.app",
   "items": [
     {
+      "name": "c2-base",
+      "type": "registry:base",
+      "title": "C2 Hub Design System",
+      "description": "Bootstraps a project with C2 tokens, primitives, aliases, and registry namespace.",
+      "version": "1.0.0",
+      "config": {
+        "style": "c2-hub",
+        "iconLibrary": "lucide",
+        "tsx": true,
+        "rsc": false,
+        "tailwind": {
+          "baseColor": "neutral",
+          "css": "src/styles/index.css",
+          "cssVariables": true
+        },
+        "aliases": {
+          "components": "@/app/components",
+          "ui": "@/app/components/ui",
+          "lib": "@/lib",
+          "hooks": "@/hooks",
+          "utils": "@/app/components/ui/utils"
+        },
+        "registries": {
+          "@c2": "https://c2-hub-three.vercel.app/r/{name}.json"
+        }
+      },
+      "dependencies": [
+        "clsx",
+        "tailwind-merge",
+        "class-variance-authority"
+      ],
+      "registryDependencies": [
+        "utils",
+        "tokens",
+        "status-chip",
+        "action-button",
+        "split-action-button",
+        "accordion-section",
+        "telemetry-row",
+        "new-updates-pill",
+        "card-header",
+        "card-actions",
+        "card-details",
+        "card-sensors",
+        "card-media",
+        "card-log",
+        "card-closure",
+        "card-timeline",
+        "card-footer-dock",
+        "target-card",
+        "map-marker-states",
+        "map-marker",
+        "map-icons"
+      ],
+      "cssVars": {
+        "theme": {
+          "--slate-1": "oklch(0.165 0.005 256)",
+          "--slate-12": "oklch(0.965 0.010 256)",
+          "--surface-void": "oklch(0.06 0 0)",
+          "--surface-1": "var(--slate-1)",
+          "--surface-2": "var(--slate-2)",
+          "--surface-3": "var(--slate-3)",
+          "--border-default": "oklch(0.490 0.016 256 / 0.55)",
+          "--border-strong": "oklch(0.580 0.018 256 / 0.80)",
+          "--accent-danger": "oklch(0.660 0.220 27)",
+          "--accent-warning": "oklch(0.770 0.170 70)",
+          "--accent-success": "oklch(0.790 0.180 145)",
+          "--accent-info": "oklch(0.790 0.140 230)",
+          "--state-hover": "color-mix(in oklch, var(--slate-12) 4%, transparent)",
+          "--state-selected": "color-mix(in oklch, var(--slate-12) 12%, transparent)"
+        },
+        "dark": {
+          "--slate-2": "oklch(0.205 0.006 256)",
+          "--slate-3": "oklch(0.245 0.008 256)",
+          "--slate-9": "oklch(0.665 0.018 256)",
+          "--slate-10": "oklch(0.760 0.018 256)"
+        }
+      },
+      "css": {
+        "@keyframes tile-detection-pulse": {
+          "0%": {
+            "opacity": "0"
+          },
+          "18%": {
+            "opacity": "0.95"
+          },
+          "50%": {
+            "opacity": "0.6"
+          },
+          "100%": {
+            "opacity": "0"
+          }
+        },
+        "@keyframes tile-detection-pulse-reduced": {
+          "0%": {
+            "opacity": "0"
+          },
+          "50%": {
+            "opacity": "0.6"
+          },
+          "100%": {
+            "opacity": "0"
+          }
+        }
+      },
+      "meta": {
+        "lifecycle": "stable"
+      },
+      "categories": [
+        "foundations"
+      ],
+      "files": []
+    },
+    {
       "name": "utils",
       "type": "registry:lib",
       "title": "Utilities",
@@ -16,8 +130,15 @@
       "files": [
         {
           "path": "src/app/components/ui/utils.ts",
-          "type": "registry:lib"
+          "type": "registry:lib",
+          "target": "@lib/utils.ts"
         }
+      ],
+      "meta": {
+        "lifecycle": "stable"
+      },
+      "categories": [
+        "foundations"
       ]
     },
     {
@@ -29,8 +150,18 @@
       "files": [
         {
           "path": "src/app/components/ui/use-mobile.ts",
-          "type": "registry:hook"
+          "type": "registry:hook",
+          "target": "@hooks/use-mobile.ts"
         }
+      ],
+      "dependencies": [
+        "react"
+      ],
+      "meta": {
+        "lifecycle": "stable"
+      },
+      "categories": [
+        "foundations"
       ]
     },
     {
@@ -41,7 +172,7 @@
       "version": "1.0.0",
       "dependencies": [
         "@radix-ui/react-accordion",
-        "lucide-react"
+        "react"
       ],
       "registryDependencies": [
         "utils"
@@ -49,8 +180,15 @@
       "files": [
         {
           "path": "src/app/components/ui/accordion.tsx",
-          "type": "registry:component"
+          "type": "registry:ui",
+          "target": "@ui/accordion.tsx"
         }
+      ],
+      "meta": {
+        "lifecycle": "stable"
+      },
+      "categories": [
+        "foundations"
       ]
     },
     {
@@ -60,7 +198,8 @@
       "description": "Callout for important messages.",
       "version": "1.0.0",
       "dependencies": [
-        "class-variance-authority"
+        "class-variance-authority",
+        "react"
       ],
       "registryDependencies": [
         "utils"
@@ -68,8 +207,15 @@
       "files": [
         {
           "path": "src/app/components/ui/alert.tsx",
-          "type": "registry:component"
+          "type": "registry:ui",
+          "target": "@ui/alert.tsx"
         }
+      ],
+      "meta": {
+        "lifecycle": "stable"
+      },
+      "categories": [
+        "foundations"
       ]
     },
     {
@@ -79,7 +225,8 @@
       "description": "Modal dialog for destructive or irreversible actions.",
       "version": "1.0.0",
       "dependencies": [
-        "@radix-ui/react-alert-dialog"
+        "@radix-ui/react-alert-dialog",
+        "react"
       ],
       "registryDependencies": [
         "utils",
@@ -88,8 +235,15 @@
       "files": [
         {
           "path": "src/app/components/ui/alert-dialog.tsx",
-          "type": "registry:component"
+          "type": "registry:ui",
+          "target": "@ui/alert-dialog.tsx"
         }
+      ],
+      "meta": {
+        "lifecycle": "stable"
+      },
+      "categories": [
+        "foundations"
       ]
     },
     {
@@ -104,8 +258,15 @@
       "files": [
         {
           "path": "src/app/components/ui/aspect-ratio.tsx",
-          "type": "registry:component"
+          "type": "registry:ui",
+          "target": "@ui/aspect-ratio.tsx"
         }
+      ],
+      "meta": {
+        "lifecycle": "stable"
+      },
+      "categories": [
+        "foundations"
       ]
     },
     {
@@ -115,7 +276,8 @@
       "description": "User or entity avatar with fallback.",
       "version": "1.0.0",
       "dependencies": [
-        "@radix-ui/react-avatar"
+        "@radix-ui/react-avatar",
+        "react"
       ],
       "registryDependencies": [
         "utils"
@@ -123,8 +285,15 @@
       "files": [
         {
           "path": "src/app/components/ui/avatar.tsx",
-          "type": "registry:component"
+          "type": "registry:ui",
+          "target": "@ui/avatar.tsx"
         }
+      ],
+      "meta": {
+        "lifecycle": "stable"
+      },
+      "categories": [
+        "foundations"
       ]
     },
     {
@@ -135,7 +304,8 @@
       "version": "1.0.0",
       "dependencies": [
         "@radix-ui/react-slot",
-        "class-variance-authority"
+        "class-variance-authority",
+        "react"
       ],
       "registryDependencies": [
         "utils"
@@ -143,8 +313,15 @@
       "files": [
         {
           "path": "src/app/components/ui/badge.tsx",
-          "type": "registry:component"
+          "type": "registry:ui",
+          "target": "@ui/badge.tsx"
         }
+      ],
+      "meta": {
+        "lifecycle": "stable"
+      },
+      "categories": [
+        "foundations"
       ]
     },
     {
@@ -155,7 +332,7 @@
       "version": "1.0.0",
       "dependencies": [
         "@radix-ui/react-slot",
-        "lucide-react"
+        "react"
       ],
       "registryDependencies": [
         "utils"
@@ -163,8 +340,15 @@
       "files": [
         {
           "path": "src/app/components/ui/breadcrumb.tsx",
-          "type": "registry:component"
+          "type": "registry:ui",
+          "target": "@ui/breadcrumb.tsx"
         }
+      ],
+      "meta": {
+        "lifecycle": "stable"
+      },
+      "categories": [
+        "foundations"
       ]
     },
     {
@@ -175,7 +359,8 @@
       "version": "1.0.0",
       "dependencies": [
         "@radix-ui/react-slot",
-        "class-variance-authority"
+        "class-variance-authority",
+        "react"
       ],
       "registryDependencies": [
         "utils"
@@ -183,29 +368,15 @@
       "files": [
         {
           "path": "src/app/components/ui/button.tsx",
-          "type": "registry:component"
+          "type": "registry:ui",
+          "target": "@ui/button.tsx"
         }
-      ]
-    },
-    {
-      "name": "calendar",
-      "type": "registry:ui",
-      "title": "Calendar",
-      "description": "Date picker calendar component.",
-      "version": "1.0.0",
-      "dependencies": [
-        "react-day-picker",
-        "lucide-react"
       ],
-      "registryDependencies": [
-        "utils",
-        "button"
-      ],
-      "files": [
-        {
-          "path": "src/app/components/ui/calendar.tsx",
-          "type": "registry:component"
-        }
+      "meta": {
+        "lifecycle": "stable"
+      },
+      "categories": [
+        "foundations"
       ]
     },
     {
@@ -220,48 +391,18 @@
       "files": [
         {
           "path": "src/app/components/ui/card.tsx",
-          "type": "registry:component"
+          "type": "registry:ui",
+          "target": "@ui/card.tsx"
         }
-      ]
-    },
-    {
-      "name": "carousel",
-      "type": "registry:ui",
-      "title": "Carousel",
-      "description": "Scrollable carousel with navigation controls.",
-      "version": "1.0.0",
+      ],
       "dependencies": [
-        "embla-carousel-react",
-        "lucide-react"
+        "react"
       ],
-      "registryDependencies": [
-        "utils",
-        "button"
-      ],
-      "files": [
-        {
-          "path": "src/app/components/ui/carousel.tsx",
-          "type": "registry:component"
-        }
-      ]
-    },
-    {
-      "name": "chart",
-      "type": "registry:ui",
-      "title": "Chart",
-      "description": "Chart container with theme-aware tooltip and legend.",
-      "version": "1.0.0",
-      "dependencies": [
-        "recharts"
-      ],
-      "registryDependencies": [
-        "utils"
-      ],
-      "files": [
-        {
-          "path": "src/app/components/ui/chart.tsx",
-          "type": "registry:component"
-        }
+      "meta": {
+        "lifecycle": "stable"
+      },
+      "categories": [
+        "foundations"
       ]
     },
     {
@@ -272,7 +413,7 @@
       "version": "1.0.0",
       "dependencies": [
         "@radix-ui/react-checkbox",
-        "lucide-react"
+        "react"
       ],
       "registryDependencies": [
         "utils"
@@ -280,8 +421,15 @@
       "files": [
         {
           "path": "src/app/components/ui/checkbox.tsx",
-          "type": "registry:component"
+          "type": "registry:ui",
+          "target": "@ui/checkbox.tsx"
         }
+      ],
+      "meta": {
+        "lifecycle": "stable"
+      },
+      "categories": [
+        "foundations"
       ]
     },
     {
@@ -296,8 +444,15 @@
       "files": [
         {
           "path": "src/app/components/ui/collapsible.tsx",
-          "type": "registry:component"
+          "type": "registry:ui",
+          "target": "@ui/collapsible.tsx"
         }
+      ],
+      "meta": {
+        "lifecycle": "stable"
+      },
+      "categories": [
+        "foundations"
       ]
     },
     {
@@ -308,7 +463,7 @@
       "version": "1.0.0",
       "dependencies": [
         "cmdk",
-        "lucide-react"
+        "react"
       ],
       "registryDependencies": [
         "utils",
@@ -317,8 +472,15 @@
       "files": [
         {
           "path": "src/app/components/ui/command.tsx",
-          "type": "registry:component"
+          "type": "registry:ui",
+          "target": "@ui/command.tsx"
         }
+      ],
+      "meta": {
+        "lifecycle": "stable"
+      },
+      "categories": [
+        "foundations"
       ]
     },
     {
@@ -329,7 +491,7 @@
       "version": "1.0.0",
       "dependencies": [
         "@radix-ui/react-context-menu",
-        "lucide-react"
+        "react"
       ],
       "registryDependencies": [
         "utils"
@@ -337,8 +499,15 @@
       "files": [
         {
           "path": "src/app/components/ui/context-menu.tsx",
-          "type": "registry:component"
+          "type": "registry:ui",
+          "target": "@ui/context-menu.tsx"
         }
+      ],
+      "meta": {
+        "lifecycle": "stable"
+      },
+      "categories": [
+        "foundations"
       ]
     },
     {
@@ -349,7 +518,7 @@
       "version": "1.0.0",
       "dependencies": [
         "@radix-ui/react-dialog",
-        "lucide-react"
+        "react"
       ],
       "registryDependencies": [
         "utils"
@@ -357,27 +526,15 @@
       "files": [
         {
           "path": "src/app/components/ui/dialog.tsx",
-          "type": "registry:component"
+          "type": "registry:ui",
+          "target": "@ui/dialog.tsx"
         }
-      ]
-    },
-    {
-      "name": "drawer",
-      "type": "registry:ui",
-      "title": "Drawer",
-      "description": "Slide-out drawer panel.",
-      "version": "1.0.0",
-      "dependencies": [
-        "vaul"
       ],
-      "registryDependencies": [
-        "utils"
-      ],
-      "files": [
-        {
-          "path": "src/app/components/ui/drawer.tsx",
-          "type": "registry:component"
-        }
+      "meta": {
+        "lifecycle": "stable"
+      },
+      "categories": [
+        "foundations"
       ]
     },
     {
@@ -388,7 +545,7 @@
       "version": "1.0.0",
       "dependencies": [
         "@radix-ui/react-dropdown-menu",
-        "lucide-react"
+        "react"
       ],
       "registryDependencies": [
         "utils"
@@ -396,30 +553,15 @@
       "files": [
         {
           "path": "src/app/components/ui/dropdown-menu.tsx",
-          "type": "registry:component"
+          "type": "registry:ui",
+          "target": "@ui/dropdown-menu.tsx"
         }
-      ]
-    },
-    {
-      "name": "form",
-      "type": "registry:ui",
-      "title": "Form",
-      "description": "Form primitives with react-hook-form integration.",
-      "version": "1.0.0",
-      "dependencies": [
-        "@radix-ui/react-label",
-        "@radix-ui/react-slot",
-        "react-hook-form"
       ],
-      "registryDependencies": [
-        "utils",
-        "label"
-      ],
-      "files": [
-        {
-          "path": "src/app/components/ui/form.tsx",
-          "type": "registry:component"
-        }
+      "meta": {
+        "lifecycle": "stable"
+      },
+      "categories": [
+        "foundations"
       ]
     },
     {
@@ -429,7 +571,8 @@
       "description": "Card that appears on hover.",
       "version": "1.0.0",
       "dependencies": [
-        "@radix-ui/react-hover-card"
+        "@radix-ui/react-hover-card",
+        "react"
       ],
       "registryDependencies": [
         "utils"
@@ -437,8 +580,15 @@
       "files": [
         {
           "path": "src/app/components/ui/hover-card.tsx",
-          "type": "registry:component"
+          "type": "registry:ui",
+          "target": "@ui/hover-card.tsx"
         }
+      ],
+      "meta": {
+        "lifecycle": "stable"
+      },
+      "categories": [
+        "foundations"
       ]
     },
     {
@@ -453,28 +603,18 @@
       "files": [
         {
           "path": "src/app/components/ui/input.tsx",
-          "type": "registry:component"
+          "type": "registry:ui",
+          "target": "@ui/input.tsx"
         }
-      ]
-    },
-    {
-      "name": "input-otp",
-      "type": "registry:ui",
-      "title": "InputOTP",
-      "description": "One-time password input with slots.",
-      "version": "1.0.0",
+      ],
       "dependencies": [
-        "input-otp",
-        "lucide-react"
+        "react"
       ],
-      "registryDependencies": [
-        "utils"
-      ],
-      "files": [
-        {
-          "path": "src/app/components/ui/input-otp.tsx",
-          "type": "registry:component"
-        }
+      "meta": {
+        "lifecycle": "stable"
+      },
+      "categories": [
+        "foundations"
       ]
     },
     {
@@ -484,7 +624,8 @@
       "description": "Accessible form label.",
       "version": "1.0.0",
       "dependencies": [
-        "@radix-ui/react-label"
+        "@radix-ui/react-label",
+        "react"
       ],
       "registryDependencies": [
         "utils"
@@ -492,8 +633,15 @@
       "files": [
         {
           "path": "src/app/components/ui/label.tsx",
-          "type": "registry:component"
+          "type": "registry:ui",
+          "target": "@ui/label.tsx"
         }
+      ],
+      "meta": {
+        "lifecycle": "stable"
+      },
+      "categories": [
+        "foundations"
       ]
     },
     {
@@ -504,7 +652,7 @@
       "version": "1.0.0",
       "dependencies": [
         "@radix-ui/react-menubar",
-        "lucide-react"
+        "react"
       ],
       "registryDependencies": [
         "utils"
@@ -512,8 +660,15 @@
       "files": [
         {
           "path": "src/app/components/ui/menubar.tsx",
-          "type": "registry:component"
+          "type": "registry:ui",
+          "target": "@ui/menubar.tsx"
         }
+      ],
+      "meta": {
+        "lifecycle": "stable"
+      },
+      "categories": [
+        "foundations"
       ]
     },
     {
@@ -529,8 +684,18 @@
       "files": [
         {
           "path": "src/app/components/ui/pagination.tsx",
-          "type": "registry:component"
+          "type": "registry:ui",
+          "target": "@ui/pagination.tsx"
         }
+      ],
+      "dependencies": [
+        "react"
+      ],
+      "meta": {
+        "lifecycle": "stable"
+      },
+      "categories": [
+        "foundations"
       ]
     },
     {
@@ -540,7 +705,8 @@
       "description": "Floating popover anchored to a trigger.",
       "version": "1.0.0",
       "dependencies": [
-        "@radix-ui/react-popover"
+        "@radix-ui/react-popover",
+        "react"
       ],
       "registryDependencies": [
         "utils"
@@ -548,8 +714,15 @@
       "files": [
         {
           "path": "src/app/components/ui/popover.tsx",
-          "type": "registry:component"
+          "type": "registry:ui",
+          "target": "@ui/popover.tsx"
         }
+      ],
+      "meta": {
+        "lifecycle": "stable"
+      },
+      "categories": [
+        "foundations"
       ]
     },
     {
@@ -559,7 +732,8 @@
       "description": "Horizontal progress bar.",
       "version": "1.0.0",
       "dependencies": [
-        "@radix-ui/react-progress"
+        "@radix-ui/react-progress",
+        "react"
       ],
       "registryDependencies": [
         "utils"
@@ -567,8 +741,15 @@
       "files": [
         {
           "path": "src/app/components/ui/progress.tsx",
-          "type": "registry:component"
+          "type": "registry:ui",
+          "target": "@ui/progress.tsx"
         }
+      ],
+      "meta": {
+        "lifecycle": "stable"
+      },
+      "categories": [
+        "foundations"
       ]
     },
     {
@@ -579,7 +760,7 @@
       "version": "1.0.0",
       "dependencies": [
         "@radix-ui/react-radio-group",
-        "lucide-react"
+        "react"
       ],
       "registryDependencies": [
         "utils"
@@ -587,8 +768,15 @@
       "files": [
         {
           "path": "src/app/components/ui/radio-group.tsx",
-          "type": "registry:component"
+          "type": "registry:ui",
+          "target": "@ui/radio-group.tsx"
         }
+      ],
+      "meta": {
+        "lifecycle": "stable"
+      },
+      "categories": [
+        "foundations"
       ]
     },
     {
@@ -598,8 +786,8 @@
       "description": "Resizable panel layout.",
       "version": "1.0.0",
       "dependencies": [
-        "react-resizable-panels",
-        "lucide-react"
+        "react",
+        "react-resizable-panels"
       ],
       "registryDependencies": [
         "utils"
@@ -607,8 +795,15 @@
       "files": [
         {
           "path": "src/app/components/ui/resizable.tsx",
-          "type": "registry:component"
+          "type": "registry:ui",
+          "target": "@ui/resizable.tsx"
         }
+      ],
+      "meta": {
+        "lifecycle": "stable"
+      },
+      "categories": [
+        "foundations"
       ]
     },
     {
@@ -618,7 +813,8 @@
       "description": "Custom scrollbar container.",
       "version": "1.0.0",
       "dependencies": [
-        "@radix-ui/react-scroll-area"
+        "@radix-ui/react-scroll-area",
+        "react"
       ],
       "registryDependencies": [
         "utils"
@@ -626,8 +822,15 @@
       "files": [
         {
           "path": "src/app/components/ui/scroll-area.tsx",
-          "type": "registry:component"
+          "type": "registry:ui",
+          "target": "@ui/scroll-area.tsx"
         }
+      ],
+      "meta": {
+        "lifecycle": "stable"
+      },
+      "categories": [
+        "foundations"
       ]
     },
     {
@@ -638,7 +841,7 @@
       "version": "1.0.0",
       "dependencies": [
         "@radix-ui/react-select",
-        "lucide-react"
+        "react"
       ],
       "registryDependencies": [
         "utils"
@@ -646,8 +849,15 @@
       "files": [
         {
           "path": "src/app/components/ui/select.tsx",
-          "type": "registry:component"
+          "type": "registry:ui",
+          "target": "@ui/select.tsx"
         }
+      ],
+      "meta": {
+        "lifecycle": "stable"
+      },
+      "categories": [
+        "foundations"
       ]
     },
     {
@@ -657,7 +867,8 @@
       "description": "Visual divider between sections.",
       "version": "1.0.0",
       "dependencies": [
-        "@radix-ui/react-separator"
+        "@radix-ui/react-separator",
+        "react"
       ],
       "registryDependencies": [
         "utils"
@@ -665,8 +876,15 @@
       "files": [
         {
           "path": "src/app/components/ui/separator.tsx",
-          "type": "registry:component"
+          "type": "registry:ui",
+          "target": "@ui/separator.tsx"
         }
+      ],
+      "meta": {
+        "lifecycle": "stable"
+      },
+      "categories": [
+        "foundations"
       ]
     },
     {
@@ -677,7 +895,7 @@
       "version": "1.0.0",
       "dependencies": [
         "@radix-ui/react-dialog",
-        "lucide-react"
+        "react"
       ],
       "registryDependencies": [
         "utils"
@@ -685,8 +903,15 @@
       "files": [
         {
           "path": "src/app/components/ui/sheet.tsx",
-          "type": "registry:component"
+          "type": "registry:ui",
+          "target": "@ui/sheet.tsx"
         }
+      ],
+      "meta": {
+        "lifecycle": "stable"
+      },
+      "categories": [
+        "foundations"
       ]
     },
     {
@@ -698,7 +923,7 @@
       "dependencies": [
         "@radix-ui/react-slot",
         "class-variance-authority",
-        "lucide-react"
+        "react"
       ],
       "registryDependencies": [
         "utils",
@@ -713,8 +938,15 @@
       "files": [
         {
           "path": "src/app/components/ui/sidebar.tsx",
-          "type": "registry:component"
+          "type": "registry:ui",
+          "target": "@ui/sidebar.tsx"
         }
+      ],
+      "meta": {
+        "lifecycle": "stable"
+      },
+      "categories": [
+        "foundations"
       ]
     },
     {
@@ -729,8 +961,15 @@
       "files": [
         {
           "path": "src/app/components/ui/skeleton.tsx",
-          "type": "registry:component"
+          "type": "registry:ui",
+          "target": "@ui/skeleton.tsx"
         }
+      ],
+      "meta": {
+        "lifecycle": "stable"
+      },
+      "categories": [
+        "foundations"
       ]
     },
     {
@@ -740,7 +979,8 @@
       "description": "Range slider input.",
       "version": "1.0.0",
       "dependencies": [
-        "@radix-ui/react-slider"
+        "@radix-ui/react-slider",
+        "react"
       ],
       "registryDependencies": [
         "utils"
@@ -748,8 +988,15 @@
       "files": [
         {
           "path": "src/app/components/ui/slider.tsx",
-          "type": "registry:component"
+          "type": "registry:ui",
+          "target": "@ui/slider.tsx"
         }
+      ],
+      "meta": {
+        "lifecycle": "stable"
+      },
+      "categories": [
+        "foundations"
       ]
     },
     {
@@ -764,8 +1011,15 @@
       "files": [
         {
           "path": "src/app/components/ui/sonner.tsx",
-          "type": "registry:component"
+          "type": "registry:ui",
+          "target": "@ui/sonner.tsx"
         }
+      ],
+      "meta": {
+        "lifecycle": "stable"
+      },
+      "categories": [
+        "foundations"
       ]
     },
     {
@@ -775,7 +1029,8 @@
       "description": "Toggle switch control.",
       "version": "1.0.0",
       "dependencies": [
-        "@radix-ui/react-switch"
+        "@radix-ui/react-switch",
+        "react"
       ],
       "registryDependencies": [
         "utils"
@@ -783,8 +1038,15 @@
       "files": [
         {
           "path": "src/app/components/ui/switch.tsx",
-          "type": "registry:component"
+          "type": "registry:ui",
+          "target": "@ui/switch.tsx"
         }
+      ],
+      "meta": {
+        "lifecycle": "stable"
+      },
+      "categories": [
+        "foundations"
       ]
     },
     {
@@ -799,8 +1061,18 @@
       "files": [
         {
           "path": "src/app/components/ui/table.tsx",
-          "type": "registry:component"
+          "type": "registry:ui",
+          "target": "@ui/table.tsx"
         }
+      ],
+      "dependencies": [
+        "react"
+      ],
+      "meta": {
+        "lifecycle": "stable"
+      },
+      "categories": [
+        "foundations"
       ]
     },
     {
@@ -810,7 +1082,8 @@
       "description": "Tabbed content switcher.",
       "version": "1.0.0",
       "dependencies": [
-        "@radix-ui/react-tabs"
+        "@radix-ui/react-tabs",
+        "react"
       ],
       "registryDependencies": [
         "utils"
@@ -818,8 +1091,15 @@
       "files": [
         {
           "path": "src/app/components/ui/tabs.tsx",
-          "type": "registry:component"
+          "type": "registry:ui",
+          "target": "@ui/tabs.tsx"
         }
+      ],
+      "meta": {
+        "lifecycle": "stable"
+      },
+      "categories": [
+        "foundations"
       ]
     },
     {
@@ -834,8 +1114,18 @@
       "files": [
         {
           "path": "src/app/components/ui/textarea.tsx",
-          "type": "registry:component"
+          "type": "registry:ui",
+          "target": "@ui/textarea.tsx"
         }
+      ],
+      "dependencies": [
+        "react"
+      ],
+      "meta": {
+        "lifecycle": "stable"
+      },
+      "categories": [
+        "foundations"
       ]
     },
     {
@@ -846,7 +1136,8 @@
       "version": "1.0.0",
       "dependencies": [
         "@radix-ui/react-toggle",
-        "class-variance-authority"
+        "class-variance-authority",
+        "react"
       ],
       "registryDependencies": [
         "utils"
@@ -854,8 +1145,15 @@
       "files": [
         {
           "path": "src/app/components/ui/toggle.tsx",
-          "type": "registry:component"
+          "type": "registry:ui",
+          "target": "@ui/toggle.tsx"
         }
+      ],
+      "meta": {
+        "lifecycle": "stable"
+      },
+      "categories": [
+        "foundations"
       ]
     },
     {
@@ -866,7 +1164,8 @@
       "version": "1.0.0",
       "dependencies": [
         "@radix-ui/react-toggle-group",
-        "class-variance-authority"
+        "class-variance-authority",
+        "react"
       ],
       "registryDependencies": [
         "utils",
@@ -875,8 +1174,15 @@
       "files": [
         {
           "path": "src/app/components/ui/toggle-group.tsx",
-          "type": "registry:component"
+          "type": "registry:ui",
+          "target": "@ui/toggle-group.tsx"
         }
+      ],
+      "meta": {
+        "lifecycle": "stable"
+      },
+      "categories": [
+        "foundations"
       ]
     },
     {
@@ -886,7 +1192,8 @@
       "description": "Informational popup on hover.",
       "version": "1.0.0",
       "dependencies": [
-        "@radix-ui/react-tooltip"
+        "@radix-ui/react-tooltip",
+        "react"
       ],
       "registryDependencies": [
         "utils"
@@ -894,8 +1201,15 @@
       "files": [
         {
           "path": "src/app/components/ui/tooltip.tsx",
-          "type": "registry:component"
+          "type": "registry:ui",
+          "target": "@ui/tooltip.tsx"
         }
+      ],
+      "meta": {
+        "lifecycle": "stable"
+      },
+      "categories": [
+        "foundations"
       ]
     },
     {
@@ -907,8 +1221,15 @@
       "files": [
         {
           "path": "src/primitives/tokens.ts",
-          "type": "registry:component"
+          "type": "registry:ui",
+          "target": "@lib/tokens.ts"
         }
+      ],
+      "meta": {
+        "lifecycle": "stable"
+      },
+      "categories": [
+        "foundations"
       ]
     },
     {
@@ -920,8 +1241,16 @@
       "files": [
         {
           "path": "src/primitives/markerStyles.ts",
-          "type": "registry:component"
+          "type": "registry:ui",
+          "target": "@lib/markerStyles.ts"
         }
+      ],
+      "meta": {
+        "lifecycle": "stable"
+      },
+      "categories": [
+        "map",
+        "tactical"
       ]
     },
     {
@@ -936,8 +1265,18 @@
       "files": [
         {
           "path": "src/primitives/StatusChip.tsx",
-          "type": "registry:component"
+          "type": "registry:ui",
+          "target": "@ui/StatusChip.tsx"
         }
+      ],
+      "dependencies": [
+        "react"
+      ],
+      "meta": {
+        "lifecycle": "stable"
+      },
+      "categories": [
+        "primitives"
       ]
     },
     {
@@ -947,8 +1286,7 @@
       "description": "Primary action trigger with icon, loading spinner, tooltip, and variant support.",
       "version": "1.0.0",
       "dependencies": [
-        "lucide-react",
-        "framer-motion"
+        "react"
       ],
       "registryDependencies": [
         "utils",
@@ -957,8 +1295,15 @@
       "files": [
         {
           "path": "src/primitives/ActionButton.tsx",
-          "type": "registry:component"
+          "type": "registry:ui",
+          "target": "@ui/ActionButton.tsx"
         }
+      ],
+      "meta": {
+        "lifecycle": "stable"
+      },
+      "categories": [
+        "primitives"
       ]
     },
     {
@@ -968,8 +1313,7 @@
       "description": "Two-segment button — primary action + dropdown menu for effector controls.",
       "version": "1.0.0",
       "dependencies": [
-        "lucide-react",
-        "framer-motion"
+        "react"
       ],
       "registryDependencies": [
         "utils",
@@ -978,8 +1322,15 @@
       "files": [
         {
           "path": "src/primitives/SplitActionButton.tsx",
-          "type": "registry:component"
+          "type": "registry:ui",
+          "target": "@ui/SplitActionButton.tsx"
         }
+      ],
+      "meta": {
+        "lifecycle": "stable"
+      },
+      "categories": [
+        "primitives"
       ]
     },
     {
@@ -989,7 +1340,7 @@
       "description": "Collapsible section with animated expand/collapse for card interiors.",
       "version": "1.0.0",
       "dependencies": [
-        "lucide-react"
+        "react"
       ],
       "registryDependencies": [
         "collapsible",
@@ -998,8 +1349,15 @@
       "files": [
         {
           "path": "src/primitives/AccordionSection.tsx",
-          "type": "registry:component"
+          "type": "registry:ui",
+          "target": "@ui/AccordionSection.tsx"
         }
+      ],
+      "meta": {
+        "lifecycle": "stable"
+      },
+      "categories": [
+        "primitives"
       ]
     },
     {
@@ -1011,8 +1369,18 @@
       "files": [
         {
           "path": "src/primitives/TelemetryRow.tsx",
-          "type": "registry:component"
+          "type": "registry:ui",
+          "target": "@ui/TelemetryRow.tsx"
         }
+      ],
+      "dependencies": [
+        "react"
+      ],
+      "meta": {
+        "lifecycle": "stable"
+      },
+      "categories": [
+        "primitives"
       ]
     },
     {
@@ -1021,10 +1389,6 @@
       "title": "NewUpdatesPill",
       "description": "Floating pill that surfaces new incoming detection count.",
       "version": "1.0.0",
-      "dependencies": [
-        "framer-motion",
-        "lucide-react"
-      ],
       "registryDependencies": [
         "button",
         "utils"
@@ -1032,8 +1396,15 @@
       "files": [
         {
           "path": "src/primitives/NewUpdatesPill.tsx",
-          "type": "registry:component"
+          "type": "registry:ui",
+          "target": "@ui/NewUpdatesPill.tsx"
         }
+      ],
+      "meta": {
+        "lifecycle": "stable"
+      },
+      "categories": [
+        "primitives"
       ]
     },
     {
@@ -1043,7 +1414,7 @@
       "description": "Search, sort, and multi-select filter controls. Requires domain types (ActivityStatus, FilterState) from consumer app.",
       "version": "1.0.0",
       "dependencies": [
-        "lucide-react"
+        "react"
       ],
       "registryDependencies": [
         "checkbox",
@@ -1052,9 +1423,17 @@
       "files": [
         {
           "path": "src/primitives/FilterBar.tsx",
-          "type": "registry:component"
+          "type": "registry:ui",
+          "target": "@ui/FilterBar.tsx"
         }
-      ]
+      ],
+      "meta": {
+        "lifecycle": "stable"
+      },
+      "categories": [
+        "primitives"
+      ],
+      "docs": "Requires domain types (ActivityStatus, FilterState) from the consumer app."
     },
     {
       "name": "card-header",
@@ -1063,7 +1442,7 @@
       "description": "Target card header with icon, title, subtitle, status badge, and collapse chevron.",
       "version": "1.0.0",
       "dependencies": [
-        "lucide-react"
+        "react"
       ],
       "registryDependencies": [
         "tokens"
@@ -1071,8 +1450,15 @@
       "files": [
         {
           "path": "src/primitives/CardHeader.tsx",
-          "type": "registry:component"
+          "type": "registry:ui",
+          "target": "@ui/CardHeader.tsx"
         }
+      ],
+      "meta": {
+        "lifecycle": "stable"
+      },
+      "categories": [
+        "cards"
       ]
     },
     {
@@ -1082,7 +1468,7 @@
       "description": "Action bar with grouped effector/investigation layout and confirm dialogs.",
       "version": "1.0.0",
       "dependencies": [
-        "framer-motion"
+        "react"
       ],
       "registryDependencies": [
         "action-button",
@@ -1092,8 +1478,15 @@
       "files": [
         {
           "path": "src/primitives/CardActions.tsx",
-          "type": "registry:component"
+          "type": "registry:ui",
+          "target": "@ui/CardActions.tsx"
         }
+      ],
+      "meta": {
+        "lifecycle": "stable"
+      },
+      "categories": [
+        "cards"
       ]
     },
     {
@@ -1102,9 +1495,6 @@
       "title": "CardDetails",
       "description": "Collapsible telemetry accordion with copy-all and 3-column grid layout.",
       "version": "1.0.0",
-      "dependencies": [
-        "lucide-react"
-      ],
       "registryDependencies": [
         "accordion-section",
         "telemetry-row"
@@ -1112,8 +1502,15 @@
       "files": [
         {
           "path": "src/primitives/CardDetails.tsx",
-          "type": "registry:component"
+          "type": "registry:ui",
+          "target": "@ui/CardDetails.tsx"
         }
+      ],
+      "meta": {
+        "lifecycle": "stable"
+      },
+      "categories": [
+        "cards"
       ]
     },
     {
@@ -1128,8 +1525,18 @@
       "files": [
         {
           "path": "src/primitives/CardSensors.tsx",
-          "type": "registry:component"
+          "type": "registry:ui",
+          "target": "@ui/CardSensors.tsx"
         }
+      ],
+      "dependencies": [
+        "react"
+      ],
+      "meta": {
+        "lifecycle": "stable"
+      },
+      "categories": [
+        "cards"
       ]
     },
     {
@@ -1139,7 +1546,7 @@
       "description": "Image/video slot for surveillance feed with live badge, playback controls, and lightbox.",
       "version": "1.0.0",
       "dependencies": [
-        "lucide-react"
+        "react"
       ],
       "registryDependencies": [
         "dialog",
@@ -1148,8 +1555,15 @@
       "files": [
         {
           "path": "src/primitives/CardMedia.tsx",
-          "type": "registry:component"
+          "type": "registry:ui",
+          "target": "@ui/CardMedia.tsx"
         }
+      ],
+      "meta": {
+        "lifecycle": "stable"
+      },
+      "categories": [
+        "cards"
       ]
     },
     {
@@ -1159,7 +1573,7 @@
       "description": "Chronological event log accordion with expand-all.",
       "version": "1.0.0",
       "dependencies": [
-        "lucide-react"
+        "react"
       ],
       "registryDependencies": [
         "accordion-section",
@@ -1168,8 +1582,15 @@
       "files": [
         {
           "path": "src/primitives/CardLog.tsx",
-          "type": "registry:component"
+          "type": "registry:ui",
+          "target": "@ui/CardLog.tsx"
         }
+      ],
+      "meta": {
+        "lifecycle": "stable"
+      },
+      "categories": [
+        "cards"
       ]
     },
     {
@@ -1179,7 +1600,7 @@
       "description": "Outcome selection grid for closing a detection event.",
       "version": "1.0.0",
       "dependencies": [
-        "lucide-react"
+        "react"
       ],
       "registryDependencies": [
         "button",
@@ -1188,8 +1609,15 @@
       "files": [
         {
           "path": "src/primitives/CardClosure.tsx",
-          "type": "registry:component"
+          "type": "registry:ui",
+          "target": "@ui/CardClosure.tsx"
         }
+      ],
+      "meta": {
+        "lifecycle": "stable"
+      },
+      "categories": [
+        "cards"
       ]
     },
     {
@@ -1199,7 +1627,7 @@
       "description": "Vertical step timeline showing detection lifecycle stages.",
       "version": "1.0.0",
       "dependencies": [
-        "lucide-react"
+        "react"
       ],
       "registryDependencies": [
         "tokens"
@@ -1207,8 +1635,15 @@
       "files": [
         {
           "path": "src/primitives/CardTimeline.tsx",
-          "type": "registry:component"
+          "type": "registry:ui",
+          "target": "@ui/CardTimeline.tsx"
         }
+      ],
+      "meta": {
+        "lifecycle": "stable"
+      },
+      "categories": [
+        "cards"
       ]
     },
     {
@@ -1224,8 +1659,18 @@
       "files": [
         {
           "path": "src/primitives/CardFooterDock.tsx",
-          "type": "registry:component"
+          "type": "registry:ui",
+          "target": "@ui/CardFooterDock.tsx"
         }
+      ],
+      "dependencies": [
+        "react"
+      ],
+      "meta": {
+        "lifecycle": "stable"
+      },
+      "categories": [
+        "cards"
       ]
     },
     {
@@ -1243,8 +1688,18 @@
       "files": [
         {
           "path": "src/primitives/TargetCard.tsx",
-          "type": "registry:component"
+          "type": "registry:ui",
+          "target": "@ui/TargetCard.tsx"
         }
+      ],
+      "dependencies": [
+        "react"
+      ],
+      "meta": {
+        "lifecycle": "stable"
+      },
+      "categories": [
+        "cards"
       ]
     },
     {
@@ -1259,8 +1714,19 @@
       "files": [
         {
           "path": "src/primitives/MapMarker.tsx",
-          "type": "registry:component"
+          "type": "registry:ui",
+          "target": "@ui/MapMarker.tsx"
         }
+      ],
+      "dependencies": [
+        "react"
+      ],
+      "meta": {
+        "lifecycle": "stable"
+      },
+      "categories": [
+        "map",
+        "tactical"
       ]
     },
     {
@@ -1272,131 +1738,115 @@
       "files": [
         {
           "path": "src/primitives/MapIcons.tsx",
-          "type": "registry:component"
+          "type": "registry:ui",
+          "target": "@ui/MapIcons.tsx"
         }
+      ],
+      "dependencies": [
+        "react"
+      ],
+      "meta": {
+        "lifecycle": "stable"
+      },
+      "categories": [
+        "map",
+        "tactical"
       ]
     },
     {
-      "name": "domain-primitives",
-      "type": "registry:ui",
-      "title": "Domain primitives",
-      "description": "Default C2 bundle — design tokens, card building blocks, tactical primitives, and map markers (excludes generic shadcn UI and FilterBar).",
+      "name": "app-shell",
+      "type": "registry:component",
+      "title": "C2 App Shell",
+      "description": "Config-driven tactical app shell — header, icon rails, resizable side panels, and main canvas slot. Use C2AppShell for fast setup; use GridblockShell for custom geometry.",
       "version": "1.0.0",
+      "dependencies": [
+        "react",
+        "@radix-ui/react-tooltip"
+      ],
       "registryDependencies": [
         "utils",
         "tokens",
-        "map-marker-states",
-        "status-chip",
-        "action-button",
-        "split-action-button",
-        "accordion-section",
-        "telemetry-row",
-        "new-updates-pill",
-        "card-header",
-        "card-actions",
-        "card-details",
-        "card-sensors",
-        "card-media",
-        "card-log",
-        "card-closure",
-        "card-timeline",
-        "card-footer-dock",
-        "target-card",
-        "map-marker",
-        "map-icons"
+        "tooltip"
       ],
-      "files": []
-    },
-    {
-      "name": "map-kit",
-      "type": "registry:ui",
-      "title": "Map kit",
-      "description": "Map visualization only — marker state tokens, MapMarker, and MapIcons.",
-      "version": "1.0.0",
-      "registryDependencies": [
-        "utils",
-        "tokens",
-        "map-marker-states",
-        "map-marker",
-        "map-icons"
+      "files": [
+        {
+          "path": "src/app/components/gridblock/C2AppShell.tsx",
+          "type": "registry:component",
+          "target": "@components/gridblock/C2AppShell.tsx"
+        },
+        {
+          "path": "src/app/components/gridblock/GridblockShell.tsx",
+          "type": "registry:component",
+          "target": "@components/gridblock/GridblockShell.tsx"
+        },
+        {
+          "path": "src/app/components/gridblock/GridblockHeader.tsx",
+          "type": "registry:component",
+          "target": "@components/gridblock/GridblockHeader.tsx"
+        },
+        {
+          "path": "src/app/components/gridblock/GridblockLeftRail.tsx",
+          "type": "registry:component",
+          "target": "@components/gridblock/GridblockLeftRail.tsx"
+        },
+        {
+          "path": "src/app/components/gridblock/GridblockRightRail.tsx",
+          "type": "registry:component",
+          "target": "@components/gridblock/GridblockRightRail.tsx"
+        },
+        {
+          "path": "src/app/components/gridblock/GridblockRailButton.tsx",
+          "type": "registry:component",
+          "target": "@components/gridblock/GridblockRailButton.tsx"
+        },
+        {
+          "path": "src/app/components/gridblock/GridblockPanel.tsx",
+          "type": "registry:component",
+          "target": "@components/gridblock/GridblockPanel.tsx"
+        },
+        {
+          "path": "src/app/components/gridblock/GridblockResizeHandle.tsx",
+          "type": "registry:component",
+          "target": "@components/gridblock/GridblockResizeHandle.tsx"
+        },
+        {
+          "path": "src/app/components/gridblock/types.ts",
+          "type": "registry:component",
+          "target": "@components/gridblock/types.ts"
+        },
+        {
+          "path": "src/app/components/gridblock/useGridblockClock.ts",
+          "type": "registry:component",
+          "target": "@components/gridblock/useGridblockClock.ts"
+        },
+        {
+          "path": "src/app/components/gridblock/gridblock.css",
+          "type": "registry:component",
+          "target": "@components/gridblock/gridblock.css"
+        },
+        {
+          "path": "src/app/hooks/useGridblockPanelSizes.ts",
+          "type": "registry:component",
+          "target": "@hooks/useGridblockPanelSizes.ts"
+        },
+        {
+          "path": "src/app/hooks/useTimezone.ts",
+          "type": "registry:component",
+          "target": "@hooks/useTimezone.ts"
+        },
+        {
+          "path": "src/primitives/Substrate.tsx",
+          "type": "registry:component",
+          "target": "@ui/Substrate.tsx"
+        }
       ],
-      "files": []
-    },
-    {
-      "name": "all",
-      "type": "registry:ui",
-      "title": "All Components",
-      "description": "Meta-package that installs every C2 Hub component — base UI, domain primitives, tokens, and icons.",
-      "version": "1.0.0",
-      "registryDependencies": [
-        "accordion",
-        "alert",
-        "alert-dialog",
-        "aspect-ratio",
-        "avatar",
-        "badge",
-        "breadcrumb",
-        "button",
-        "calendar",
-        "card",
-        "carousel",
-        "chart",
-        "checkbox",
-        "collapsible",
-        "command",
-        "context-menu",
-        "dialog",
-        "drawer",
-        "dropdown-menu",
-        "form",
-        "hover-card",
-        "input",
-        "input-otp",
-        "label",
-        "menubar",
-        "pagination",
-        "popover",
-        "progress",
-        "radio-group",
-        "resizable",
-        "scroll-area",
-        "select",
-        "separator",
-        "sheet",
-        "sidebar",
-        "skeleton",
-        "slider",
-        "sonner",
-        "switch",
-        "table",
-        "tabs",
-        "textarea",
-        "toggle",
-        "toggle-group",
-        "tooltip",
-        "tokens",
-        "map-marker-states",
-        "status-chip",
-        "action-button",
-        "split-action-button",
-        "accordion-section",
-        "telemetry-row",
-        "new-updates-pill",
-        "filter-bar",
-        "card-header",
-        "card-actions",
-        "card-details",
-        "card-sensors",
-        "card-media",
-        "card-log",
-        "card-closure",
-        "card-timeline",
-        "card-footer-dock",
-        "target-card",
-        "map-marker",
-        "map-icons"
+      "meta": {
+        "lifecycle": "stable"
+      },
+      "categories": [
+        "layout"
       ],
-      "files": []
+      "docs": "Import gridblock.css in your app entry (e.g. import '@/app/components/gridblock/gridblock.css'). Install @c2/c2-base first for palette tokens. GridblockHeader uses @/lib/icons/central — provide brand via C2AppShell or wire your icon pack. Optional: copy gridblock strings from C2 Hub intl or pass labels on C2AppShell."
     }
   ]
 }

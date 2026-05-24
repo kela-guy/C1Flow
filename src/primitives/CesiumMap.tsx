@@ -1,8 +1,7 @@
 /**
  * CesiumMap — generic CesiumJS viewer primitive.
  *
- * Drop-in component that wraps `Cesium.Viewer` with a prop-driven API for the
- * common surface our existing Mapbox-based map exposes:
+ * Component that wraps `Cesium.Viewer` with a prop-driven tactical-map API:
  *
  *   - basemap selection (Cesium Ion imagery, default Bing Aerial)
  *   - 2D / 2.5D / 3D scene mode
@@ -22,8 +21,7 @@ import { MotionRegistry, createMotionTrack, type MotionTrack } from '@/lib/motio
  * Minimum container size (px) before we're willing to construct
  * `Cesium.Viewer`. Below this, WebGL context init can fail silently and leave
  * the viewer in a "half-built" state where `_cesiumWidget` is undefined,
- * which then explodes on the first public-getter access. Mirrors the same
- * threshold our Mapbox path uses for `mapbox-gl`.
+ * which then explodes on the first public-getter access.
  */
 const MIN_MOUNT_SIZE_PX = 8;
 
@@ -98,14 +96,14 @@ export interface CesiumPolyline {
    * Animated particles flowing from the first to the last point of the
    * line. Used for engagement-pair viz so the user sees a clear direction
    * of fire even on a still map. Spring-eased so each dot accelerates and
-   * settles into the target — mirrors Mapbox's `useEngagementLine` look.
+   * settles into the target.
    */
   particles?: {
-    /** Number of dots flowing along the line. Mapbox uses 3. */
+    /** Number of dots flowing along the line. */
     count: number;
     /** Core dot colour. Defaults to the line's `color`. */
     color?: string;
-    /** Cycles per second. `0.25` ≈ 4 s loop, matching Mapbox. */
+    /** Cycles per second. `0.25` ≈ 4 s loop. */
     speed?: number;
   };
 }
@@ -181,7 +179,7 @@ export interface CesiumMapProps {
    * object identity each time you want to refit.
    */
   fitBounds?: CesiumMapFitBounds | null;
-  /** Scene mode. Defaults to '2D' for parity with our current top-down Mapbox view. */
+  /** Scene mode. Defaults to '2D' for the current top-down tactical view. */
   sceneMode?: CesiumSceneMode;
   /**
    * Cesium Ion imagery asset id. Defaults to 2 (Bing Maps Aerial),
@@ -273,9 +271,8 @@ function buildSectorPositions(
 }
 
 /**
- * Lazy-built spring lookup table for particle easing. Same physics
- * constants as `useEngagementLine.ts` so the Cesium and Mapbox paths
- * accelerate / settle identically. Built on first use, then cached.
+ * Lazy-built spring lookup table for particle easing. Built on first use,
+ * then cached.
  */
 let SPRING_LUT_CACHE: number[] | null = null;
 function getSpringLUT(): number[] {

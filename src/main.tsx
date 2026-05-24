@@ -10,4 +10,8 @@ if (import.meta.env.DEV) {
   void import('./lib/perf/bootstrap').then((m) => m.setupPerf());
 }
 
+if (import.meta.env.PROD) {
+  void import('./lib/rum').then((m) => m.setupRum());
+}
+
 createRoot(document.getElementById('root')!).render(<App />);

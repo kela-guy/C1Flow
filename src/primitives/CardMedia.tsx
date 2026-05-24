@@ -73,6 +73,10 @@ export function CardMedia({
           <img
             src={src}
             alt={alt}
+            width={640}
+            height={360}
+            loading="lazy"
+            decoding="async"
             className="w-full h-full object-cover opacity-70 group-hover/media:opacity-90 transition-opacity grayscale contrast-125"
           />
         ) : null}

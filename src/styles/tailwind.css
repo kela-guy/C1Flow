@@ -12,6 +12,19 @@
 
 @import 'tw-animate-css';
 
+@keyframes tile-detection-pulse {
+  0% { opacity: 0; }
+  18% { opacity: 0.95; }
+  50% { opacity: 0.6; }
+  100% { opacity: 0; }
+}
+
+@keyframes tile-detection-pulse-reduced {
+  0% { opacity: 0; }
+  50% { opacity: 0.6; }
+  100% { opacity: 0; }
+}
+
 /*
  * Tailwind v4 @theme mirror for the OKLCH Slate palette.
  *
@@ -155,8 +168,8 @@
   --color-overlay:         oklch(0 0 0 / 0.6);
 
   /* Fonts (preserved from old --font-* declarations) */
-  --font-sans: "Heebo", sans-serif;
-  --font-mono: "IBM Plex Mono", monospace;
+  --font-sans: "Heebo", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-mono: "IBM Plex Mono", "SFMono-Regular", Consolas, "Liberation Mono", monospace;
 
   /* Radius (4pt grid) */
   --radius-sm: 4px;

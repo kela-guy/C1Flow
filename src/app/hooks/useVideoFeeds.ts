@@ -241,6 +241,8 @@ export interface VideoFeedsApi {
   recordTileFocus: (cameraId: string) => void;
 }
 
+const STORAGE_WRITE_DELAY_MS = 400;
+
 export function useVideoFeeds(): VideoFeedsApi {
   const initial = loadPersistedSnapshot();
   const [tabs, setTabs] = useState<CameraFeedTab[]>(() => initial.tabs);
@@ -250,17 +252,20 @@ export function useVideoFeeds(): VideoFeedsApi {
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-    try {
-      window.localStorage.setItem(
-        TABS_STORAGE_KEY,
-        JSON.stringify({
-          activeTabIndex,
-          tabs: tabsForPersist(tabs),
-        } satisfies PersistedV2Snapshot),
-      );
-    } catch {
-      // ignore
-    }
+    const id = window.setTimeout(() => {
+      try {
+        window.localStorage.setItem(
+          TABS_STORAGE_KEY,
+          JSON.stringify({
+            activeTabIndex,
+            tabs: tabsForPersist(tabs),
+          } satisfies PersistedV2Snapshot),
+        );
+      } catch {
+        // ignore
+      }
+    }, STORAGE_WRITE_DELAY_MS);
+    return () => window.clearTimeout(id);
   }, [activeTabIndex, tabs]);
 
   useEffect(() => {

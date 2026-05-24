@@ -18,6 +18,8 @@ import { useCallback, useMemo, useRef, useState } from "react";
 import type { HistoricalTrack } from "@/app/components/track-history/types";
 import { buildSeedHistoricalTrack } from "@/app/components/track-history/historicalTracksFixture";
 
+const MAX_RECORDED_TRACKS = 200;
+
 export interface HistoryStoreApi {
   /** Seed plus every track recorded since the last refresh. */
   tracks: HistoricalTrack[];
@@ -46,7 +48,7 @@ export function useHistoryStore(): HistoryStoreApi {
   const appendClosed = useCallback((track: HistoricalTrack) => {
     setRecorded((prev) => {
       if (prev.some((t) => t.id === track.id)) return prev;
-      return [track, ...prev];
+      return [track, ...prev].slice(0, MAX_RECORDED_TRACKS);
     });
   }, []);
 

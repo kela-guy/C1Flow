@@ -9,7 +9,7 @@
  *   - Cesium Color.fromCssColorString primitives + scene materials
  *   - SVG fill="" / stroke="" attributes inside icon components
  *   - Canvas 2D ctx.fillStyle
- *   - react-joyride / DialKit theme objects that take literal strings
+ *   - DialKit theme objects that take literal strings
  *
  * Routing these through getComputedStyle() at runtime would force a
  * style-recalculation per paint. Instead we generate the hex values

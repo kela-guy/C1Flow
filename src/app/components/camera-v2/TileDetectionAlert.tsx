@@ -21,7 +21,6 @@
  * glow" rather than a flat band.
  */
 
-import { motion, useReducedMotion } from 'motion/react';
 import { useStrings } from '@/lib/intl';
 import { useDetectionPulse } from './useDetectionPulse';
 import type { DetectionBox } from './types';
@@ -40,7 +39,6 @@ const ALERT_RED_SOFT = 'rgba(239, 68, 68, 0.18)';
 export function TileDetectionAlert({ detections }: TileDetectionAlertProps) {
   const t = useStrings().camera.feedTile;
   const { hasActive, pulseKey } = useDetectionPulse(detections);
-  const reduceMotion = useReducedMotion();
 
   if (!hasActive) return null;
 
@@ -65,25 +63,10 @@ export function TileDetectionAlert({ detections }: TileDetectionAlertProps) {
         }}
       />
 
-      {/* Layer 2: one-shot pulse keyed by `pulseKey`. Re-mounting the
-          motion node forces a fresh enter animation each time a new
-          detection id appears. Under `prefers-reduced-motion` the
-          pulse degrades to a brief flat fade. */}
       {pulseKey > 0 && (
-        <motion.div
+        <div
           key={pulseKey}
-          className="absolute inset-0"
-          initial={{ opacity: 0 }}
-          animate={
-            reduceMotion
-              ? { opacity: [0, 0.6, 0] }
-              : { opacity: [0, 0.95, 0.6, 0] }
-          }
-          transition={{
-            duration: reduceMotion ? 0.4 : 0.65,
-            ease: 'easeOut',
-            times: reduceMotion ? [0, 0.5, 1] : [0, 0.18, 0.5, 1],
-          }}
+          className="absolute inset-0 animate-[tile-detection-pulse_650ms_ease-out_forwards] motion-reduce:animate-[tile-detection-pulse-reduced_400ms_ease-out_forwards]"
           style={{
             boxShadow: `inset 0 0 0 2px ${ALERT_RED_STRONG}, inset 0 0 26px ${ALERT_RED_MID}`,
           }}

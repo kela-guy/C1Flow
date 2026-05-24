@@ -7,7 +7,6 @@ const IMPORT_REWRITES = [
   [/from\s+["']\.\/utils["']/g, 'from "@/lib/utils"'],
   [/from\s+["']@\/shared\/components\/ui\/utils["']/g, 'from "@/lib/utils"'],
   [/from\s+["']@\/shared\/components\/ui\/([^"']+)["']/g, 'from "./$1"'],
-  [/from\s+["']@\/imports\/([^"']+)["']/g, 'from "@/imports/$1"'],
 ];
 
 async function transform() {

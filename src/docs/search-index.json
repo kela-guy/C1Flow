@@ -1,0 +1,122 @@
+[
+  {
+    "title": "Introduction",
+    "description": "Install components into the consuming app and own the source. The registry ships files, dependencies, and token layers instead of hiding behavior behind a runtime package.",
+    "url": "/docs",
+    "headings": [
+      {
+        "id": "open-code",
+        "text": "Open code",
+        "level": 2
+      },
+      {
+        "id": "distribution",
+        "text": "Distribution",
+        "level": 2
+      },
+      {
+        "id": "ai-ready-docs",
+        "text": "AI-ready docs",
+        "level": 2
+      }
+    ]
+  },
+  {
+    "title": "Installation",
+    "description": "Install C2 Hub components into a Vite, React, TypeScript, and Tailwind CSS v4 project.",
+    "url": "/docs/installation",
+    "headings": [
+      {
+        "id": "base-bundle",
+        "text": "Base bundle",
+        "level": 2
+      },
+      {
+        "id": "single-component",
+        "text": "Single component",
+        "level": 2
+      },
+      {
+        "id": "styles",
+        "text": "Styles",
+        "level": 2
+      }
+    ]
+  },
+  {
+    "title": "Theming",
+    "description": "C2 Hub uses a layered OKLCH token system built for dark tactical surfaces.",
+    "url": "/docs/theming",
+    "headings": [
+      {
+        "id": "token-layers",
+        "text": "Token layers",
+        "level": 2
+      },
+      {
+        "id": "palette",
+        "text": "Palette",
+        "level": 2
+      },
+      {
+        "id": "no-hardcoded-colors",
+        "text": "No hardcoded colors",
+        "level": 2
+      }
+    ]
+  },
+  {
+    "title": "Components",
+    "description": "Installable primitives and C2-specific assemblies published through the registry.",
+    "url": "/docs/components",
+    "headings": [
+      {
+        "id": "catalog",
+        "text": "Catalog",
+        "level": 2
+      },
+      {
+        "id": "source-of-truth",
+        "text": "Source of truth",
+        "level": 2
+      }
+    ]
+  },
+  {
+    "title": "Button",
+    "description": "Buttons trigger actions, navigation, and icon-only controls.",
+    "url": "/docs/components/button",
+    "headings": [
+      {
+        "id": "installation",
+        "text": "Installation",
+        "level": 2
+      },
+      {
+        "id": "usage",
+        "text": "Usage",
+        "level": 2
+      },
+      {
+        "id": "examples",
+        "text": "Examples",
+        "level": 2
+      },
+      {
+        "id": "default",
+        "text": "Default",
+        "level": 3
+      },
+      {
+        "id": "outline",
+        "text": "Outline",
+        "level": 3
+      },
+      {
+        "id": "api-reference",
+        "text": "API Reference",
+        "level": 2
+      }
+    ]
+  }
+]

@@ -1,6 +1,5 @@
 import React from "react";
 import { Loader2 } from "@/lib/icons/central";
-import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { cn } from "@/shared/components/ui/utils";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/shared/components/ui/tooltip";
 
@@ -78,7 +77,6 @@ export function ActionButton({
   title?: string;
   dataTour?: string;
 }) {
-  const prefersReducedMotion = useReducedMotion();
   const isDisabled = disabled || loading;
   const c = ACTION_BUTTON_VARIANTS[variant];
   const sz = ACTION_BUTTON_SIZES[size];
@@ -93,7 +91,7 @@ export function ActionButton({
         sz.height, sz.text, sz.font, c.text,
         c.base, c.hover, c.active,
         'transition-[background-color,transform] duration-150 ease-out',
-        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[color-mix(in_oklch,var(--slate-12)_30%,transparent)]',
+        'focus-visible:outline-none focus-visible:ring-[2px] focus-visible:ring-inset focus-visible:ring-[color-mix(in_oklch,var(--slate-12)_30%,transparent)]',
         !loading && 'active:scale-[0.98] will-change-transform',
         isDisabled && !loading && 'opacity-45 pointer-events-none',
         loading && 'cursor-wait',
@@ -102,27 +100,18 @@ export function ActionButton({
       {...(dataTour ? { "data-tour": dataTour } : {})}
       {...(loading ? { "aria-live": "polite" as const } : {})}
     >
-      <AnimatePresence mode="popLayout" initial={false}>
-        <motion.span
-          key={label}
-          className="flex items-center gap-2"
-          transition={prefersReducedMotion ? { duration: 0 } : { type: 'spring', duration: 0.3, bounce: 0 }}
-          initial={prefersReducedMotion ? false : { opacity: 0, y: -25 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={prefersReducedMotion ? undefined : { opacity: 0, y: 25 }}
-        >
-          {loading ? (
-            <Loader2
-              size={sz.icon}
-              className={cn('shrink-0', prefersReducedMotion ? 'opacity-90' : 'animate-spin opacity-90')}
-              aria-hidden="true"
-            />
-          ) : (
-            Icon && <Icon size={sz.icon} className="shrink-0 opacity-95" aria-hidden="true" />
-          )}
-          <span className="whitespace-nowrap">{label}</span>
-        </motion.span>
-      </AnimatePresence>
+      <span className="flex items-center gap-2">
+        {loading ? (
+          <Loader2
+            size={sz.icon}
+            className="shrink-0 animate-spin opacity-90 motion-reduce:animate-none"
+            aria-hidden="true"
+          />
+        ) : (
+          Icon && <Icon size={sz.icon} className="shrink-0 opacity-95" aria-hidden="true" />
+        )}
+        <span className="whitespace-nowrap">{label}</span>
+      </span>
     </button>
   );
 

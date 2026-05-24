@@ -115,6 +115,7 @@ export function PlaybackContainer({ src, state, onPatch }: PlaybackContainerProp
         autoPlay={false}
         muted
         playsInline
+        preload="metadata"
         draggable={false}
         className="absolute inset-0 w-full h-full object-cover pointer-events-none"
         style={{ filter: 'sepia(0.18) contrast(1.05)' }}

@@ -22,6 +22,33 @@
 
       <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
       <link rel="manifest" href="/site.webmanifest" />
+      <style>
+        html {
+          background: var(--surface-1);
+          color-scheme: dark;
+        }
+        body {
+          min-height: 100vh;
+          margin: 0;
+          background: var(--surface-1);
+        }
+        #root {
+          min-height: 100vh;
+          background:
+            linear-gradient(180deg, var(--surface-2), var(--surface-1));
+        }
+      </style>
+      <script>
+        (() => {
+          try {
+            const dir = localStorage.getItem('c2hub.direction');
+            if (dir === 'ltr' || dir === 'rtl') {
+              document.documentElement.dir = dir;
+              document.documentElement.lang = dir === 'rtl' ? 'he' : 'en';
+            }
+          } catch {}
+        })();
+      </script>
 
       <title>C2 - Hub — מסוף ניהול מטרות</title>
     </head>

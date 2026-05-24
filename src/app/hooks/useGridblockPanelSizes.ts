@@ -30,6 +30,7 @@ const STORAGE_KEY_START = "c2.gridblock.panelWidth.start.v1";
 const STORAGE_KEY_END = "c2.gridblock.panelWidth.end.v1";
 const LEGACY_STORAGE_KEY_START = "c2.gridblock.panelWidth.left.v1";
 const LEGACY_STORAGE_KEY_END = "c2.gridblock.panelWidth.right.v1";
+const STORAGE_WRITE_DELAY_MS = 400;
 
 /**
  * 300 px is the floor below which list rows truncate the action
@@ -169,26 +170,32 @@ export function useGridblockPanelSizes(): UseGridblockPanelSizesResult {
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-    try {
-      window.localStorage.setItem(
-        STORAGE_KEY_START,
-        String(clampStored(startPx, PANEL_WIDTH_MAX_PX)),
-      );
-    } catch {
-      // Storage quota / SecurityError — non-critical, skip silently.
-    }
+    const id = window.setTimeout(() => {
+      try {
+        window.localStorage.setItem(
+          STORAGE_KEY_START,
+          String(clampStored(startPx, PANEL_WIDTH_MAX_PX)),
+        );
+      } catch {
+        // Storage quota / SecurityError — non-critical, skip silently.
+      }
+    }, STORAGE_WRITE_DELAY_MS);
+    return () => window.clearTimeout(id);
   }, [startPx]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-    try {
-      window.localStorage.setItem(
-        STORAGE_KEY_END,
-        String(clampStored(endPx, PANEL_WIDTH_END_MAX_PX)),
-      );
-    } catch {
-      // Storage quota / SecurityError — non-critical, skip silently.
-    }
+    const id = window.setTimeout(() => {
+      try {
+        window.localStorage.setItem(
+          STORAGE_KEY_END,
+          String(clampStored(endPx, PANEL_WIDTH_END_MAX_PX)),
+        );
+      } catch {
+        // Storage quota / SecurityError — non-critical, skip silently.
+      }
+    }, STORAGE_WRITE_DELAY_MS);
+    return () => window.clearTimeout(id);
   }, [endPx]);
 
   return { startPx, endPx, setStartPx, setEndPx };

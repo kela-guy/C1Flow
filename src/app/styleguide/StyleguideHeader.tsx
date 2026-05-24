@@ -1,6 +1,8 @@
-import { ExternalLink, Search } from '@/lib/icons/central';
+import { useCallback, useState } from 'react';
+import { Check, Copy, ExternalLink, Search } from '@/lib/icons/central';
 import { useDirection } from '@/lib/direction';
 import { findGroupForId, NAV } from './navConfig';
+import { COMPONENTS_JSON_SNIPPET, REGISTRY_HOMEPAGE } from './registryMeta';
 
 interface StyleguideHeaderProps {
   activeItem: string;
@@ -16,9 +18,23 @@ export function StyleguideHeader({
   const { direction, setDirection } = useDirection();
 
   const isMac = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.userAgent);
+  const [configCopied, setConfigCopied] = useState(false);
+
+  const handleCopyConfig = useCallback(async () => {
+    try {
+      await navigator.clipboard.writeText(COMPONENTS_JSON_SNIPPET);
+      setConfigCopied(true);
+      window.setTimeout(() => setConfigCopied(false), 1800);
+    } catch {
+      setConfigCopied(false);
+    }
+  }, []);
+
+  const headerActionClass =
+    'inline-flex min-h-10 items-center gap-1.5 rounded-md px-2.5 py-1.5 text-[13px] text-n-8 transition-[color,background-color,transform] duration-150 ease-out hover:bg-state-hover hover:text-n-10 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-[2px] focus-visible:ring-border-strong motion-reduce:transition-none motion-reduce:active:scale-100';
 
   return (
-    <header className="sticky top-0 z-10 flex items-center h-14 px-8 border-b border-border-default bg-[color-mix(in_oklch,var(--surface-1)_85%,transparent)] backdrop-blur-sm">
+    <header className="sticky top-0 z-10 flex items-center h-14 px-8 bg-surface-2/90 shadow-[var(--shadow-2)] backdrop-blur-sm">
       <nav className="flex items-center gap-1.5 text-[14px] min-w-0 flex-1">
         {group && (
           <>
@@ -52,7 +68,7 @@ export function StyleguideHeader({
             onClick={() => setDirection('rtl')}
             aria-pressed={direction === 'rtl'}
             title="Switch to Right-to-Left (Hebrew)"
-            className={`px-2 py-1 rounded-sm transition-[color,background-color] duration-150 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-border-strong ${
+            className={`px-2 py-1 rounded-sm transition-[color,background-color] duration-150 ease-out focus-visible:outline-none focus-visible:ring-[2px] focus-visible:ring-border-strong ${
               direction === 'rtl'
                 ? 'bg-state-hover-strong text-n-11'
                 : 'text-n-8 hover:text-n-10 hover:bg-state-hover'
@@ -65,7 +81,7 @@ export function StyleguideHeader({
             onClick={() => setDirection('ltr')}
             aria-pressed={direction === 'ltr'}
             title="Switch to Left-to-Right (English)"
-            className={`px-2 py-1 rounded-sm transition-[color,background-color] duration-150 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-border-strong ${
+            className={`px-2 py-1 rounded-sm transition-[color,background-color] duration-150 ease-out focus-visible:outline-none focus-visible:ring-[2px] focus-visible:ring-border-strong ${
               direction === 'ltr'
                 ? 'bg-state-hover-strong text-n-11'
                 : 'text-n-8 hover:text-n-10 hover:bg-state-hover'
@@ -78,18 +94,35 @@ export function StyleguideHeader({
         <button
           type="button"
           onClick={onSearchOpen}
-          className="flex items-center gap-2 rounded-md border border-border-default bg-state-hover px-3 py-1.5 text-[13px] text-n-8 cursor-pointer transition-[border-color,background-color] duration-150 ease-out hover:bg-state-hover hover:border-border-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-border-strong"
+          className="inline-flex min-h-10 items-center gap-2 rounded-md border border-border-default bg-state-hover px-3 py-1.5 text-[13px] text-n-8 transition-[border-color,background-color,transform] duration-150 ease-out hover:border-border-strong active:scale-[0.97] focus-visible:outline-none focus-visible:ring-[2px] focus-visible:ring-border-strong motion-reduce:active:scale-100"
         >
           <Search size={14} />
-          <kbd className="text-[11px] font-mono text-n-7 bg-state-hover-strong rounded px-1.5 py-0.5">
+          <kbd className="text-[11px] font-mono text-n-7 bg-state-hover-strong rounded px-1.5 py-0.5 tabular-nums">
             {isMac ? '⌘' : 'Ctrl'} K
           </kbd>
         </button>
 
-        <a
-          href="/"
-          className="flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-[13px] text-n-8 cursor-pointer transition-[color] duration-150 ease-out hover:text-n-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-border-strong"
+        <button
+          type="button"
+          onClick={handleCopyConfig}
+          aria-label={configCopied ? 'components.json copied' : 'Copy components.json snippet'}
+          className={headerActionClass}
         >
+          {configCopied ? <Check size={13} className="text-accent-success" /> : <Copy size={13} />}
+          <span>{configCopied ? 'Copied' : 'components.json'}</span>
+        </button>
+
+        <a
+          href={`${REGISTRY_HOMEPAGE}/r/registry.json`}
+          target="_blank"
+          rel="noreferrer"
+          className={headerActionClass}
+        >
+          <span>Registry</span>
+          <ExternalLink size={13} />
+        </a>
+
+        <a href="/" className={headerActionClass}>
           <span>App</span>
           <ExternalLink size={13} />
         </a>

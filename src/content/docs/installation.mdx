@@ -1,0 +1,34 @@
+Install C2 Hub components into a Vite, React, TypeScript, and Tailwind CSS v4 project.
+
+<Callout>
+  Recommended for new work: install `@c2/c2-base` first, then add individual registry items as needed.
+</Callout>
+
+<PickerGrid>
+  <PickerCard href="#base-bundle" title="Base bundle">Install tokens, primitives, and registry config in one command.</PickerCard>
+  <PickerCard href="#single-component" title="Single component">Pull only the component and dependencies you need.</PickerCard>
+  <PickerCard href="#styles" title="Styles">Import the C2 token layers in the consuming app.</PickerCard>
+</PickerGrid>
+
+## Base bundle
+
+Run the registry command from the app that will consume C2 Hub components.
+
+<PMCodeBlock command="pnpm dlx shadcn@latest add @c2/c2-base" />
+
+## Single component
+
+Use the same registry namespace for individual components.
+
+<PMCodeBlock command="pnpm dlx shadcn@latest add @c2/button @c2/status-chip" />
+
+## Styles
+
+Import the C2 style layers in the app CSS entry point.
+
+```css
+@import "./fonts.css";
+@import "./palette.css";
+@import "./tailwind.css";
+@import "./theme.css";
+```

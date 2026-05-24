@@ -35,11 +35,9 @@ import {
   type CesiumMapFlyTo,
   type CesiumPolyline,
   type CesiumSceneMode,
-  MapMarker,
-  resolveMarkerStyle,
-  type Affiliation,
-  type InteractionState,
-} from '@/primitives';
+} from '@/primitives/CesiumMap';
+import { MapMarker } from '@/primitives/MapMarker';
+import { resolveMarkerStyle, type Affiliation, type InteractionState } from '@/primitives/markerStyles';
 import {
   CAMERA_ASSETS,
   RADAR_ASSETS,

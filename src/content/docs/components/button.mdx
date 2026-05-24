@@ -1,0 +1,43 @@
+Buttons trigger actions, navigation, and icon-only controls.
+
+## Installation
+
+<PMCodeBlock command="pnpm dlx shadcn@latest add @c2/button" />
+
+## Usage
+
+```tsx
+import { Button } from "@/components/ui/button";
+
+export function Example() {
+  return <Button>Track target</Button>;
+}
+```
+
+## Examples
+
+### Default
+
+Use the default variant for primary actions in a local workflow.
+
+```tsx
+<Button>Track target</Button>
+```
+
+### Outline
+
+Use outline for secondary actions that still need a clear target.
+
+```tsx
+<Button variant="outline">Open details</Button>
+```
+
+## API Reference
+
+<ApiTable
+  rows={[
+    { prop: "variant", type: "\"default\" | \"outline\" | \"secondary\" | \"ghost\" | \"destructive\" | \"link\"", defaultValue: "\"default\"" },
+    { prop: "size", type: "\"default\" | \"sm\" | \"lg\" | \"icon\"", defaultValue: "\"default\"" },
+    { prop: "asChild", type: "boolean", defaultValue: "false" },
+  ]}
+/>

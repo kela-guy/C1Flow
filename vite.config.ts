@@ -6,6 +6,10 @@ import cesium from 'vite-plugin-cesium';
 import { fileURLToPath } from 'node:url';
 import { visualizer } from 'rollup-plugin-visualizer';
 import reactScan from '@react-scan/vite-plugin-react-scan';
+import mdx from '@mdx-js/rollup';
+import remarkGfm from 'remark-gfm';
+import rehypeSlug from 'rehype-slug';
+import rehypeShiki from '@shikijs/rehype';
 
 const dirname = typeof __dirname !== 'undefined' ? __dirname : path.dirname(fileURLToPath(import.meta.url));
 
@@ -14,7 +18,22 @@ const PERF_BUILD = process.env.PERF_BUILD === '1';
 
 export default defineConfig(({ mode }) => {
   const isDev = mode === 'development';
-  const plugins: PluginOption[] = [react(), tailwindcss(), cesium()];
+  const plugins: PluginOption[] = [
+    {
+      enforce: 'pre',
+      ...mdx({
+        remarkPlugins: [remarkGfm],
+        rehypePlugins: [
+          rehypeSlug,
+          [rehypeShiki, { themes: { light: 'github-light', dark: 'github-dark' } }],
+        ],
+        providerImportSource: '@mdx-js/react',
+      }),
+    } as PluginOption,
+    react(),
+    tailwindcss(),
+    cesium(),
+  ];
 
   // react-scan annotates every commit with a render-cause overlay in
   // dev. The plugin loads but starts disabled — toggle it on from the
@@ -143,7 +162,6 @@ export default defineConfig(({ mode }) => {
         '@radix-ui/react-slot',
         '@radix-ui/react-switch',
         '@radix-ui/react-tabs',
-        '@radix-ui/react-toggle',
 
         // ── Animation runtime (motion is the rebrand of framer-motion;
         // both ids resolve to the same package, but we import via
@@ -156,7 +174,6 @@ export default defineConfig(({ mode }) => {
         'react-router-dom',
         'react-dnd',
         'react-dnd-html5-backend',
-        'react-map-gl',
         'sonner',
         'cmdk',
         'lucide-react',
@@ -236,6 +253,8 @@ export default defineConfig(({ mode }) => {
       ],
     },
     build: {
+      target: 'esnext',
+      cssCodeSplit: true,
       rollupOptions: {
         input: {
           main: path.resolve(dirname, 'index.html'),
@@ -254,7 +273,6 @@ export default defineConfig(({ mode }) => {
             if (id.includes('vite/preload-helper')) return 'vendor';
             if (!id.includes('node_modules')) return undefined;
             if (id.includes('cesium')) return 'cesium';
-            if (id.includes('react-joyride') || id.includes('react-floater')) return 'tour';
             if (id.includes('shiki')) return 'shiki';
             // Animation chunk. We import from `motion/react` (the
             // official rebrand of Framer Motion), but the actual

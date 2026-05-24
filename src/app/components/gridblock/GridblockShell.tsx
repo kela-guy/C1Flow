@@ -17,8 +17,7 @@
  * Panel cells stay mounted at all times (the column track
  * interpolates between two fully-defined widths), so the map cell
  * elastically expands as a panel collapses. The panel content
- * itself is mounted/unmounted via `AnimatePresence` so it can
- * fade + translate the rail-edge wash on enter/exit.
+ * itself mounts only while the panel column is open.
  *
  * The shell knows nothing about targets, devices, or video. All
  * domain rendering happens inside the slots passed via props.
@@ -27,8 +26,6 @@
  * needs one — so the shell stays a pure geometry contract.
  */
 
-import { useId } from "react";
-import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import type { ReactNode } from "react";
 
 import { Substrate } from "@/primitives/Substrate";
@@ -126,45 +123,6 @@ interface GridblockShellProps {
   endResizeAriaLabel?: string;
 }
 
-/**
- * Reveal motion shared by both side panels. Content fades and
- * slides ~12px from the rail-adjacent edge into place.
- *
- * Translate is in pixels rather than `%` because the panel cell
- * itself is shrinking to 0 underneath us; a percentage exit
- * would race the column collapse and read as juddery.
- *
- * The X axis follows logical-direction conventions implicitly
- * because translateX in a `dir="rtl"` ancestor still uses screen
- * pixels. Browsers do not automatically flip translateX for RTL
- * — but in our shell the panels themselves are placed in source
- * order, so the inline-start panel's "rail-adjacent edge" still
- * flips with `dir`, leaving the visual effect identical: the
- * panel slides off toward its own rail.
- *
- * For that to hold we drive the inline-start panel with a NEGATIVE
- * `x` and the inline-end panel with a POSITIVE `x`. In RTL the
- * `dir="rtl"` writing mode does not change the viewport's pixel
- * coordinate system; what changes is which rail is on the left
- * vs. right. A negative-x slide of the inline-start panel in RTL
- * therefore moves it *into* the visual area instead of off-screen.
- *
- * To keep the slide direction logical, we read `dir` off the
- * shell's outer element via a CSS custom property
- * (`--gridblock-rtl: 0 | 1`) and flip the X translate sign in
- * Motion via inline style. See the `dirSign` resolution below.
- */
-const PANEL_TRANSITION = {
-  enter: {
-    duration: 0.24,
-    ease: [0.32, 0.72, 0, 1] as const,
-  },
-  exit: {
-    duration: 0.18,
-    ease: [0.4, 0, 1, 1] as const,
-  },
-};
-
 const DEFAULT_PANEL_WIDTH_PX = 300;
 
 export function GridblockShell({
@@ -185,17 +143,6 @@ export function GridblockShell({
   startResizeAriaLabel = "Resize panel",
   endResizeAriaLabel = "Resize panel",
 }: GridblockShellProps) {
-  // Stable id so panel `motion` keys don't collide if the shell
-  // mounts more than once on a page (rare; styleguide etc.).
-  const id = useId();
-
-  // Honor `prefers-reduced-motion` directly on the panel slide so we
-  // don't depend on the global CSS duration override as a safety net.
-  // When reduced, panels still mount/unmount via AnimatePresence (so
-  // exit timing matches the column-collapse) but skip the translateX
-  // and opacity tween — content snaps in.
-  const prefersReducedMotion = useReducedMotion();
-
   // The inline-end panel column track is `min(stored, calc(viewport-fit))`
   // — the operator can persist a width larger than the viewport
   // allows, but the rendered column clamps to whatever space is
@@ -263,27 +210,11 @@ export function GridblockShell({
         </div>
 
         <div className="gridblock-panel-cell gridblock-panel-cell--start min-h-0">
-          <AnimatePresence mode="wait">
-            {startPanel ? (
-              <motion.div
-                key={`${id}-start`}
-                initial={prefersReducedMotion ? false : { x: -12, opacity: 0 }}
-                animate={
-                  prefersReducedMotion
-                    ? { x: 0, opacity: 1 }
-                    : { x: 0, opacity: 1, transition: PANEL_TRANSITION.enter }
-                }
-                exit={
-                  prefersReducedMotion
-                    ? { opacity: 0, transition: { duration: 0 } }
-                    : { x: -12, opacity: 0, transition: PANEL_TRANSITION.exit }
-                }
-                className="gridblock-block h-full"
-              >
-                {startPanel}
-              </motion.div>
-            ) : null}
-          </AnimatePresence>
+          {startPanel ? (
+            <div className="gridblock-block h-full">
+              {startPanel}
+            </div>
+          ) : null}
           {startPanel && onStartPanelResize ? (
             <GridblockResizeHandle
               side="start"
@@ -346,27 +277,11 @@ export function GridblockShell({
         </div>
 
         <div className="gridblock-panel-cell gridblock-panel-cell--end min-h-0">
-          <AnimatePresence mode="wait">
-            {endPanel ? (
-              <motion.div
-                key={`${id}-end`}
-                initial={prefersReducedMotion ? false : { x: 12, opacity: 0 }}
-                animate={
-                  prefersReducedMotion
-                    ? { x: 0, opacity: 1 }
-                    : { x: 0, opacity: 1, transition: PANEL_TRANSITION.enter }
-                }
-                exit={
-                  prefersReducedMotion
-                    ? { opacity: 0, transition: { duration: 0 } }
-                    : { x: 12, opacity: 0, transition: PANEL_TRANSITION.exit }
-                }
-                className="gridblock-block h-full"
-              >
-                {endPanel}
-              </motion.div>
-            ) : null}
-          </AnimatePresence>
+          {endPanel ? (
+            <div className="gridblock-block h-full">
+              {endPanel}
+            </div>
+          ) : null}
           {endPanel && onEndPanelResize ? (
             <GridblockResizeHandle
               side="end"

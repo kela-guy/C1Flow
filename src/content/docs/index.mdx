@@ -1,0 +1,17 @@
+<Callout>
+  C2 Hub is the source package and registry for tactical interface components.
+</Callout>
+
+## Open code
+
+Install components into the consuming app and own the source. The registry ships files, dependencies, and token layers instead of hiding behavior behind a runtime package.
+
+## Distribution
+
+The live registry is served from `/r/{name}.json`. Start with the base bundle when a product needs the full token and primitive foundation.
+
+<PMCodeBlock command="pnpm dlx shadcn@latest add @c2/c2-base" />
+
+## AI-ready docs
+
+Every docs page is designed to become markdown. The generated `/llms.txt` and `/llms-full.txt` files are the source an agent should ingest before changing the component system.

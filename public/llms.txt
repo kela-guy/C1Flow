@@ -1,6 +1,9 @@
-# C2 Hub — doc index for assistants
+# C2 Hub docs
 
-Registry & conventions (markdown): https://raw.githubusercontent.com/kela-guy/C1Flow/main/design-system.md
-Live styleguide (components / props): https://c2-hub-three.vercel.app/styleguide
+- [Introduction](/docs) — Install components into the consuming app and own the source. The registry ships files, dependencies, and token layers instead of hiding behavior behind a runtime package.
+- [Installation](/docs/installation) — Install C2 Hub components into a Vite, React, TypeScript, and Tailwind CSS v4 project.
+- [Theming](/docs/theming) — C2 Hub uses a layered OKLCH token system built for dark tactical surfaces.
+- [Components](/docs/components) — Installable primitives and C2-specific assemblies published through the registry.
+- [Button](/docs/components/button) — Buttons trigger actions, navigation, and icon-only controls.
 
-Key anchors: design-system.md sections "Component Registry", "Design Tokens", "Conventions". Styleguide URLs use fragment IDs matching nav, e.g. #status-chip, #target-card.
+Registry base install: pnpm dlx shadcn@latest add @c2/c2-base

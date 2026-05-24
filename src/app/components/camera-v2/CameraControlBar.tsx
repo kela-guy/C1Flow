@@ -97,10 +97,10 @@ function ControlButton({
           aria-label={label}
           aria-pressed={active ?? undefined}
           className={`flex flex-col items-center justify-center h-[30px] p-2 transition-colors duration-150 ease-out
-            focus-visible:ring-2 focus-visible:ring-border-strong focus-visible:outline-none
+            focus-visible:outline-none focus-visible:ring-[2px] focus-visible:ring-border-strong
             disabled:opacity-40 disabled:cursor-not-allowed active:scale-[0.97]
             ${active
-              ? 'bg-state-selected text-slate-12 ring-1 ring-inset ring-border-default'
+              ? 'bg-state-selected text-slate-12 ring-[1px] ring-inset ring-border-default'
               : 'text-slate-12/80 hover:text-slate-12 hover:bg-state-hover-strong'}`}
         >
           {children}
@@ -132,8 +132,7 @@ interface ZoomControlProps {
 function ZoomControl({ zoom, mode, disabled, onChange }: ZoomControlProps) {
   const [open, setOpen] = useState(false);
   // Tracked across mouse + focus events; cleared on unmount so a delayed
-  // setState can't fire on a dead component (mirrors the pattern in
-  // useCuasTour's notifyTimeoutsRef).
+  // setState can't fire on a dead component.
   const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const popoverId = useId();
 
@@ -186,7 +185,7 @@ function ZoomControl({ zoom, mode, disabled, onChange }: ZoomControlProps) {
       onBlurCapture={handleBlurCapture}
     >
       <div
-        className={`flex h-9 items-center overflow-hidden rounded-full bg-surface-3/90 ring-1 ring-inset ring-border-default backdrop-blur-sm transition-[gap,padding] duration-150 ease-out motion-reduce:transition-none
+        className={`flex h-9 items-center overflow-hidden rounded-full bg-surface-3/90 ring-[1px] ring-inset ring-border-default backdrop-blur-sm transition-[gap,padding] duration-150 ease-out motion-reduce:transition-none
           ${open ? 'gap-2 pl-1 pr-3' : 'w-9'}`}
       >
         <button
@@ -196,7 +195,7 @@ function ZoomControl({ zoom, mode, disabled, onChange }: ZoomControlProps) {
           aria-controls={popoverId}
           onClick={() => setOpen(true)}
           disabled={disabled}
-          className="flex size-9 shrink-0 items-center justify-center rounded-full text-slate-12 transition-colors duration-150 ease-out hover:bg-state-hover-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-border-strong active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-40"
+          className="flex size-9 shrink-0 items-center justify-center rounded-full text-slate-12 transition-colors duration-150 ease-out hover:bg-state-hover-strong focus-visible:outline-none focus-visible:ring-[2px] focus-visible:ring-border-strong active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-40"
         >
           <Search size={14} aria-hidden="true" />
         </button>
@@ -267,7 +266,7 @@ function LockButton({ status, onClick }: { status: CameraStatus; onClick: () => 
           aria-label={label}
           aria-pressed={ownsControl}
           className={`p-2 transition-colors duration-150 ease-out
-            focus-visible:ring-2 focus-visible:ring-border-strong focus-visible:outline-none
+            focus-visible:outline-none focus-visible:ring-[2px] focus-visible:ring-border-strong
             disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.97]
             ${tone}`}
         >
