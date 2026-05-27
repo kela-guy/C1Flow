@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useId, useRef, useState, type FocusEvent } from 'react';
 import {
+  AlertTriangle,
+  CircleX,
   TakeControl,
   LockOpen,
   Maximize2,
@@ -12,7 +14,10 @@ import type { CameraStatus, DayNightMode, FeedDeviceType } from '@/app/component
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/shared/components/ui/tooltip';
 import { DirIsland } from '@/lib/direction';
 import { useStrings } from '@/lib/intl';
-import { CameraSettingsMenu } from '@/app/components/camera-v2/CameraSettingsMenu';
+import {
+  CameraSettingsMenu,
+  type CameraAngle,
+} from '@/app/components/camera-v2/CameraSettingsMenu';
 
 const MIN_ZOOM = 1;
 const MAX_ZOOM = 30;
@@ -51,6 +56,13 @@ interface SandboxBottomChromeProps {
   stopArmed: boolean;
   onDockToggle: () => void;
   onStopToggle: () => void;
+  videoHovered?: boolean;
+  mutedAlerts?: boolean;
+  onMutedAlertsToggle?: () => void;
+  deviceKind?: 'camera' | 'drone' | 'pathfinder';
+  cameraAngle?: CameraAngle;
+  onCameraAngleChange?: (angle: CameraAngle) => void;
+  onAutoTrackStart?: () => void;
 }
 
 export function SandboxBottomChrome({
@@ -73,9 +85,17 @@ export function SandboxBottomChrome({
   stopArmed,
   onDockToggle,
   onStopToggle,
+  videoHovered = false,
+  mutedAlerts,
+  onMutedAlertsToggle,
+  deviceKind,
+  cameraAngle,
+  onCameraAngleChange,
+  onAutoTrackStart,
 }: SandboxBottomChromeProps) {
   const t = useStrings();
   const isDrone = deviceType === 'drone';
+  const dockStopVisible = videoHovered || dockArmed || stopArmed;
   const owned = controlOwner === 'self';
   const takeReleaseLabel = owned
     ? t.camera.controlBar.releaseControl
@@ -93,30 +113,39 @@ export function SandboxBottomChrome({
         </div>
 
         {isDrone && (
-          <div className="absolute left-1/2 top-0 flex -translate-x-1/2 items-center gap-1.5">
+          <div
+            className={`absolute left-1/2 top-0 flex -translate-x-1/2 items-center gap-1.5 transition-[opacity,transform] duration-150 ease-out motion-reduce:transition-none ${
+              dockStopVisible
+                ? 'opacity-100 translate-y-0'
+                : 'opacity-0 -translate-y-1 pointer-events-none'
+            }`}
+            aria-hidden={!dockStopVisible}
+          >
             <button
               type="button"
               aria-pressed={dockArmed}
               onClick={onDockToggle}
-              className={`pointer-events-auto rounded-sm border px-3 py-1 text-[10px] backdrop-blur-sm transition-colors duration-150 ${
+              className={`pointer-events-auto inline-flex items-center gap-1.5 rounded-sm border px-3 py-1 text-[10px] backdrop-blur-sm transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-border-strong ${
                 dockArmed
-                  ? 'border-accent-warning/70 bg-accent-warning-tint text-accent-warning'
-                  : 'border-accent-danger/45 bg-surface-1/75 text-slate-11 hover:bg-state-hover-strong'
+                  ? 'border-accent-warning bg-accent-warning text-slate-1'
+                  : 'border-accent-warning/55 bg-surface-1/85 text-accent-warning hover:bg-accent-warning-tint'
               }`}
             >
-              חזרה לעגינה
+              <AlertTriangle size={11} aria-hidden />
+              <span>חזרה לעגינה</span>
             </button>
             <button
               type="button"
               aria-pressed={stopArmed}
               onClick={onStopToggle}
-              className={`pointer-events-auto rounded-sm border px-3 py-1 text-[10px] backdrop-blur-sm transition-colors duration-150 ${
+              className={`pointer-events-auto inline-flex items-center gap-1.5 rounded-sm border px-3 py-1 text-[10px] backdrop-blur-sm transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-border-strong ${
                 stopArmed
-                  ? 'border-accent-danger bg-accent-danger text-slate-12'
-                  : 'border-accent-danger/55 bg-accent-danger-tint text-accent-danger hover:bg-accent-danger/30'
+                  ? 'border-accent-danger bg-accent-danger text-slate-12 motion-safe:animate-pulse'
+                  : 'border-accent-danger/55 bg-accent-danger-tint text-accent-danger hover:bg-accent-danger/25'
               }`}
             >
-              עצור
+              <CircleX size={11} aria-hidden />
+              <span>עצור</span>
             </button>
           </div>
         )}
@@ -154,6 +183,12 @@ export function SandboxBottomChrome({
               playbackEnabled={playbackOn}
               onDetectionsToggle={onDetectionsToggle}
               onPlaybackToggle={onPlaybackToggle}
+              mutedAlerts={mutedAlerts}
+              onMutedAlertsToggle={onMutedAlertsToggle}
+              deviceKind={deviceKind}
+              cameraAngle={cameraAngle}
+              onCameraAngleChange={onCameraAngleChange}
+              onAutoTrackStart={onAutoTrackStart}
             />
             <IconButton
               label={fullscreenLabel}

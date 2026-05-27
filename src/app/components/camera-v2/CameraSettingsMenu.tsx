@@ -1,16 +1,54 @@
 /**
- * Settings popover triggered by the gear button in the bottom control bar.
+ * Settings dropdown triggered by the gear button in the bottom control bar.
  *
  * Sections:
- *   1. Playback investigation - toggle Live <-> Playback inside this tile.
- *   2. Display - AI detection.
+ *   1. Playback investigation — toggle split-view playback on/off.
+ *   2. Display — AI detection markers.
+ *
+ * Both rows are `DropdownMenuCheckboxItem`s — Radix-driven, keyboard
+ * navigable, with the standard left-aligned checkmark indicator. The
+ * menu stays open across toggles (`onSelect` preventDefault) so the
+ * operator can flip multiple settings in one trip.
  */
 
-import { Popover, PopoverContent, PopoverTrigger } from '@/shared/components/ui/popover';
-import { Switch } from '@/shared/components/ui/switch';
+import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuSeparator,
+  DropdownMenuShortcut,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
+  DropdownMenuTrigger,
+} from '@/app/components/ui/dropdown-menu';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/shared/components/ui/tooltip';
-import { Eye, History, Settings } from '@/lib/icons/central';
+import {
+  ArrowUp,
+  BellOff,
+  Crosshair,
+  Settings,
+} from '@/lib/icons/central';
 import { useStrings } from '@/lib/intl';
+import { useIsRtl } from '@/lib/direction';
+
+export type CameraAngle = 'front' | 'down' | 'straight';
+
+// shadcn `DropdownMenuCheckboxItem` ships the checkmark indicator at
+// inline-start (`start-2`) with matching `ps-8` padding. This product
+// wants the indicator at inline-end instead so it never competes with
+// the row label for the operator's first glance. Flip the indicator
+// span via an arbitrary variant and swap the padding.
+const CHECKBOX_INDICATOR_AT_END =
+  'ps-2 pe-8 [&>span:first-child]:start-auto [&>span:first-child]:end-2';
+
+// `DropdownMenuShortcut` is `ms-auto` (pushes to inline-end). With the
+// checkmark now occupying inline-end, the shortcut moves to inline-start.
+const SHORTCUT_AT_START = 'ms-0 me-auto';
 
 interface CameraSettingsMenuProps {
   open: boolean;
@@ -19,7 +57,19 @@ interface CameraSettingsMenuProps {
   playbackEnabled: boolean;
   onDetectionsToggle: () => void;
   onPlaybackToggle: () => void;
+  mutedAlerts?: boolean;
+  onMutedAlertsToggle?: () => void;
+  deviceKind?: 'camera' | 'drone' | 'pathfinder';
+  cameraAngle?: CameraAngle;
+  onCameraAngleChange?: (angle: CameraAngle) => void;
+  onAutoTrackStart?: () => void;
 }
+
+const ANGLE_ICON_ROTATION: Record<CameraAngle, string> = {
+  front: 'rotate-[135deg]',
+  down: 'rotate-180',
+  straight: 'rotate-90',
+};
 
 export function CameraSettingsMenu({
   open,
@@ -28,18 +78,23 @@ export function CameraSettingsMenu({
   playbackEnabled,
   onDetectionsToggle,
   onPlaybackToggle,
+  mutedAlerts,
+  onMutedAlertsToggle,
+  deviceKind,
+  cameraAngle = 'straight',
+  onCameraAngleChange,
+  onAutoTrackStart,
 }: CameraSettingsMenuProps) {
   const t = useStrings().camera.settingsMenu;
-  const playbackLabel = playbackEnabled ? t.playbackSplitLabel : t.liveLabel;
-  const playbackDescription = playbackEnabled
-    ? t.playbackSplitDescription
-    : t.liveDescription;
+  const dir = useIsRtl() ? 'rtl' : 'ltr';
+  const isPathfinder = deviceKind === 'pathfinder';
+  const showAlertsSection = onMutedAlertsToggle != null;
 
   return (
-    <Popover open={open} onOpenChange={onOpenChange}>
+    <DropdownMenu open={open} onOpenChange={onOpenChange} dir={dir}>
       <Tooltip>
         <TooltipTrigger asChild>
-          <PopoverTrigger asChild>
+          <DropdownMenuTrigger asChild>
             <button
               type="button"
               aria-label={t.settingsTriggerAriaLabel}
@@ -53,103 +108,132 @@ export function CameraSettingsMenu({
             >
               <Settings size={14} />
             </button>
-          </PopoverTrigger>
+          </DropdownMenuTrigger>
         </TooltipTrigger>
         <TooltipContent side="top" sideOffset={6} className="rounded-none text-[10px]">
           {t.settingsHeading}
         </TooltipContent>
       </Tooltip>
 
-      <PopoverContent
-        side="top"
-        align="end"
-        sideOffset={8}
-        // Surface + shadow now come from <PopoverSurface> (substrate
-        // lift +2). Keep `rounded-none` so the menu still hugs the
-        // hard-edged camera HUD aesthetic, and `backdrop-blur-xl`
-        // for the frosted-glass over-video feel.
-        className="w-[280px] p-0 rounded-none backdrop-blur-xl border-none"
-      >
-        <Section title={t.playbackSection} icon={<History size={11} />}>
-          <Row
-            label={playbackLabel}
-            description={playbackDescription}
-            shortcutHint="P"
-          >
-            <Switch
-              checked={playbackEnabled}
-              onCheckedChange={onPlaybackToggle}
-              aria-label={playbackLabel}
-            />
-          </Row>
-        </Section>
+      <DropdownMenuContent side="top" align="end" sideOffset={8} className="w-[240px]">
+        <DropdownMenuLabel className="text-[10px] font-semibold text-slate-9 uppercase tracking-[0.18em]">
+          {t.playbackSection}
+        </DropdownMenuLabel>
+        <DropdownMenuCheckboxItem
+          checked={playbackEnabled}
+          onCheckedChange={onPlaybackToggle}
+          onSelect={(e) => e.preventDefault()}
+          className={CHECKBOX_INDICATOR_AT_END}
+        >
+          {t.playbackLabel}
+          <DropdownMenuShortcut className={SHORTCUT_AT_START}>P</DropdownMenuShortcut>
+        </DropdownMenuCheckboxItem>
 
-        <SectionDivider />
+        <DropdownMenuSeparator />
 
-        <Section title={t.displaySection} icon={<Eye size={11} />}>
-          <Row label={t.aiDetectionsLabel} description={t.aiDetectionsDescription}>
-            <Switch
-              checked={detectionsOn}
-              onCheckedChange={onDetectionsToggle}
-              aria-label={t.aiDetectionsAriaLabel}
-            />
-          </Row>
-        </Section>
-      </PopoverContent>
-    </Popover>
+        <DropdownMenuLabel className="text-[10px] font-semibold text-slate-9 uppercase tracking-[0.18em]">
+          {t.displaySection}
+        </DropdownMenuLabel>
+        <DropdownMenuCheckboxItem
+          checked={detectionsOn}
+          onCheckedChange={onDetectionsToggle}
+          onSelect={(e) => e.preventDefault()}
+          className={CHECKBOX_INDICATOR_AT_END}
+        >
+          {t.aiDetectionsLabel}
+        </DropdownMenuCheckboxItem>
+
+        {showAlertsSection && (
+          <>
+            <DropdownMenuSeparator />
+            <DropdownMenuLabel className="text-[10px] font-semibold text-slate-9 uppercase tracking-[0.18em]">
+              {t.alertsSection}
+            </DropdownMenuLabel>
+            <DropdownMenuCheckboxItem
+              checked={mutedAlerts ?? false}
+              onCheckedChange={onMutedAlertsToggle}
+              onSelect={(e) => e.preventDefault()}
+              className={CHECKBOX_INDICATOR_AT_END}
+            >
+              <BellOff size={14} className="me-2 text-slate-11" />
+              {t.muteAlertsLabel}
+            </DropdownMenuCheckboxItem>
+          </>
+        )}
+
+        {isPathfinder && (
+          <>
+            <DropdownMenuSeparator />
+            <DropdownMenuLabel className="text-[10px] font-semibold text-slate-9 uppercase tracking-[0.18em]">
+              {t.pathfinderSection}
+            </DropdownMenuLabel>
+
+            <DropdownMenuSub>
+              <DropdownMenuSubTrigger className="ps-2 pe-2">
+                <ArrowUp
+                  size={14}
+                  className={`me-2 text-slate-11 ${ANGLE_ICON_ROTATION[cameraAngle]}`}
+                />
+                {t.cameraAnglesLabel}
+              </DropdownMenuSubTrigger>
+              <DropdownMenuSubContent className="w-[180px]">
+                <DropdownMenuRadioGroup
+                  value={cameraAngle}
+                  onValueChange={(v) => onCameraAngleChange?.(v as CameraAngle)}
+                >
+                  <AngleRadioItem
+                    value="front"
+                    icon={ANGLE_ICON_ROTATION.front}
+                    label={t.cameraAngleFront}
+                  />
+                  <AngleRadioItem
+                    value="straight"
+                    icon={ANGLE_ICON_ROTATION.straight}
+                    label={t.cameraAngleStraight}
+                  />
+                  <AngleRadioItem
+                    value="down"
+                    icon={ANGLE_ICON_ROTATION.down}
+                    label={t.cameraAngleDown}
+                  />
+                </DropdownMenuRadioGroup>
+              </DropdownMenuSubContent>
+            </DropdownMenuSub>
+
+            <DropdownMenuItem
+              className="ps-2 pe-2"
+              onSelect={() => {
+                onOpenChange(false);
+                onAutoTrackStart?.();
+              }}
+            >
+              <Crosshair size={14} className="me-2 text-accent-warning" />
+              {t.autoTrackLabel}
+            </DropdownMenuItem>
+          </>
+        )}
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }
 
-function Section({ title, icon, children }: { title: string; icon: React.ReactNode; children: React.ReactNode }) {
-  return (
-    <div className="px-3 py-2.5">
-      <div className="flex items-center gap-1.5 mb-2 text-[10px] font-semibold text-slate-9 uppercase tracking-[0.18em]">
-        {icon}
-        <span>{title}</span>
-      </div>
-      <div className="flex flex-col gap-2">{children}</div>
-    </div>
-  );
-}
-
-function SectionDivider() {
-  return <div className="h-px bg-state-hover-strong" aria-hidden="true" />;
-}
-
-function Row({
+function AngleRadioItem({
+  value,
+  icon,
   label,
-  description,
-  children,
-  disabled,
-  shortcutHint,
 }: {
+  value: CameraAngle;
+  icon: string;
   label: string;
-  description?: string;
-  children: React.ReactNode;
-  disabled?: boolean;
-  /** Optional keyboard hint rendered inline next to the label
-   *  (e.g. "P" for playback). */
-  shortcutHint?: string;
 }) {
   return (
-    <div className={`flex items-center justify-between gap-2 ${disabled ? 'opacity-50' : ''}`}>
-      <div className="flex flex-col gap-0.5 min-w-0">
-        <span className="text-xs text-slate-12 flex items-center gap-1.5">
-          <span className="truncate">{label}</span>
-          {shortcutHint && (
-            <kbd
-              aria-hidden="true"
-              className="font-mono text-[9px] text-slate-9 px-1 py-px ring-1 ring-inset ring-border-default rounded"
-            >
-              {shortcutHint}
-            </kbd>
-          )}
-        </span>
-        {description && (
-          <span className="text-[10px] text-slate-9 leading-snug">{description}</span>
-        )}
-      </div>
-      {children}
-    </div>
+    <DropdownMenuRadioItem
+      value={value}
+      onSelect={(e) => e.preventDefault()}
+      className={CHECKBOX_INDICATOR_AT_END}
+    >
+      <ArrowUp size={14} className={`me-2 text-slate-11 ${icon}`} />
+      {label}
+    </DropdownMenuRadioItem>
   );
 }

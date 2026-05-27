@@ -106,6 +106,9 @@ interface CameraFeedTileProps {
   suppressTelemetryStrip?: boolean;
   /** Suppress the bottom control bar (sandbox preview). */
   suppressControlBar?: boolean;
+  /** 0..1 reticle bloom. Defaults to 0 (static). Callers wire this to
+   *  whatever "camera is moving" signal they have. */
+  crosshairBloom?: number;
 }
 
 export function CameraFeedTile({
@@ -142,6 +145,7 @@ export function CameraFeedTile({
   suppressDroneHud = false,
   suppressTelemetryStrip = false,
   suppressControlBar = false,
+  crosshairBloom = 0,
 }: CameraFeedTileProps) {
   const tile = useStrings().camera.feedTile;
   const [hovered, setHovered] = useState(false);
@@ -383,7 +387,7 @@ export function CameraFeedTile({
               useful) and while designate-target is armed (the
               designate overlay supplies its own follow-cursor reticle —
               two crosses would compete). */}
-          {!isThumb && !designateMode && <CenterCrosshair />}
+          {!isThumb && !designateMode && <CenterCrosshair bloom={crosshairBloom} />}
           <CameraDetectionsOverlay detections={detections} visible={detectionsOn} />
           {!playbackEnabled && !isThumb && (
             <DesignateTargetOverlay active={designateMode} onDesignate={handleDesignate} />

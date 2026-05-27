@@ -4,7 +4,7 @@ export const spec: ComponentSpec = {
   name: 'CameraSettingsMenu',
   filePath: 'src/app/components/camera-v2/CameraSettingsMenu.tsx',
   purpose:
-    'Settings popover triggered by the gear button on the bottom control bar. Hosts Playback investigation and Display toggles (AI detections).',
+    'Settings dropdown triggered by the gear button on the bottom control bar. Hosts Playback investigation and Display toggles (AI detections) as shadcn DropdownMenuCheckboxItems.',
   location: 'Composition (camera-v2)',
   status: 'prototype',
 
@@ -18,10 +18,10 @@ export const spec: ComponentSpec = {
   ],
 
   states: [
-    { name: 'closed', trigger: 'open === false', description: 'Just the gear trigger button, popover not in DOM (Radix portal)', implementedInPrototype: true },
-    { name: 'open', trigger: 'open === true', description: 'Popover renders two sections (Playback, Display)', implementedInPrototype: true },
-    { name: 'playback enabled', trigger: 'playbackEnabled === true', description: 'Playback row text switches to "מפוצל: שידור חי + פלייבק"', implementedInPrototype: true },
-    { name: 'P shortcut hint', trigger: 'always', description: 'A small (P) `kbd` chip is rendered next to the playback row label', implementedInPrototype: true },
+    { name: 'closed', trigger: 'open === false', description: 'Just the gear trigger button, dropdown not in DOM (Radix portal)', implementedInPrototype: true },
+    { name: 'open', trigger: 'open === true', description: 'Dropdown renders two sections (Playback, Display) with checkbox items', implementedInPrototype: true },
+    { name: 'playback enabled', trigger: 'playbackEnabled === true', description: 'Playback checkbox item renders the leading checkmark indicator', implementedInPrototype: true },
+    { name: 'P shortcut hint', trigger: 'always', description: 'A "P" shortcut chip renders at the trailing end of the playback row', implementedInPrototype: true },
     { name: 'loading', trigger: 'N/A', description: '-', implementedInPrototype: true },
     { name: 'error', trigger: 'N/A', description: '-', implementedInPrototype: true },
     { name: 'disabled', trigger: 'N/A', description: '-', implementedInPrototype: true },
@@ -30,9 +30,10 @@ export const spec: ComponentSpec = {
 
   interactions: [
     { trigger: 'click', element: 'Gear trigger', result: 'Toggles open state' },
-    { trigger: 'click', element: 'Switch in Playback row', result: 'Calls onPlaybackToggle - tile re-renders into the live-vs-playback split' },
-    { trigger: 'click', element: 'Switch in Display rows', result: 'Calls onDetectionsToggle' },
+    { trigger: 'click', element: 'Playback checkbox item', result: 'Calls onPlaybackToggle; menu stays open' },
+    { trigger: 'click', element: 'AI detections checkbox item', result: 'Calls onDetectionsToggle; menu stays open' },
     { trigger: 'keydown', element: 'Trigger', result: 'S keyboard shortcut (handled by parent tile) toggles open' },
+    { trigger: 'keydown', element: 'Open menu', result: 'Arrow keys move focus between items, Space/Enter toggles, Esc closes (Radix)' },
   ],
 
   tokens: {
@@ -78,10 +79,10 @@ export const spec: ComponentSpec = {
   hardcodedData: [],
 
   notes: [
-    'About section is intentionally text-only - no edit handles - so the popover stays a fast settings switcher rather than a properties editor.',
+    'Built on shadcn `DropdownMenu` + `DropdownMenuCheckboxItem`. The previous custom Popover + Switch implementation was replaced for consistency with the rest of the menu surfaces in the app.',
     'When playbackEnabled flips on, `VideoPanel.handlePlaybackToggle` builds an open-state via `makeOpenPlaybackState` (rewinds 30s, paused).',
-    'The Switch primitive was retuned for this popover specifically: the off-state uses `bg-state-selected` with an inset border-default ring so it stays visible against `bg-[#1a1a1a]/95`, and both the track and thumb animate over 200ms ease-out so the flip never feels instant. The shadcn defaults read as invisible in our dark theme.',
+    'Each checkbox item calls `e.preventDefault()` in `onSelect` so toggling does not auto-close the menu — operators frequently flip both settings in one trip.',
     'The toggle is always enabled when a feed is mounted. There is no archive-availability gate; the previous "disabled with reason" copy was over-engineered for a prototype playground.',
-    'The (P) shortcut hint next to the row label matches the tile-level `P` shortcut wired in `CameraFeedTile`.',
+    'The P shortcut chip mirrors the tile-level `P` shortcut wired in `CameraFeedTile`.',
   ],
 };

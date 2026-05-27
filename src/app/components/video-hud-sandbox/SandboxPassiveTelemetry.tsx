@@ -7,12 +7,16 @@ export interface SandboxPassiveTelemetryProps {
   status: CameraStatus;
   composition: PassiveComposition;
   deviceType?: FeedDeviceType;
+  /** When true, top-right items shift down so they don't collide with
+   *  the sandbox `DeviceConnectivityBadge`. */
+  topRightOffset?: boolean;
 }
 
 export function SandboxPassiveTelemetry({
   status,
   composition,
   deviceType = 'drone',
+  topRightOffset = false,
 }: SandboxPassiveTelemetryProps) {
   const battery = Math.round(status.batteryPct ?? 0);
   const altitude = Math.round(status.altitudeM ?? 0);
@@ -20,7 +24,7 @@ export function SandboxPassiveTelemetry({
   const rel = bearingDelta(status.bearingDeg, 0);
 
   if (deviceType === 'camera') {
-    return <MinimalCorners battery={battery} rel={rel} />;
+    return <MinimalCorners battery={battery} rel={rel} topRightOffset={topRightOffset} />;
   }
 
   switch (composition) {
@@ -29,13 +33,13 @@ export function SandboxPassiveTelemetry({
     case 'A':
       return <BottomCenter battery={battery} rel={rel} />;
     case 'B':
-      return <TopRightStack battery={battery} home={home} rel={rel} />;
+      return <TopRightStack battery={battery} home={home} rel={rel} topRightOffset={topRightOffset} />;
     case 'C':
-      return <RightStack battery={battery} altitude={altitude} rel={rel} />;
+      return null;
     case 'E':
-      return <Corners battery={battery} home={home} rel={rel} />;
+      return <Corners battery={battery} home={home} rel={rel} topRightOffset={topRightOffset} />;
     case 'F':
-      return <MinimalCorners battery={battery} rel={rel} />;
+      return <MinimalCorners battery={battery} rel={rel} topRightOffset={topRightOffset} />;
     default:
       return <TopStrip battery={battery} altitude={altitude} home={home} rel={rel} />;
   }
@@ -93,13 +97,15 @@ function TopRightStack({
   battery,
   home,
   rel,
+  topRightOffset,
 }: {
   battery: number;
   home: number;
   rel: number;
+  topRightOffset?: boolean;
 }) {
   return (
-    <div className="absolute z-20 top-3 right-3 pointer-events-none">
+    <div className={`absolute z-20 right-3 pointer-events-none ${topRightOffset ? 'top-12' : 'top-3'}`}>
       <DirIsland
         direction="ltr"
         className="flex flex-col gap-1 px-2 py-1.5 rounded-md bg-surface-1/70 backdrop-blur-sm ring-1 ring-inset ring-border-default"
@@ -112,52 +118,50 @@ function TopRightStack({
   );
 }
 
-function RightStack({
-  battery,
-  altitude,
-  rel,
-}: {
-  battery: number;
-  altitude: number;
-  rel: number;
-}) {
-  return (
-    <div className="absolute z-20 right-3 top-1/2 -translate-y-1/2 pointer-events-none">
-      <DirIsland
-        direction="ltr"
-        className="flex flex-col gap-1.5"
-      >
-        <StackRow label="BAT" value={`${battery}%`} valueClass="text-accent-success" bar={battery / 100} />
-        <StackRow label="ALT" value={`${altitude}m`} sub="live" />
-        <StackRow label="REL" value={`${rel >= 0 ? '+' : ''}${rel}°`} valueClass="text-accent-info" accentBar />
-      </DirIsland>
-    </div>
-  );
-}
-
 function Corners({
   battery,
   home,
   rel,
+  topRightOffset,
 }: {
   battery: number;
   home: number;
   rel: number;
+  topRightOffset?: boolean;
 }) {
   return (
     <>
       <CornerReadout className="left-3 top-3" label="BAT" value={`${battery}%`} valueClass="text-accent-success" />
       <CornerReadout className="left-3 top-12" label="HOME" value={`${home}m`} />
-      <CornerReadout className="right-3 top-3" label="REL" value={`${rel >= 0 ? '+' : ''}${rel}°`} valueClass="text-accent-info" />
+      <CornerReadout
+        className={`right-3 ${topRightOffset ? 'top-12' : 'top-3'}`}
+        label="REL"
+        value={`${rel >= 0 ? '+' : ''}${rel}°`}
+        valueClass="text-accent-info"
+      />
     </>
   );
 }
 
-function MinimalCorners({ battery, rel }: { battery: number; rel: number }) {
+function MinimalCorners({
+  battery,
+  rel,
+  topRightOffset,
+}: {
+  battery: number;
+  rel: number;
+  topRightOffset?: boolean;
+}) {
   return (
     <>
       <CornerReadout className="left-2 top-2" label="BAT" value={`${battery}%`} valueClass="text-accent-success" compact />
-      <CornerReadout className="right-2 top-2" label="REL" value={`${rel >= 0 ? '+' : ''}${rel}°`} valueClass="text-accent-info" compact />
+      <CornerReadout
+        className={`right-2 ${topRightOffset ? 'top-11' : 'top-2'}`}
+        label="REL"
+        value={`${rel >= 0 ? '+' : ''}${rel}°`}
+        valueClass="text-accent-info"
+        compact
+      />
     </>
   );
 }
