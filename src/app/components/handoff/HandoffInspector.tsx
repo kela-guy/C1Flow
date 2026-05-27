@@ -3,10 +3,11 @@
  * `document.body` containing the picker glyph, the hover overlay, and
  * the click-anchored popover.
  *
- * Dev-only — the consumer in `src/app/App.tsx` lazy-imports this
- * module behind `import.meta.env.DEV`. A second runtime guard inside
- * this component returns `null` in production so a stray import can't
- * still mount the inspector.
+ * Shipped in production. The consumer in `src/app/App.tsx` lazy-loads
+ * this module so the listener/capture/popover code is its own chunk —
+ * it only downloads when a route actually mounts the picker (i.e. not
+ * `/demo`, which `ScopedHandoffInspector` skips for marketing
+ * recordings).
  */
 
 import { useEffect, useState } from 'react';
@@ -17,15 +18,6 @@ import { PickerGlyph } from './PickerGlyph';
 import { PickPopover } from './PickPopover';
 
 export default function HandoffInspector() {
-  // Build-time constant — Vite's `define` substitutes `false` in
-  // production, so this component compiles to `() => null` and the rest
-  // of the file tree-shakes away. Keep the guard ABOVE every hook so
-  // the hook order stays stable for the one mode that actually renders.
-  if (!import.meta.env.DEV) return null;
-  return <HandoffInspectorImpl />;
-}
-
-function HandoffInspectorImpl() {
   const inspector = useInspector();
   const portal = usePortalNode();
 

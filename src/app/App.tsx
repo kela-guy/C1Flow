@@ -32,14 +32,12 @@ const PerfHud = import.meta.env.DEV
   ? lazy(() => import("./components/perf/PerfHud").then((m) => ({ default: m.PerfHud })))
   : null;
 
-// Dev-only Handoff Inspector. Same pattern as `PerfHud`: lazy import
-// behind the `import.meta.env.DEV` constant so the entire chunk
-// (hover/click listeners, capture pipeline, popover) is
-// dead-code-eliminated from production bundles. See
-// `src/app/components/handoff/HandoffInspector.tsx`.
-const HandoffInspector = import.meta.env.DEV
-  ? lazy(() => import("./components/handoff/HandoffInspector"))
-  : null;
+// Handoff Inspector — code-split so the hover/click listeners,
+// capture pipeline, and popover only download when the route
+// actually mounts the picker. Shipped in production by request:
+// operators and designers share the same surface, so the picker
+// glyph is part of the production UI.
+const HandoffInspector = lazy(() => import("./components/handoff/HandoffInspector"));
 
 /**
  * Renders {@link PerfHud} on every route *except* `/demo`. The
@@ -62,13 +60,12 @@ function ScopedPerfHud() {
 
 /**
  * Renders {@link HandoffInspector} on every route *except* `/demo`,
- * mirroring {@link ScopedPerfHud}. Same dev-only / DCE story — the
- * inspector ships with the dev experience and never with production
- * or marketing recordings.
+ * mirroring {@link ScopedPerfHud}. The `/demo` skip stays because
+ * the inspector glyph must never appear in a marketing recording,
+ * even though the rest of the production surface is identical.
  */
 function ScopedHandoffInspector() {
   const { pathname } = useLocation();
-  if (!HandoffInspector) return null;
   if (pathname.startsWith('/demo')) return null;
   return (
     <Suspense fallback={null}>
