@@ -1,0 +1,40 @@
+/**
+ * Shared chrome for "this control is disabled because…" tooltips.
+ *
+ * Wraps a disabled control in a `Tooltip` whose content is the reason
+ * string. When `reason` is null/empty, the wrapper is a no-op so
+ * enabled controls don't pay the tooltip cost.
+ *
+ * The wrapping `<span>` carries `onClick` stop-propagation because the
+ * row container is itself a button — without it, clicking the
+ * disabled control would expand/collapse the row.
+ */
+
+import React from 'react';
+import { Tooltip, TooltipContent, TooltipTrigger } from '../../ui/tooltip';
+
+interface ReasonTooltipProps {
+  reason: string | null | undefined;
+  children: React.ReactNode;
+}
+
+export function ReasonTooltip({ reason, children }: ReasonTooltipProps) {
+  if (!reason) return <>{children}</>;
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <span className="shrink-0" onClick={(e) => e.stopPropagation()}>
+          {children}
+        </span>
+      </TooltipTrigger>
+      <TooltipContent
+        side="top"
+        sideOffset={6}
+        showArrow={false}
+        className="px-2 py-1 text-xs text-zinc-300 bg-zinc-800 shadow-[0_0_0_1px_rgba(255,255,255,0.1)] whitespace-nowrap"
+      >
+        {reason}
+      </TooltipContent>
+    </Tooltip>
+  );
+}
