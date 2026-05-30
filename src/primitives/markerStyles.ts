@@ -1,3 +1,12 @@
+import type { Detection } from '@/imports/ListOfSystems';
+import {
+  resolveTargetSeverity,
+  isUnclassifiedUnknown,
+  UNKNOWN_GRAY,
+  SEVERITY_COLOR,
+  SEVERITY_PULSE,
+} from './urgency';
+
 export type Affiliation = 'friendly' | 'hostile' | 'possibleThreat' | 'neutral' | 'unknown';
 
 export type InteractionState =
@@ -289,6 +298,101 @@ export function resolveMarkerStyle(
     }
   }
   return merged;
+}
+
+/**
+ * Interaction subset that applies to a target marker. Tactical states
+ * like `alert` / `jammer` / `weaponPointing` are deliberately omitted —
+ * a target's "tactical urgency" now lives in its severity, not in the
+ * marker's interaction state.
+ */
+export type TargetMarkerInteraction =
+  | 'default'
+  | 'hovered'
+  | 'selected'
+  | 'active'
+  | 'disabled'
+  | 'expired';
+
+/**
+ * Affiliation chooser for a target marker. Identity (the glyph fill)
+ * derives from the target's classification + IFF, not from urgency.
+ * This mirrors the existing TacticalMap fallback logic so the visual
+ * stays the same for callers that haven't migrated to richer IFF data.
+ */
+function targetAffiliation(target: Detection): Affiliation {
+  if (target.classifiedType === 'bird') return 'unknown';
+  if (target.affiliation) return target.affiliation;
+  if (target.entityStage === 'classified') return 'hostile';
+  if (target.status === 'detection' || target.status === 'event') return 'hostile';
+  return 'possibleThreat';
+}
+
+/**
+ * Resolve a marker style for a Detection under the unified urgency
+ * model. The marker speaks ONE urgency color — ring and glyph both
+ * carry the same hue, so the operator never has to translate between
+ * a "ring red" and a "glyph red" that mean different things.
+ *
+ *   - **Severity** (`resolveTargetSeverity`) drives the urgency channel:
+ *     ring color, ring pulse, ring opacity, ring width, **glyph color**,
+ *     inner-glow color. Same source the card spine reads from.
+ *   - **Interaction** (`hovered` / `selected` / `active`) drives the
+ *     inner-glow opacity + surface emphasis. Never overrides color.
+ *   - **Affiliation** is still resolved (so the underlying state matrix
+ *     picks the right surface palette), but no longer colors the glyph
+ *     — identity will surface through a separate channel in a later phase.
+ *
+ * Lifecycle finality (`expired` / `disabled`) wins over everything —
+ * the marker desaturates to gray and reads "no longer engaged"
+ * regardless of upstream signals.
+ */
+export function resolveTargetMarkerStyle(
+  target: Detection,
+  interaction: TargetMarkerInteraction = 'default',
+): MarkerStyle {
+  const affiliation = targetAffiliation(target);
+
+  if (interaction === 'expired' || interaction === 'disabled') {
+    return resolveMarkerStyle(interaction, affiliation);
+  }
+
+  // Unclassified raw blip — render as a plain gray dot: gray glyph, no
+  // ring, no pulse. It carries no urgency color until a camera classifies
+  // it (see `isUnclassifiedUnknown`). Interaction glow still applies via
+  // the base style so hover/select feedback survives.
+  if (isUnclassifiedUnknown(target)) {
+    const base = resolveMarkerStyle(interaction, 'unknown');
+    return {
+      ...base,
+      ringColor: UNKNOWN_GRAY,
+      ringWidth: 0,
+      ringOpacity: 0,
+      ringPulse: false,
+      glyphColor: UNKNOWN_GRAY,
+      innerGlowColor: UNKNOWN_GRAY,
+    };
+  }
+
+  const severity = resolveTargetSeverity(target);
+  const base = resolveMarkerStyle(interaction, affiliation);
+  const severityColor = SEVERITY_COLOR[severity];
+
+  return {
+    ...base,
+    ringColor: severityColor,
+    ringPulse: SEVERITY_PULSE[severity],
+    ringOpacity: 1,
+    // CRITICAL gets a slightly heavier ring — visual parallel of the
+    // card's higher icon-surface opacity at the same tier.
+    ringWidth: severity === 'CRITICAL' ? 3 : 2,
+    // Glyph + inner glow ride the same severity color as the ring so
+    // the marker reads as one tier, not two. Keeps the underlying glow
+    // toggle from the interaction state (only hovered/selected/active
+    // light it up); severity only picks the *color* that gets glowed.
+    glyphColor: severityColor,
+    innerGlowColor: severityColor,
+  };
 }
 
 const COMPASS_DIRECTIONS = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'] as const;

@@ -29,6 +29,7 @@ import {
   CardDetails, CardIdentity, CardSensors, CardMedia, MEDIA_BADGE_CONFIG, CardLog, CardClosure, CopyButton,
   FilterBar, NewUpdatesPill,
   CesiumMap, type CesiumMarker,
+  SEVERITY_COLOR,
   type CardAction, type CardSensor,
   type LogEntry, type ClosureOutcome, type DetailRow,
   type FilterDef,
@@ -2415,7 +2416,7 @@ function StyleguideUnifiedCard({ detection, defaultOpen = true }: { detection: D
 
   return (
     <TargetCard
-      accent={slots.accent}
+      severity={slots.severity}
       completed={slots.completed}
       open={open}
       onToggle={() => setOpen(!open)}
@@ -2598,12 +2599,25 @@ function CardStatePlayground() {
             </thead>
             <tbody>
               <tr className="border-b border-white/[0.03]">
-                <td className="py-2 px-3 font-mono text-sky-300/80">accent</td>
-                <td className="py-2 px-3 font-mono text-n-10">{slots.accent}</td>
+                <td className="py-2 px-3 font-mono text-sky-300/80">severity</td>
+                <td className="py-2 px-3 font-mono text-n-10">{slots.severity}</td>
                 <td className="py-2 px-3">
                   <div className="flex items-center gap-2">
                     <div
                       className="w-4 h-4 rounded shadow-[0_0_0_1px_rgba(255,255,255,0.08)]"
+                      style={{ backgroundColor: SEVERITY_COLOR[slots.severity] }}
+                    />
+                    <span className="font-mono text-n-9 text-xs">{SEVERITY_COLOR[slots.severity]}</span>
+                  </div>
+                </td>
+              </tr>
+              <tr className="border-b border-white/[0.03]">
+                <td className="py-2 px-3 font-mono text-sky-300/40">accent (deprecated)</td>
+                <td className="py-2 px-3 font-mono text-n-9">{slots.accent}</td>
+                <td className="py-2 px-3">
+                  <div className="flex items-center gap-2">
+                    <div
+                      className="w-4 h-4 rounded shadow-[0_0_0_1px_rgba(255,255,255,0.08)] opacity-60"
                       style={{ backgroundColor: CARD_TOKENS.spine.colors[slots.accent] }}
                     />
                     <span className="font-mono text-n-9 text-xs">{CARD_TOKENS.spine.colors[slots.accent]}</span>

@@ -8,6 +8,7 @@
  */
 
 import type { RegulusEffector } from '@/imports/ListOfSystems';
+import { fovPolygon, pointInPolygon, FOV_RADIUS_M } from '@/app/lib/mapGeo';
 
 export interface MapAsset {
   id: string;
@@ -34,6 +35,14 @@ export const DRONE_HIVE_ASSETS: MapAsset[] = [
   { id: 'HIVE-NVT-MAIN', latitude: 32.4666, longitude: 35.0013, typeLabel: 'Drone Hive', fovDeg: 0, bearingDeg: 0 },
 ];
 
+/**
+ * The defended center of the protected area — the point inbound threats
+ * are assumed to be heading toward. Matches the hive/cluster center the
+ * live CUAS approach targets converge on, so Flow Builder playback moves
+ * its spawn along the same axis a real incoming track would.
+ */
+export const SITE_CENTER = { lat: 32.4666, lon: 35.0013 } as const;
+
 export const LIDAR_ASSETS: MapAsset[] = [
   { id: 'LIDAR-NVT-01', latitude: 32.4706, longitude: 35.0103, typeLabel: 'LiDAR North', fovDeg: 360, bearingDeg: 0 },
 ];
@@ -54,3 +63,45 @@ export const REGULUS_EFFECTORS: RegulusEffector[] = [
   { id: 'REG-NVT-SOUTH', name: 'Regulus South', lat: 32.4526, lon: 35.0013, coverageRadiusM: 2500, status: 'available' },
   { id: 'REG-NVT-WEST', name: 'Regulus West', lat: 32.4666, lon: 34.9763, coverageRadiusM: 2500, status: 'available' },
 ];
+
+/**
+ * Sensors whose FOV cone covers a given lat/lon. Mirrors the legacy
+ * `findDetectingSensors` in `TacticalMap.tsx` but lives next to the
+ * asset registry so non-map code (e.g. the Flow Builder) can call it
+ * without pulling react-map-gl into the bundle.
+ *
+ * If no asset's strict FOV contains the point, falls back to the
+ * single nearest asset by Euclidean lat/lon distance — guarantees the
+ * caller always gets at least one sensor when at least one exists, so
+ * panel UX never lands in the "no detector matched" dead end on a
+ * fresh location.
+ */
+export function findDetectingSensorAssets(lat: number, lon: number): MapAsset[] {
+  const pool = [...CAMERA_ASSETS, ...RADAR_ASSETS, ...LIDAR_ASSETS];
+  const result: MapAsset[] = [];
+  for (const asset of pool) {
+    const ring = fovPolygon(
+      asset.latitude,
+      asset.longitude,
+      asset.fovDeg,
+      asset.bearingDeg,
+      FOV_RADIUS_M,
+    );
+    if (pointInPolygon(lon, lat, ring)) result.push(asset);
+  }
+  if (result.length === 0 && pool.length > 0) {
+    let closest: MapAsset | null = null;
+    let bestDistSq = Number.POSITIVE_INFINITY;
+    for (const asset of pool) {
+      const dLat = asset.latitude - lat;
+      const dLon = asset.longitude - lon;
+      const distSq = dLat * dLat + dLon * dLon;
+      if (distSq < bestDistSq) {
+        bestDistSq = distSq;
+        closest = asset;
+      }
+    }
+    if (closest) result.push(closest);
+  }
+  return result;
+}

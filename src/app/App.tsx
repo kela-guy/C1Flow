@@ -7,6 +7,7 @@ import "dialkit/styles.css";
 import { Dashboard } from "./components/Dashboard";
 import FovTestPage from "./components/FovTestPage";
 import StyleguidePage from "./components/StyleguidePage";
+import UrgencyReviewPage from "./components/UrgencyReviewPage";
 import { TooltipProvider } from "./components/ui/tooltip";
 import { DirectionProvider } from "@/lib/direction";
 
@@ -97,6 +98,14 @@ export default function App() {
               <Route path="/" element={<Dashboard />} />
               <Route path="/fov-test" element={<FovTestPage />} />
               <Route path="/styleguide" element={<StyleguidePage />} />
+              {/*
+                Urgency review — dedicated surface for inspecting every
+                TargetCard + MapMarker variant against the unified
+                Severity model. Phase 2 of the urgency unification plan
+                (see `docs/urgency-unification-plan.md`). Not linked
+                from the main UI — reviewers open the route directly.
+              */}
+              <Route path="/urgency-review" element={<UrgencyReviewPage />} />
               {/*
                 Marketing demo route — same Dashboard component as `/`,
                 served from a separate URL so we can iterate on demo-only

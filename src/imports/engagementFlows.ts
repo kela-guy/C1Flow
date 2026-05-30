@@ -156,7 +156,10 @@ export function getJamFlow(t: Strings): EngagementFlowDef {
   return {
     id: 'jam',
     matchTarget: (target) =>
-      target.classifiedType !== 'bird' && target.classifiedType !== 'car',
+      target.classifiedType !== 'bird' &&
+      target.classifiedType !== 'car' &&
+      target.classifiedType !== 'tank' &&
+      target.classifiedType !== 'truck',
 
     assetContextKey: 'regulusEffectors',
     selectedIdContextKey: 'selectedEffectorId',
@@ -218,7 +221,10 @@ export function getWeaponFlow(t: Strings): EngagementFlowDef {
   const w = t.engagementFlows.weapon;
   return {
     id: 'weapon',
-    matchTarget: (target) => target.classifiedType === 'car',
+    matchTarget: (target) =>
+      target.classifiedType === 'car' ||
+      target.classifiedType === 'tank' ||
+      target.classifiedType === 'truck',
 
     assetContextKey: 'launcherEffectors',
     selectedIdContextKey: 'selectedLauncherId',

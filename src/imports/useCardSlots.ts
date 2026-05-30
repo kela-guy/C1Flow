@@ -30,6 +30,15 @@ import {
 } from '@/lib/icons/central';
 import { DroneCardIcon, MissileCardIcon, CarCardIcon } from '@/primitives/MapIcons';
 import type { ThreatAccent } from '@/primitives/tokens';
+import { hexToRgba } from '@/primitives/tokens';
+import {
+  resolveTargetSeverity,
+  isUnclassifiedUnknown,
+  UNKNOWN_GRAY,
+  SEVERITY_COLOR,
+  SEVERITY_SURFACE_OPACITY,
+  type Severity,
+} from '@/primitives/urgency';
 import type { CardAction } from '@/primitives/CardActions';
 import type { SplitDropdownGroup } from '@/primitives/SplitActionButton';
 import type { TimelineStep } from '@/primitives/CardTimeline';
@@ -39,7 +48,6 @@ import type { CardSensor } from '@/primitives/CardSensors';
 import type { LogEntry } from '@/primitives/CardLog';
 import type { ClosureOutcome } from '@/primitives/CardClosure';
 import type { CardHeaderProps } from '@/primitives/CardHeader';
-import { Tooltip, TooltipTrigger, TooltipContent } from '@/shared/components/ui/tooltip';
 import type { CardMediaProps } from '@/primitives/CardMedia';
 import type {
   Detection,
@@ -111,6 +119,17 @@ export interface CardContext {
 }
 
 export interface CardSlots {
+  /**
+   * Unified urgency tier — the canonical signal both card spine and
+   * map marker ring read from. Computed by `resolveTargetSeverity()`.
+   * Prefer this over `accent` when wiring new visuals.
+   */
+  severity: Severity;
+  /**
+   * @deprecated Lifecycle-based accent. Retained so the styleguide and
+   * any pre-unification consumer keeps working. New code should use
+   * `severity` plus the `SEVERITY_COLOR` palette.
+   */
   accent: ThreatAccent;
   completed: boolean;
   closureType: 'manual' | 'auto' | null;
@@ -156,64 +175,58 @@ function buildHeaderIcon(target: Detection): React.ElementType {
   }
 }
 
-function buildConfidenceBadge(confidence: number | undefined, classifiedType: string | undefined, t: Strings): React.ReactNode {
-  if (confidence == null) return null;
-  // Neutral, metadata-style pill. Severity is communicated by the icon-wrapper
-  // affiliation color (AFFILIATION_PALETTES) and the status chip (lifecycle).
-  // The number itself communicates confidence; tinting it red on high-confidence
-  // would double-signal threat and mis-read a 99%-confident bird as hostile.
-  const bg = 'bg-white/[0.06] text-zinc-300';
-  const types = t.cards.classifiedTypes;
-  const key = (classifiedType ?? 'unknown') as keyof typeof types;
-  const typeLabel = types[key] ?? types.unknown;
-  return React.createElement(Tooltip, null,
-    React.createElement(TooltipTrigger, { asChild: true },
-      React.createElement('span', {
-        className: `text-xs font-semibold font-sans tabular-nums px-1.5 py-0.5 rounded-sm flex flex-col items-center justify-center h-[22px] ${bg} cursor-default`,
-      }, `${confidence}%`),
-    ),
-    React.createElement(TooltipContent, {
-      side: 'top',
-      sideOffset: 6,
-      showArrow: false,
-      className: 'px-2 py-1 text-xs font-normal font-sans text-white bg-zinc-700 shadow-[0_0_0_1px_rgba(255,255,255,0.1),0_10px_15px_-3px_rgba(0,0,0,0.3)] whitespace-nowrap',
-    }, t.cards.classifiedTypeLabel(typeLabel)),
-  );
-}
-
-function buildHeader(target: Detection, t: Strings): CardHeaderProps {
+/**
+ * Build the card header. Icon + icon-surface colors come from the
+ * unified severity model — same source the map marker ring reads from —
+ * so card and map never disagree on urgency.
+ *
+ * Missions (flow 4) are not threats; they're operator-initiated planned
+ * actions. They keep their existing purple identity color regardless of
+ * severity, so the operator can tell at a glance "this card is a plan I
+ * authored" vs "this card is something the system detected".
+ *
+ * Affiliation no longer participates in icon coloring here. It will be
+ * surfaced separately (small IFF chip / marker glyph) so identity and
+ * urgency stay on independent visual axes.
+ *
+ * The confidence (`NN%`) pill was removed from the header — it competed
+ * with the urgency channel and isn't part of the card's at-a-glance
+ * read. Classification confidence still lives in the expanded
+ * `CardDetails` classification block.
+ */
+function buildHeader(target: Detection, severity: Severity, t: Strings): CardHeaderProps {
   const Icon = buildHeaderIcon(target);
-  const isActive = target.status === 'detection' || target.status === 'event';
   const isMission = target.flowType === 4;
-  const isRaw = target.entityStage === 'raw_detection';
-  const isCompleted = target.status === 'event_resolved'
-    || target.status === 'event_neutralized'
-    || target.status === 'expired';
 
-  // When affiliation is present, it owns the icon-wrapper color (single source
-  // of truth shared with the map). Fall back to lifecycle coloring otherwise
-  // so existing callers (missions, raw detections, active events) keep their
-  // current treatment.
-  const hasAffiliation = !!target.affiliation;
+  let iconColor: string | undefined;
+  let iconBgColor: string | undefined;
+
+  if (isMission) {
+    // Mission identity — purple, no severity tint. Missions sit on a
+    // different axis (planned action) from detected targets.
+    iconColor = '#a78bfa';
+  } else if (isUnclassifiedUnknown(target)) {
+    // Raw sensor blip, no identity yet — neutral gray glyph, no tint, so
+    // the card matches the gray dot on the map until classification.
+    iconColor = UNKNOWN_GRAY;
+  } else {
+    const severityColor = SEVERITY_COLOR[severity];
+    const surfaceOpacity = SEVERITY_SURFACE_OPACITY[severity];
+    iconBgColor = surfaceOpacity > 0 ? hexToRgba(severityColor, surfaceOpacity) : undefined;
+    // LOW desaturates the glyph itself so the receded surface has a
+    // matching foreground. Other tiers paint the glyph in their tier
+    // color directly.
+    iconColor = severity === 'LOW' ? '#a1a1aa' : severityColor;
+  }
 
   return {
     icon: Icon,
-    affiliation: target.affiliation,
-    iconColor: hasAffiliation
-      ? undefined
-      : isMission
-        ? '#a78bfa'
-        : isRaw
-          ? '#71717a'
-          : isActive
-            ? '#ef4444'
-            : '#9ca3af',
-    iconBgActive: !hasAffiliation && !isMission && !isRaw && isActive,
+    iconColor,
+    iconBgColor,
     title: isMission
       ? (target.plannedMission?.missionType === 'ptz' ? t.cards.cameraScan : t.cards.droneMission)
       : target.name,
     subtitle: isMission ? target.id : target.timestamp,
-    badge: target.entityStage && !isCompleted ? buildConfidenceBadge(target.confidence, target.classifiedType, t) : undefined,
   };
 }
 
@@ -759,10 +772,12 @@ function buildDetails(target: Detection, t: Strings): { rows: DetailRow[]; class
   let classification: CardDetailsClassification | undefined;
   if (target.entityStage === 'classified') {
     const typeLabels: Record<string, string> = {
-      drone: tl.drone, bird: tl.bird, aircraft: tl.aircraft, car: tl.car, unknown: tl.unknown,
+      drone: tl.drone, bird: tl.bird, aircraft: tl.aircraft, car: tl.car,
+      tank: tl.tank, truck: tl.truck, unknown: tl.unknown,
     };
     const colorClasses: Record<string, string> = {
       drone: 'text-red-400', bird: 'text-amber-400', aircraft: 'text-zinc-300', car: 'text-orange-400',
+      tank: 'text-orange-400', truck: 'text-orange-400',
     };
     classification = {
       type: target.classifiedType ?? 'unknown',
@@ -843,6 +858,7 @@ export function useCardSlots(
   ctx: CardContext = {},
 ): CardSlots {
   const t = useStrings();
+  const severity = useMemo(() => resolveTargetSeverity(target), [target]);
   const accent = useMemo(() => buildAccent(target), [target.status, target.mitigationStatus, target.weaponPointingStatus, target.flowType, target.droneDeployment?.phase, target.plannedMission?.phase]);
   const completed = target.status === 'event_resolved' || target.status === 'event_neutralized';
   const closureType = useMemo((): 'manual' | 'auto' | null => {
@@ -855,7 +871,7 @@ export function useCardSlots(
     if (target.status === 'event_resolved') return 'manual';
     return 'auto';
   }, [target.status, target.dismissReason]);
-  const header = useMemo(() => buildHeader(target, t), [target, t]);
+  const header = useMemo(() => buildHeader(target, severity, t), [target, severity, t]);
   const media = useMemo(() => buildMedia(target, ctx, t), [target, ctx.isCameraActive, t]);
   const actions = useMemo(() => buildActions(target, callbacks, ctx, t), [target, callbacks, ctx, t]);
   const timeline = useMemo(() => buildTimeline(target, ctx, t), [target, ctx.isDroneVerifying, t]);
@@ -869,5 +885,5 @@ export function useCardSlots(
   const log = target.actionLog ?? [];
   const closure = useMemo(() => buildClosure(target, callbacks, t), [target.flowPhase, target.flowType, callbacks, t]);
 
-  return { accent, completed, closureType, header, media, actions, timeline, identity, details, sensors, log, closure, laserPosition };
+  return { severity, accent, completed, closureType, header, media, actions, timeline, identity, details, sensors, log, closure, laserPosition };
 }

@@ -69,7 +69,7 @@ import IconChevronDoubleLeftRaw from '@central-icons-react/round-outlined-radius
 import IconChevronDoubleRightRaw from '@central-icons-react/round-outlined-radius-1-stroke-1.5/IconChevronDoubleRight';
 import IconArrowUpRaw from '@central-icons-react/round-outlined-radius-1-stroke-1.5/IconArrowUp';
 import IconArrowBottomTopRaw from '@central-icons-react/round-outlined-radius-1-stroke-1.5/IconArrowBottomTop';
-import IconXRaw from '@central-icons-react/round-outlined-radius-1-stroke-1.5/IconX';
+import IconCrossMediumRaw from '@central-icons-react/round-outlined-radius-1-stroke-1.5/IconCrossMedium';
 import IconPlusMediumRaw from '@central-icons-react/round-outlined-radius-1-stroke-1.5/IconPlusMedium';
 import IconCheckmark1MediumRaw from '@central-icons-react/round-outlined-radius-1-stroke-1.5/IconCheckmark1Medium';
 import IconCheckCircle2Raw from '@central-icons-react/round-outlined-radius-1-stroke-1.5/IconCheckCircle2';
@@ -79,6 +79,7 @@ import IconUnlockedRaw from '@central-icons-react/round-outlined-radius-1-stroke
 import IconHand5FingerRaw from '@central-icons-react/round-outlined-radius-1-stroke-1.5/IconHand5Finger';
 import IconBlockRaw from '@central-icons-react/round-outlined-radius-1-stroke-1.5/IconBlock';
 import IconTrashCanSimpleRaw from '@central-icons-react/round-outlined-radius-1-stroke-1.5/IconTrashCanSimple';
+import IconEditSmall1Raw from '@central-icons-react/round-outlined-radius-1-stroke-1.5/IconEditSmall1';
 import IconSendRaw from '@central-icons-react/round-outlined-radius-1-stroke-1.5/IconSend';
 import IconPhoneRaw from '@central-icons-react/round-outlined-radius-1-stroke-1.5/IconPhone';
 import IconBookSimpleRaw from '@central-icons-react/round-outlined-radius-1-stroke-1.5/IconBookSimple';
@@ -168,7 +169,12 @@ export const ArrowUp = asIcon(IconArrowUpRaw);
 export const ArrowUpDown = asIcon(IconArrowBottomTopRaw);
 
 // --- Actions & form controls ---
-export const X = asIcon(IconXRaw);
+// `X` is the canonical CLOSE glyph used by panel/dialog close buttons
+// across the app. Central's `IconX` is the *brand* "X" logo, not a
+// close cross, so the export is intentionally wired to `IconCrossMedium`.
+// `Close` is an alias for new code that wants the semantic name.
+export const X = asIcon(IconCrossMediumRaw);
+export const Close = X;
 export const Plus = asIcon(IconPlusMediumRaw);
 export const Check = asIcon(IconCheckmark1MediumRaw);
 export const CheckCircle2 = asIcon(IconCheckCircle2Raw);
@@ -178,6 +184,7 @@ export const LockOpen = asIcon(IconUnlockedRaw);
 export const Hand = asIcon(IconHand5FingerRaw);
 export const Ban = asIcon(IconBlockRaw);
 export const Trash2 = asIcon(IconTrashCanSimpleRaw);
+export const Pencil = asIcon(IconEditSmall1Raw);
 export const Send = asIcon(IconSendRaw);
 export const Phone = asIcon(IconPhoneRaw);
 export const BookOpen = asIcon(IconBookSimpleRaw);

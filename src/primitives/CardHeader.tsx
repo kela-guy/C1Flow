@@ -34,6 +34,15 @@ export interface CardHeaderProps {
   icon?: React.ElementType;
   iconColor?: string;
   iconBgActive?: boolean;
+  /**
+   * Explicit icon-surface background color. When set, wins over both
+   * `iconBgActive` and the affiliation-derived background — used by
+   * the unified urgency model (see `src/primitives/urgency.ts`) to
+   * tint the icon box by severity rather than by IFF affiliation.
+   * Accepts any valid CSS color (rgba recommended so the surface
+   * tints rather than overwrites).
+   */
+  iconBgColor?: string;
   affiliation?: Affiliation;
   title: string;
   subtitle?: string;
@@ -60,6 +69,7 @@ export function CardHeader({
   icon: Icon,
   iconColor,
   iconBgActive,
+  iconBgColor,
   affiliation,
   title,
   subtitle,
@@ -83,7 +93,13 @@ export function CardHeader({
       : hexToRgba(affPalette.glyph, AFFILIATION_BG_OPACITY))
     : undefined;
 
-  const iconBoxBg = affBg ?? (iconBgActive
+  // Resolution order for the icon-box background:
+  //   1. `iconBgColor` — explicit caller override, used by the unified
+  //      urgency model (severity-driven tint).
+  //   2. Affiliation palette — IFF-driven tint.
+  //   3. `iconBgActive` — legacy red active-bg toggle.
+  //   4. Default neutral surface.
+  const iconBoxBg = iconBgColor ?? affBg ?? (iconBgActive
     ? `${d.iconBox.activeBg}${Math.round(d.iconBox.activeBgOpacity * 255).toString(16).padStart(2, '0')}`
     : d.iconBox.defaultBg);
   const iconBoxFg = affGlyph ?? iconColor ?? (iconBgActive ? d.iconBox.activeBg : undefined);

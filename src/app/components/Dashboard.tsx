@@ -9,10 +9,17 @@ import { NotificationSystem, showTacticalNotification } from './NotificationSyst
 import { NotificationCenter } from './NotificationCenter';
 import ListOfSystems from '@/imports/ListOfSystems';
 import type { Detection, RegulusEffector, LauncherEffector } from '@/imports/ListOfSystems';
-import { List, Bell, Radar, Palette, Target, Video } from '@/lib/icons/central';
+import { List, Bell, Palette, Video, Sparkles } from '@/lib/icons/central';
+import { FlowBuilderPanel, defaultFlowDraft } from './flow-builder/FlowBuilderPanel';
+import { useFlowPlayer, type FlowPlayerOps } from './flow-builder/useFlowPlayer';
+import type { FlowPreview, SensorDetectionLink } from './CesiumTacticalMap';
+import type { FlowDef } from '@/lib/flowBuilder';
+import { readFlowPresets, deleteFlowPreset, FLOW_LOCATION_PRESETS } from '@/lib/flowBuilder';
+import { computeSeverityTrajectory } from './flow-builder/flowSeverity';
+import { SimulationsPanel, type BuiltinKind } from './simulations/SimulationsPanel';
+import { resolveTargetSeverity } from '@/primitives/urgency';
 import { Toggle } from '@/shared/components/ui/toggle';
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/shared/components/ui/tooltip';
-import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator } from '@/shared/components/ui/dropdown-menu';
 import { Separator } from '@/shared/components/ui/separator';
 import { DevicesPanel, DevicesIcon, DEVICE_CAMERA_DRAG_TYPE } from './DevicesPanel';
 import type { DeviceCameraDragItem } from './DevicesPanel';
@@ -248,7 +255,26 @@ export const Dashboard = ({ demoMode = false }: DashboardProps = {}) => {
   const [activeTargetId, setActiveTargetId] = useState<string | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [devicesPanelOpen, setDevicesPanelOpen] = useState(false);
-  const [simulationMenuOpen, setSimulationMenuOpen] = useState(false);
+  // Flow Builder panel — independent of the inline-start mutual-exclusion group
+  // (queue/devices). It docks on the inline-END so PM can watch the queue + map
+  // react while editing the flow.
+  const [flowBuilderOpen, setFlowBuilderOpen] = useState(false);
+  // Draft owned here (not inside the panel) so closing+reopening
+  // the panel preserves in-flight edits. Only named presets persist
+  // across reloads — see `c2hub.flowBuilder.presets` in storage.ts.
+  const [flowDraft, setFlowDraft] = useState<FlowDef>(() => defaultFlowDraft());
+  // Simulations panel — joins the inline-START mutual-exclusion group
+  // (queue/devices) so launching a sim naturally "switches to the
+  // target panel." Replaces the old CUAS dropdown menu.
+  const [simulationsPanelOpen, setSimulationsPanelOpen] = useState(false);
+  // Saved flow presets are lifted here so BOTH the Flow Builder (author)
+  // and the Simulations panel (run gallery) share one live list — a
+  // save in the builder shows up as a card immediately, no reload.
+  const [flowPresets, setFlowPresets] = useState<FlowDef[]>(() => readFlowPresets());
+  // Which saved preset the Flow Builder currently has loaded (so Save
+  // overwrites it). Lifted here so the Simulations "edit" action can
+  // load a preset into the builder with the right id.
+  const [flowLoadedPresetId, setFlowLoadedPresetId] = useState<string | null>(null);
   const [focusedDeviceId, setFocusedDeviceId] = useState<string | null>(null);
   const [selectedAssetId, setSelectedAssetId] = useState<string | null>(null);
   const [panelSwitching, setPanelSwitching] = useState(false);
@@ -267,6 +293,11 @@ export const Dashboard = ({ demoMode = false }: DashboardProps = {}) => {
   }, []);
 
   const [targets, setTargets] = useState<Detection[]>([]);
+  // Always-fresh mirror of `targets` for callbacks that must read the
+  // current track without being recreated each render (e.g. the flow
+  // player's camera-point op reads a moving target's live coordinates).
+  const targetsRef = useRef<Detection[]>([]);
+  targetsRef.current = targets;
   const [hoveredSensorIdFromCard, setHoveredSensorIdFromCard] = useState<string | null>(null);
   const [hoveredTargetIdFromCard, setHoveredTargetIdFromCard] = useState<string | null>(null);
   const [sensorFocusId, setSensorFocusId] = useState<string | null>(null);
@@ -571,6 +602,10 @@ export const Dashboard = ({ demoMode = false }: DashboardProps = {}) => {
       const activeLoiterIds = new Set<string>();
       setTargets(prev => prev.map(t => {
         if (approachingTargetIds.current.has(t.id)) return t;
+        // Flow Builder spawns drive their own movement loop in
+        // `useFlowPlayer`; never let the loiter sim fight it for the
+        // same track.
+        if (t.id.startsWith('FLOW-')) return t;
 
         const isActiveDrone = t.entityStage === 'classified'
           && t.classifiedType === 'drone'
@@ -863,7 +898,6 @@ export const Dashboard = ({ demoMode = false }: DashboardProps = {}) => {
 
   // --- CUAS Simulation Flows ---
   const handleCUASFlow = useCallback(() => {
-    setSimulationMenuOpen(false);
     if (devicesPanelOpen) setPanelSwitching(true);
     setDevicesPanelOpen(false);
     setSelectedAssetId(null);
@@ -904,7 +938,6 @@ export const Dashboard = ({ demoMode = false }: DashboardProps = {}) => {
   }, [devicesPanelOpen, spawnCuasTarget]);
 
   const handleCUASSingle = useCallback(() => {
-    setSimulationMenuOpen(false);
     if (devicesPanelOpen) setPanelSwitching(true);
     setDevicesPanelOpen(false);
     setSelectedAssetId(null);
@@ -924,7 +957,6 @@ export const Dashboard = ({ demoMode = false }: DashboardProps = {}) => {
   }, [devicesPanelOpen, spawnCuasTarget]);
 
   const handleCUASMassDetection = useCallback(() => {
-    setSimulationMenuOpen(false);
     if (devicesPanelOpen) setPanelSwitching(true);
     setDevicesPanelOpen(false);
     setSelectedAssetId(null);
@@ -1327,26 +1359,277 @@ export const Dashboard = ({ demoMode = false }: DashboardProps = {}) => {
   }, []);
 
   const openSystemsPanel = useCallback(() => {
-    if (devicesPanelOpen) setPanelSwitching(true);
+    if (devicesPanelOpen || simulationsPanelOpen || flowBuilderOpen) setPanelSwitching(true);
     setSidebarOpen(true);
     setDevicesPanelOpen(false);
+    setSimulationsPanelOpen(false);
+    setFlowBuilderOpen(false);
     setSelectedAssetId(null);
-  }, [devicesPanelOpen]);
+  }, [devicesPanelOpen, simulationsPanelOpen, flowBuilderOpen]);
 
   const closeSystemsPanel = useCallback(() => {
     setSidebarOpen(false);
   }, []);
 
   const openDevicesPanel = useCallback(() => {
-    if (sidebarOpen) setPanelSwitching(true);
+    if (sidebarOpen || simulationsPanelOpen || flowBuilderOpen) setPanelSwitching(true);
     setSidebarOpen(false);
+    setSimulationsPanelOpen(false);
+    setFlowBuilderOpen(false);
     setDevicesPanelOpen(true);
-  }, [sidebarOpen]);
+  }, [sidebarOpen, simulationsPanelOpen, flowBuilderOpen]);
 
   const closeDevicesPanel = useCallback(() => {
     setDevicesPanelOpen(false);
     setSelectedAssetId(null);
   }, []);
+
+  const openSimulationsPanel = useCallback(() => {
+    if (sidebarOpen || devicesPanelOpen || flowBuilderOpen) setPanelSwitching(true);
+    setSidebarOpen(false);
+    setDevicesPanelOpen(false);
+    setFlowBuilderOpen(false);
+    setSelectedAssetId(null);
+    setSimulationsPanelOpen(true);
+  }, [sidebarOpen, devicesPanelOpen, flowBuilderOpen]);
+
+  const closeSimulationsPanel = useCallback(() => {
+    setSimulationsPanelOpen(false);
+  }, []);
+
+  // Flow Builder joins the right-side mutual-exclusion group: opening it
+  // closes the queue / Devices / Simulations (and vice-versa, above).
+  const openFlowBuilderPanel = useCallback(() => {
+    if (sidebarOpen || devicesPanelOpen || simulationsPanelOpen) setPanelSwitching(true);
+    setSidebarOpen(false);
+    setDevicesPanelOpen(false);
+    setSimulationsPanelOpen(false);
+    setSelectedAssetId(null);
+    setFlowBuilderOpen(true);
+  }, [sidebarOpen, devicesPanelOpen, simulationsPanelOpen]);
+
+  // Tracks the flow detection id we've already stolen focus to, so the
+  // escalation watcher (below) fires exactly once per playback. Resets
+  // when the active flow detection clears (reset / new play mints a new
+  // id, so the guard naturally re-arms).
+  const flowEscalationRef = useRef<string | null>(null);
+
+  // ── Flow Builder — production ops shim ──────────────────────────────
+  //
+  // The player ([useFlowPlayer](./flow-builder/useFlowPlayer.ts))
+  // calls into these seams. Everything that has a production side
+  // effect (engagement chain, effector reset) routes through the
+  // SAME handlers the live card buttons use, so manual stepping and
+  // auto playback are pixel-identical to operator-driven runs.
+  const flowOps = useMemo<FlowPlayerOps>(() => ({
+    appendDetection: (det) => {
+      setTargets((prev) => [...prev, det]);
+    },
+    patchDetection: (id, patch) => {
+      setTargets((prev) => prev.map((tg) => (tg.id === id ? { ...tg, ...patch } : tg)));
+    },
+    removeDetection: (id) => {
+      setTargets((prev) => prev.filter((tg) => tg.id !== id));
+    },
+    dispatchAct: ({ kind, targetId }) => {
+      if (kind === 'jam') {
+        // Pick the first available regulus effector; the production
+        // handler accepts an explicit asset id, so this mirrors the
+        // operator clicking the topmost dropdown option.
+        const eff = regulusEffectors.find((r) => r.status === 'available');
+        if (eff) handleMitigate(targetId, eff.id);
+        return;
+      }
+      if (kind === 'weapon') {
+        const launcher = launcherEffectors.find((l) => l.status === 'available');
+        if (launcher) {
+          handlePointWeapon(targetId, launcher.id);
+          // Chain pointing -> locking -> mission-complete with small
+          // delays so the player's closure mutation lands on top of a
+          // fully-driven engagement (matching what the operator sees
+          // when clicking through manually).
+          setTimeout(() => handleLockWeapon(targetId), 3200);
+          setTimeout(() => handleCompleteMission(targetId), 5200);
+        }
+        return;
+      }
+      if (kind === 'dismiss') {
+        handleDismiss(targetId);
+      }
+    },
+    invokeCameraPoint: (targetId) => {
+      // Real PTZ slew: pick the nearest camera to the (moving) target,
+      // mark it pointing, then after a short dwell lock the look-at on
+      // the target's CURRENT coordinates. Mirrors the production
+      // `handleStartMission('investigate')` chain so the card pointing
+      // state, action log, and camera viewer behave identically.
+      const tgt = targetsRef.current.find((x) => x.id === targetId);
+      if (!tgt) return;
+      const [lat, lon] = (tgt.coordinates ?? '').split(',').map((s) => parseFloat(s.trim()));
+      if (!Number.isFinite(lat) || !Number.isFinite(lon)) return;
+      const nearest = CAMERA_ASSETS
+        .map((c) => ({ cam: c, dist: haversineDistanceM(c.latitude, c.longitude, lat, lon) }))
+        .sort((a, b) => a.dist - b.dist)[0];
+      if (!nearest) return;
+      const cam = nearest.cam;
+
+      if (cameraPointingTimeoutRef.current) clearTimeout(cameraPointingTimeoutRef.current);
+      setCameraPointingTargetId(targetId);
+      setActiveTargetId(targetId);
+      setSidebarOpen(true);
+      setTargets((prev) => appendLog(prev, targetId, t.actionLog.cameraPointing(cam.typeLabel)));
+
+      cameraPointingTimeoutRef.current = setTimeout(() => {
+        setCameraPointingTargetId(null);
+        const cur = targetsRef.current.find((x) => x.id === targetId);
+        const [clat, clon] = (cur?.coordinates ?? tgt.coordinates ?? '')
+          .split(',')
+          .map((s) => parseFloat(s.trim()));
+        setCameraLookAtRequest({
+          cameraId: cam.id,
+          targetLat: Number.isFinite(clat) ? clat : lat,
+          targetLon: Number.isFinite(clon) ? clon : lon,
+        });
+        setTargets((prev) => appendLog(prev, targetId, t.actionLog.cameraLocked(cam.typeLabel)));
+      }, 1500);
+    },
+    resetEffectors: () => {
+      setRegulusEffectors((prev) => prev.map((r) =>
+        r.status !== 'available' ? { ...r, status: 'available' as const, activeTargetId: undefined } : r,
+      ));
+      setLauncherEffectors((prev) => prev.map((l) =>
+        l.status !== 'available' ? { ...l, status: 'available' as const } : l,
+      ));
+    },
+    onDetectionAppended: (det) => {
+      // Detection-faithful spawn: behave like a real detection. Always
+      // notify, but only "steal" focus (select + fly map) if the spawn
+      // already lands at HIGH/CRITICAL — otherwise the card surfaces in
+      // the queue without yanking the operator's attention. Mid-flow
+      // escalation into HIGH/CRITICAL is handled by the watcher effect
+      // below (see `flowEscalationRef`).
+      const sev = resolveTargetSeverity(det);
+      if (sev === 'HIGH' || sev === 'CRITICAL') {
+        setActiveTargetId(det.id);
+        const [lat, lon] = (det.coordinates ?? '').split(',').map((s) => parseFloat(s.trim()));
+        if (Number.isFinite(lat) && Number.isFinite(lon)) {
+          setMapFocusRequest({ lat, lon });
+          setTimeout(() => setMapFocusRequest(null), 100);
+        }
+        flowEscalationRef.current = det.id;
+      }
+      showTacticalNotification({
+        title: t.notifications.newDetectionTitle(det.name ?? det.id),
+        message: det.coordinates ?? '',
+        level: 'medium',
+      });
+    },
+  }), [
+    regulusEffectors,
+    launcherEffectors,
+    handleMitigate,
+    handlePointWeapon,
+    handleLockWeapon,
+    handleCompleteMission,
+    handleDismiss,
+    t,
+  ]);
+
+  const flowPlayer = useFlowPlayer({ ops: flowOps, nowLabel: nowLocaleTime });
+
+  // Derive the sensor->target detection geometry from the live player
+  // state. Undefined while idle so the production map renders zero
+  // extra polylines for normal operations.
+  const flowSensorLinks = useMemo<SensorDetectionLink[] | undefined>(() => {
+    const def = flowPlayer.def;
+    const id = flowPlayer.state.activeDetectionId;
+    if (!def || !id) return undefined;
+    return def.sensorIds.map((sensorId) => ({ sensorId, targetId: id }));
+  }, [flowPlayer.def, flowPlayer.state.activeDetectionId]);
+
+  // Live draft preview: while the Flow Builder is open and no flow has
+  // spawned yet, show a ghost target + sensor lines so the PM feels the
+  // map react as they author. Severity = the first (detection-stage)
+  // trajectory entry, so it reads as "what this looks like when it
+  // spawns." Undefined while playing — the real geometry takes over.
+  const flowPreview = useMemo<FlowPreview | undefined>(() => {
+    if (!flowBuilderOpen || flowPlayer.state.activeDetectionId) return undefined;
+    const loc = flowDraft.location.kind === 'custom'
+      ? { lat: flowDraft.location.lat, lon: flowDraft.location.lon }
+      : FLOW_LOCATION_PRESETS[flowDraft.location.key];
+    const severity = computeSeverityTrajectory(flowDraft)[0]?.severity ?? 'MEDIUM';
+    return {
+      lat: loc.lat,
+      lon: loc.lon,
+      sensorIds: flowDraft.sensorIds,
+      severity,
+      entity: flowDraft.entity,
+    };
+  }, [flowBuilderOpen, flowPlayer.state.activeDetectionId, flowDraft]);
+
+  // Detection-faithful focus escalation. A spawned flow detection that
+  // starts LOW/MEDIUM sits quietly in the queue; the *moment* its
+  // severity first crosses into HIGH/CRITICAL (e.g. as a hostile drone
+  // classifies / engages) we steal focus once — select the card and fly
+  // the map — mirroring how a real high-priority detection grabs the
+  // operator. A bird/dismiss flow never crosses the threshold and never
+  // steals focus.
+  const activeFlowDetectionId = flowPlayer.state.activeDetectionId;
+  useEffect(() => {
+    if (!activeFlowDetectionId) {
+      // Playback reset / idle — re-arm for the next run.
+      flowEscalationRef.current = null;
+      return;
+    }
+    if (flowEscalationRef.current === activeFlowDetectionId) return;
+    const det = targets.find((tg) => tg.id === activeFlowDetectionId);
+    if (!det) return;
+    const sev = resolveTargetSeverity(det);
+    if (sev === 'HIGH' || sev === 'CRITICAL') {
+      flowEscalationRef.current = activeFlowDetectionId;
+      setActiveTargetId(activeFlowDetectionId);
+      const [lat, lon] = (det.coordinates ?? '').split(',').map((s) => parseFloat(s.trim()));
+      if (Number.isFinite(lat) && Number.isFinite(lon)) {
+        setMapFocusRequest({ lat, lon });
+        setTimeout(() => setMapFocusRequest(null), 100);
+      }
+    }
+  }, [activeFlowDetectionId, targets]);
+
+  // ── Simulations panel — run / edit / delete ────────────────────────
+  const handleRunBuiltin = useCallback((kind: BuiltinKind) => {
+    // Close Simulations and surface the queue, then fire the existing
+    // CUAS injector. The injectors already open the queue panel, so
+    // this just guarantees Simulations isn't left covering it.
+    setSimulationsPanelOpen(false);
+    if (kind === 'single') handleCUASSingle();
+    else if (kind === 'flow') handleCUASFlow();
+    else handleCUASMassDetection();
+  }, [handleCUASSingle, handleCUASFlow, handleCUASMassDetection]);
+
+  const handleRunFlow = useCallback((def: FlowDef) => {
+    // Switch to the target panel (closes Simulations + devices), then
+    // load + play. Focus stealing is delegated to the player's
+    // detection-faithful escalation rule.
+    openSystemsPanel();
+    flowPlayer.loadFlow(def);
+    flowPlayer.play();
+  }, [openSystemsPanel, flowPlayer]);
+
+  const handleEditFlow = useCallback((def: FlowDef) => {
+    setFlowDraft({ ...def });
+    setFlowLoadedPresetId(def.id);
+    openFlowBuilderPanel();
+  }, [openFlowBuilderPanel]);
+
+  const handleDeleteFlow = useCallback((def: FlowDef) => {
+    const after = deleteFlowPreset(def.id);
+    setFlowPresets(after);
+    if (flowLoadedPresetId === def.id) {
+      setFlowLoadedPresetId(null);
+    }
+    toast.success(t.flowBuilder.toasts.deleted(def.name));
+  }, [flowLoadedPresetId, t]);
 
   const handleAssetClick = useCallback((assetId: string) => {
     openDevicesPanel();
@@ -1560,47 +1843,43 @@ export const Dashboard = ({ demoMode = false }: DashboardProps = {}) => {
             </TooltipContent>
           </Tooltip>
 
-          <DropdownMenu>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <DropdownMenuTrigger asChild>
-                  <button
-                    data-cuas-sim-menu
-                    className="size-6 rounded flex items-center justify-center text-gray-400 hover:text-white hover:bg-white/10 active:scale-[0.97] transition-[color,background-color] focus-visible:ring-2 focus-visible:ring-white/20 focus-visible:outline-none"
-                    aria-label={t.dashboard.cuasScenariosAriaLabel}
-                  >
-                    <CuasIcon size={20} strokeWidth={1.5} />
-                  </button>
-                </DropdownMenuTrigger>
-              </TooltipTrigger>
-              <TooltipContent side={railTooltipSide} sideOffset={8}>{t.dashboard.cuasScenarios}</TooltipContent>
-            </Tooltip>
-            <DropdownMenuContent
-              side={railTooltipSide}
-              align="start"
-              sideOffset={8}
-              className="w-52 rounded bg-[#202020] border-0 shadow-[0_25px_50px_-12px_rgba(0,0,0,0.5)]"
-            >
-              <DropdownMenuLabel className="text-xs text-white/70 uppercase tracking-wider">CUAS</DropdownMenuLabel>
-              <DropdownMenuSeparator className="bg-white/10" />
-              <DropdownMenuItem onSelect={handleCUASSingle} className="gap-2.5 text-xs text-zinc-300 focus:bg-white/10 focus:text-white">
-                <Target size={14} className="shrink-0 text-zinc-400" />
-                <span>{t.dashboard.scenarioSingle}</span>
-              </DropdownMenuItem>
-              <DropdownMenuItem onSelect={handleCUASFlow} className="gap-2.5 text-xs text-zinc-300 focus:bg-white/10 focus:text-white">
-                <CuasIcon size={14} className="shrink-0 text-zinc-400" />
-                <span>{t.dashboard.scenarioFull}</span>
-              </DropdownMenuItem>
-              <DropdownMenuItem onSelect={handleCUASMassDetection} className="gap-2.5 text-xs text-zinc-300 focus:bg-white/10 focus:text-white">
-                <Radar size={14} className="shrink-0 text-zinc-400" />
-                <span>{t.dashboard.scenarioSwarm}</span>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Toggle
+                size="sm"
+                pressed={simulationsPanelOpen}
+                onPressedChange={(next) => {
+                  if (next) openSimulationsPanel();
+                  else closeSimulationsPanel();
+                }}
+                className="size-6 min-w-6 px-0 rounded bg-transparent text-gray-400 aria-pressed:bg-white/[0.08] aria-pressed:text-white aria-pressed:ring-1 aria-pressed:ring-inset aria-pressed:ring-white/15 hover:text-white hover:bg-white/10 active:scale-[0.97] transition-[color,background-color] focus-visible:ring-2 focus-visible:ring-white/20 focus-visible:outline-none"
+                aria-label={simulationsPanelOpen ? t.flowBuilder.simulations.close : t.flowBuilder.simulations.title}
+              >
+                <CuasIcon size={20} strokeWidth={1.5} />
+              </Toggle>
+            </TooltipTrigger>
+            <TooltipContent side={railTooltipSide} sideOffset={8}>{t.flowBuilder.simulations.title}</TooltipContent>
+          </Tooltip>
         </div>
 
         <Separator className="bg-white/10" />
         <div className="flex flex-col items-center gap-0.5 py-2">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Toggle
+                size="sm"
+                pressed={flowBuilderOpen}
+                onPressedChange={(next: boolean) => (next ? openFlowBuilderPanel() : setFlowBuilderOpen(false))}
+                className="size-6 min-w-6 px-0 rounded bg-transparent text-gray-400 aria-pressed:bg-white/[0.08] aria-pressed:text-white aria-pressed:ring-1 aria-pressed:ring-inset aria-pressed:ring-white/15 hover:text-white hover:bg-white/10 active:scale-[0.97] transition-[color,background-color] focus-visible:ring-2 focus-visible:ring-white/20 focus-visible:outline-none"
+                aria-label={t.flowBuilder.panel.title}
+              >
+                <Sparkles size={20} />
+              </Toggle>
+            </TooltipTrigger>
+            <TooltipContent side={railTooltipSide} sideOffset={8}>
+              {t.flowBuilder.panel.title}
+            </TooltipContent>
+          </Tooltip>
           {/*
             Mount point for the Handoff Inspector picker. The inspector
             module (see `src/app/components/handoff/HandoffInspector.tsx`)
@@ -1718,6 +1997,8 @@ export const Dashboard = ({ demoMode = false }: DashboardProps = {}) => {
                   launcherEffectors={launcherEffectors}
                   selectedLauncherIds={selectedLauncherIds}
                   darkMonochromeMap={demoMode}
+                  sensorDetectionLinks={flowSensorLinks}
+                  flowPreview={flowPreview}
                 />
                 </PerfProfiled>
               </CesiumErrorBoundary>
@@ -1853,6 +2134,35 @@ export const Dashboard = ({ demoMode = false }: DashboardProps = {}) => {
           * mute interval, and full device-list iteration on every Dashboard
           * render. We trade the slide-out animation for a tighter render budget.
           */}
+        {flowBuilderOpen && (
+          <FlowBuilderPanel
+            open={flowBuilderOpen}
+            onClose={() => setFlowBuilderOpen(false)}
+            width={sidebarWidth}
+            noTransition={panelSwitching}
+            draft={flowDraft}
+            onDraftChange={setFlowDraft}
+            presets={flowPresets}
+            onPresetsChange={setFlowPresets}
+            loadedPresetId={flowLoadedPresetId}
+            onLoadedPresetIdChange={setFlowLoadedPresetId}
+          />
+        )}
+
+        {simulationsPanelOpen && (
+          <SimulationsPanel
+            open={simulationsPanelOpen}
+            onClose={closeSimulationsPanel}
+            width={sidebarWidth}
+            noTransition={panelSwitching}
+            presets={flowPresets}
+            onRunBuiltin={handleRunBuiltin}
+            onRunFlow={handleRunFlow}
+            onEditFlow={handleEditFlow}
+            onDeleteFlow={handleDeleteFlow}
+          />
+        )}
+
         {devicesPanelOpen && (
           <DevicesPanel
             devices={allDevices}

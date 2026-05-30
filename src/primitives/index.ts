@@ -1,4 +1,14 @@
 export { CARD_TOKENS, ELEVATION, SURFACE, LAYOUT_TOKENS, surfaceAt, overlayAt, hexToRgba, type ThreatAccent } from './tokens';
+export {
+  resolveTargetSeverity,
+  isReceding,
+  SEVERITY_ORDER,
+  SEVERITY_LABEL,
+  SEVERITY_COLOR,
+  SEVERITY_SURFACE_OPACITY,
+  SEVERITY_PULSE,
+  type Severity,
+} from './urgency';
 export { StatusChip, STATUS_CHIP_COLORS, type StatusChipColor } from './StatusChip';
 export { ActionButton, ACTION_BUTTON_VARIANTS, ACTION_BUTTON_SIZES, type ActionButtonVariant, type ActionButtonSize } from './ActionButton';
 export { SplitActionButton, SPLIT_BUTTON_VARIANTS, SPLIT_BUTTON_SIZES, type SplitButtonVariant, type SplitButtonSize, type SplitActionButtonProps, type SplitDropdownItem, type SplitDropdownGroup } from './SplitActionButton';
@@ -29,16 +39,31 @@ export {
   type CesiumPolyline,
   type CesiumSceneMode,
 } from './CesiumMap';
-export { DroneCardIcon, JamWaveIcon, MissileCardIcon, DRONE_PATH, MISSILE_PATH } from './MapIcons';
+export {
+  DroneCardIcon,
+  JamWaveIcon,
+  MissileCardIcon,
+  CarIcon,
+  CarCardIcon,
+  TankIcon,
+  TankCardIcon,
+  TruckIcon,
+  TruckCardIcon,
+  DRONE_PATH,
+  MISSILE_PATH,
+  CAR_PATH,
+} from './MapIcons';
 export {
   type Affiliation,
   type InteractionState,
   type MarkerStyle,
+  type TargetMarkerInteraction,
   INTERACTION_STATES,
   AFFILIATIONS,
   INTERACTION_STATE_LABELS,
   AFFILIATION_LABELS,
   AFFILIATION_PALETTES,
   resolveMarkerStyle,
+  resolveTargetMarkerStyle,
   headingToCompass,
 } from './markerStyles';

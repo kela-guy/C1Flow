@@ -4,9 +4,14 @@ import type mapboxgl from 'mapbox-gl';
 
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { Crosshair, AlertTriangle, ShieldAlert, Camera, CheckCircle2, Radio, Search, Eye, MapPin, X, Compass, Circle, Video, Info, Settings, BellOff, Wrench, ExternalLink, Maximize2, Plane } from 'lucide-react';
-import { JamWaveIcon, DRONE_PATH, MISSILE_PATH, CarIcon } from '@/primitives/MapIcons';
+import { JamWaveIcon, DRONE_PATH, MISSILE_PATH, CarIcon, TankIcon, TruckIcon } from '@/primitives/MapIcons';
 import { MapMarker } from '@/primitives/MapMarker';
-import { type Affiliation, type InteractionState, resolveMarkerStyle } from '@/primitives/markerStyles';
+import {
+  type InteractionState,
+  type TargetMarkerInteraction,
+  resolveMarkerStyle,
+  resolveTargetMarkerStyle,
+} from '@/primitives/markerStyles';
 import { OFFLINE_VISIBILITY_VARIANT } from '@/app/config/offlineVisibility';
 import {
   ContextMenu,
@@ -1593,12 +1598,12 @@ export const TacticalMap = ({
               droneHeadingDeg = bearingDegrees(p0.lat, p0.lon, p1.lat, p1.lon);
             }
 
-            const targetAffiliation: Affiliation =
-              isBird ? 'unknown' :
-              isClassified || isCritical ? 'hostile' :
-              'possibleThreat';
-
-            const targetState: InteractionState =
+            // Unified urgency model: ring color + pulse come from
+            // `resolveTargetSeverity` (same source the card spine reads
+            // from); affiliation/glyph + interaction stay as before but
+            // never override the urgency channel. See
+            // `docs/urgency-unification-plan.md`.
+            const targetInteraction: TargetMarkerInteraction =
               isExpiredCuas ? 'expired' :
               isMitigated ? 'disabled' :
               isMitigating ? 'active' :
@@ -1606,13 +1611,19 @@ export const TacticalMap = ({
               isHoveredTarget ? 'hovered' :
               'default';
 
-            const targetStyle = resolveMarkerStyle(targetState, targetAffiliation);
+            const targetStyle = resolveTargetMarkerStyle(target, targetInteraction);
 
             const isCar = target.classifiedType === 'car';
+            const isTank = target.classifiedType === 'tank';
+            const isTruck = target.classifiedType === 'truck';
             const targetGlyph = isClassified && isDrone
               ? <DroneIcon rotationDeg={droneHeadingDeg - 90} color={targetStyle.glyphColor} disabled={isMitigated} />
               : isClassified && isCar
               ? <CarIcon color={targetStyle.glyphColor} size={26} />
+              : isClassified && isTank
+              ? <TankIcon color={targetStyle.glyphColor} size={26} />
+              : isClassified && isTruck
+              ? <TruckIcon color={targetStyle.glyphColor} size={26} />
               : <div className="w-2.5 h-2.5 rounded-full" style={{ background: targetStyle.glyphColor }} />;
 
             const targetSurfaceSize = isExpiredCuas ? 24 : isClassified ? 32 : 28;

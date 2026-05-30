@@ -7,6 +7,7 @@ import {
 import { Card } from '@/shared/components/ui/card';
 import { cn } from '@/shared/components/ui/utils';
 import { CARD_TOKENS, type ThreatAccent } from './tokens';
+import { type Severity } from './urgency';
 
 export interface TargetCardProps {
   header: React.ReactNode;
@@ -14,6 +15,17 @@ export interface TargetCardProps {
   footer?: React.ReactNode;
   open: boolean;
   onToggle: () => void;
+  /**
+   * Unified urgency tier. Accepted for API compatibility — urgency on
+   * the card is communicated through the header icon glyph + icon
+   * surface color (see `useCardSlots`), not a spine. The card itself
+   * renders no urgency chrome.
+   */
+  severity?: Severity;
+  /**
+   * @deprecated Lifecycle accent. Accepted for API compatibility only;
+   * the card renders no spine.
+   */
   accent?: ThreatAccent;
   completed?: boolean;
   className?: string;
@@ -26,7 +38,6 @@ export function TargetCard({
   footer,
   open,
   onToggle,
-  accent = 'idle',
   completed,
   className = '',
   onFocus,

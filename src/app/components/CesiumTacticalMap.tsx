@@ -28,8 +28,10 @@ import {
   type CesiumSceneMode,
   MapMarker,
   resolveMarkerStyle,
+  resolveTargetMarkerStyle,
   type Affiliation,
   type InteractionState,
+  type TargetMarkerInteraction,
 } from '@/primitives';
 import {
   CAMERA_ASSETS,
@@ -51,7 +53,8 @@ import {
   DroneIcon,
   MissileIcon,
 } from './tacticalIcons';
-import { CarIcon } from '@/primitives/MapIcons';
+import { CarIcon, TankIcon, TruckIcon } from '@/primitives/MapIcons';
+import { SEVERITY_COLOR, isUnclassifiedUnknown, UNKNOWN_GRAY, type Severity } from '@/primitives/urgency';
 import { Phone } from '@/lib/icons/central';
 import {
   FOV_RADIUS_M,
@@ -71,12 +74,45 @@ import type { Detection, RegulusEffector, LauncherEffector } from '@/imports/Lis
  * jamming-verification animation, PathFinder, planning click handlers)
  * were removed when the legacy backend was retired.
  */
+/**
+ * Sensor-to-target detection geometry. When supplied, the map draws
+ * a thin cyan polyline from each `sensorId` (resolved through the
+ * static asset registry in `tacticalAssets.ts`) to the corresponding
+ * target's coordinates, AND lifts those sensors into the highlighted
+ * FOV set. Used by the Flow Builder to make "X is being seen by Y"
+ * legible without forcing the PM to also wire highlightedSensorIds.
+ */
+export interface SensorDetectionLink {
+  sensorId: string;
+  targetId: string;
+}
+
+/**
+ * Flow Builder draft preview. Additive: when set (and no real flow is
+ * running) the map renders a low-opacity "ghost" target at (lat, lon),
+ * faint dashed sensor lines, and lights up the preview sensors' FOVs —
+ * so the PM gets immediate feedback while authoring, before anything is
+ * actually spawned. `severity` colours the ghost ring to match the
+ * panel's trajectory chip.
+ */
+export interface FlowPreview {
+  lat: number;
+  lon: number;
+  sensorIds: string[];
+  severity: Severity;
+  entity: 'drone' | 'car' | 'tank' | 'truck' | 'bird';
+}
+
 export interface CesiumTacticalMapProps {
   focusCoords?: { lat: number; lon: number } | null;
   targets?: Detection[];
   activeTargetId?: string | null;
   onMarkerClick?: (targetId: string) => void;
   highlightedSensorIds?: string[];
+  /** Optional sensor->target detection geometry (Flow Builder; ignored when undefined). */
+  sensorDetectionLinks?: SensorDetectionLink[];
+  /** Optional Flow Builder draft preview (ghost marker + sensor lines). */
+  flowPreview?: FlowPreview;
   hoveredSensorIdFromCard?: string | null;
   jammingTargetId?: string | null;
   jammingJammerAssetId?: string | null;
@@ -218,8 +254,26 @@ function buildThreatIcon(
   const rotationDeg =
     targetHeading != null ? droneRotationFromHeading(targetHeading) : 0;
 
+  // Unclassified raw blip — a bare sensor track has no identity yet, so
+  // we render a plain gray dot instead of guessing a glyph. The dot flips
+  // to the real entity glyph once the classify reveal lands.
+  if (isUnclassifiedUnknown(target)) {
+    return (
+      <div
+        style={{
+          width: 12,
+          height: 12,
+          borderRadius: '50%',
+          backgroundColor: UNKNOWN_GRAY,
+        }}
+      />
+    );
+  }
+
   const classified = target.classifiedType;
   if (classified === 'car') return <CarIcon color={glyphColor} />;
+  if (classified === 'tank') return <TankIcon color={glyphColor} />;
+  if (classified === 'truck') return <TruckIcon color={glyphColor} />;
   if (classified === 'drone' || classified === 'aircraft' || classified === 'bird') {
     return <DroneIcon color={glyphColor} rotationDeg={rotationDeg} />;
   }
@@ -357,18 +411,23 @@ function targetHeadingFromTrail(t: Detection): number | null {
  * Map a `Detection.status` onto an `InteractionState` so we can reuse the
  * existing `markerStyles.ts` palette. Mirrors the pairing the Mapbox map uses.
  */
-function detectionInteractionState(d: Detection): InteractionState {
+/**
+ * Lifecycle → interaction-axis mapping for a target marker. Returns
+ * only the interaction-side values defined in `TargetMarkerInteraction`
+ * — urgency-flavoured values like `alert` are deliberately not
+ * returned, because urgency is now communicated through severity
+ * (ring color + pulse) by `resolveTargetMarkerStyle`.
+ */
+function detectionInteractionState(d: Detection): TargetMarkerInteraction {
   switch (d.status) {
     case 'tracking':
       return 'active';
+    case 'expired':
+      return 'expired';
     case 'event':
     case 'event_neutralized':
     case 'event_resolved':
-      return 'alert';
-    case 'expired':
-      return 'expired';
     case 'suspicion':
-      return 'default';
     case 'detection':
     default:
       return 'default';
@@ -392,6 +451,8 @@ export function CesiumTacticalMap({
   hoveredTargetIdFromCard,
   hoveredSensorIdFromCard,
   highlightedSensorIds,
+  sensorDetectionLinks,
+  flowPreview,
   selectedAssetId,
   offlineAssetIds,
   regulusEffectors,
@@ -417,9 +478,22 @@ export function CesiumTacticalMap({
 }: CesiumTacticalMapProps) {
   const t = useStrings().map;
   const offlineSet = useMemo(() => new Set(offlineAssetIds ?? []), [offlineAssetIds]);
+  // The draft preview only shows while no real flow geometry exists; once
+  // a flow spawns (`sensorDetectionLinks` populated) the live geometry
+  // takes over and the preview bails.
+  const previewActive = !!flowPreview && (sensorDetectionLinks?.length ?? 0) === 0;
   const highlightedSensorSet = useMemo(
-    () => new Set(highlightedSensorIds ?? []),
-    [highlightedSensorIds],
+    () => {
+      const s = new Set(highlightedSensorIds ?? []);
+      // Any sensor that's the source of a detection link also lights
+      // up its FOV. Lets the Flow Builder pass a single prop instead
+      // of plumbing the same ids through two channels.
+      for (const link of sensorDetectionLinks ?? []) s.add(link.sensorId);
+      // Same path for the draft preview's sensors.
+      if (previewActive && flowPreview) for (const id of flowPreview.sensorIds) s.add(id);
+      return s;
+    },
+    [highlightedSensorIds, sensorDetectionLinks, previewActive, flowPreview],
   );
   const [contextMenu, setContextMenu] = useState<ContextMenuState | null>(null);
   // Tracks which marker the cursor is currently over (DOM-level hover).
@@ -823,13 +897,16 @@ export function CesiumTacticalMap({
       const isHoveredFromCard = hoveredTargetIdFromCard === t.id;
       const isHoveredOnMap = hoveredMarkerId === t.id;
       const isHovered = isHoveredFromCard || isHoveredOnMap;
-      const baseState = detectionInteractionState(t);
-      const state: InteractionState = isHovered
+      // Unified urgency model: ring + pulse from severity (same source
+      // the card spine reads). Affiliation glyph + interaction overlays
+      // remain in `resolveTargetMarkerStyle`. See
+      // `docs/urgency-unification-plan.md`.
+      const interaction: TargetMarkerInteraction = isHovered
         ? 'hovered'
         : isActive
           ? 'selected'
-          : baseState;
-      const style = resolveMarkerStyle(state, 'hostile');
+          : detectionInteractionState(t);
+      const style = resolveTargetMarkerStyle(t, interaction);
       const isNewArrival = t.isNew === true;
       const targetHeading = targetHeadingFromTrail(t);
       out.push({
@@ -1049,6 +1126,47 @@ export function CesiumTacticalMap({
    * assets first (lowest priority), then effectors, then dynamic
    * targets/drones on top.
    */
+  /**
+   * Flow Builder draft ghost marker. A low-opacity, dashed-ring target
+   * at the draft location, coloured by the draft's first-stage severity.
+   * Null unless previewing (and no real flow is running).
+   */
+  const flowPreviewMarker = useMemo<CesiumHtmlMarker | null>(() => {
+    if (!previewActive || !flowPreview) return null;
+    const color = SEVERITY_COLOR[flowPreview.severity];
+    const style = resolveMarkerStyle('default', 'hostile', {
+      ringColor: color,
+      ringDash: 'dashed',
+      ringPulse: false,
+      glyphColor: color,
+      innerGlowColor: color,
+    });
+    const e = flowPreview.entity;
+    const icon =
+      e === 'car' ? <CarIcon color={color} />
+        : e === 'tank' ? <TankIcon color={color} />
+          : e === 'truck' ? <TruckIcon color={color} />
+            : <DroneIcon color={color} />;
+    return {
+      id: 'flow-preview-ghost',
+      lat: flowPreview.lat,
+      lon: flowPreview.lon,
+      zIndex: 18,
+      content: (
+        <div className="opacity-50" aria-hidden>
+          <MapMarker
+            icon={icon}
+            style={style}
+            surfaceSize={TARGET_SURFACE}
+            ringSize={TARGET_RING}
+            showLabel={false}
+            pulse={false}
+          />
+        </div>
+      ),
+    };
+  }, [previewActive, flowPreview]);
+
   const htmlMarkers = useMemo<CesiumHtmlMarker[]>(() => {
     // De-dupe across slices. Launchers in particular appear in BOTH
     // `staticAssetMarkers` (from `LAUNCHER_ASSETS` constant) and
@@ -1069,6 +1187,7 @@ export function CesiumTacticalMap({
     for (const m of targetMarkers) append(m);
     for (const m of friendlyDroneMarkers) append(m);
     for (const m of forceUnitMarkers) append(m);
+    if (flowPreviewMarker) append(flowPreviewMarker);
     if (engagementBadgeMarker) append(engagementBadgeMarker);
     return out;
   }, [
@@ -1078,6 +1197,7 @@ export function CesiumTacticalMap({
     friendlyDroneMarkers,
     launcherEffectorMarkers,
     forceUnitMarkers,
+    flowPreviewMarker,
     engagementBadgeMarker,
   ]);
 
@@ -1201,6 +1321,46 @@ export function CesiumTacticalMap({
   }, [jammingTargetId, jammingJammerAssetId, targets, regulusEffectors, engagementPair]);
 
   /**
+   * Slice — sensor-to-target detection geometry. Thin cyan lines
+   * from each sensor's static map position to the corresponding
+   * target. Reads "this sensor sees this track" without competing
+   * with the red/green engagement particles. Driven by the Flow
+   * Builder; undefined / empty prop means zero overhead.
+   */
+  const sensorDetectionPolylines = useMemo<CesiumPolyline[]>(() => {
+    if (!sensorDetectionLinks || sensorDetectionLinks.length === 0) return [];
+    const sensorPool: MapAsset[] = [
+      ...CAMERA_ASSETS,
+      ...RADAR_ASSETS,
+      ...LIDAR_ASSETS,
+      ...DRONE_HIVE_ASSETS,
+    ];
+    const out: CesiumPolyline[] = [];
+    for (const link of sensorDetectionLinks) {
+      const sensor = sensorPool.find((a) => a.id === link.sensorId);
+      const target = targets?.find((tg) => tg.id === link.targetId);
+      if (!sensor || !target) continue;
+      const [tLat, tLon] = (target.coordinates ?? '')
+        .split(',')
+        .map((s) => parseFloat(s.trim()));
+      if (!Number.isFinite(tLat) || !Number.isFinite(tLon)) continue;
+      out.push({
+        id: `sensor-detect-${link.sensorId}-${link.targetId}`,
+        points: [
+          { lat: sensor.latitude, lon: sensor.longitude },
+          { lat: tLat, lon: tLon },
+        ],
+        // rgba so the line reads as "sees" (low presence) rather
+        // than "engaging." Cyan keeps it distinct from the red jam
+        // and green weapon engagement lines above.
+        color: 'rgba(34, 184, 207, 0.45)',
+        width: 1,
+      });
+    }
+    return out;
+  }, [sensorDetectionLinks, targets]);
+
+  /**
    * Slice — planning-scan fan. Driven by the user's planner UI, not
    * the kinematic sim — so it stays cold while drones tick.
    */
@@ -1230,9 +1390,46 @@ export function CesiumTacticalMap({
     return out;
   }, [planningScanViz]);
 
+  /**
+   * Slice — Flow Builder draft preview lines. Faint dashed cyan from
+   * each preview sensor to the ghost marker, distinct (lower presence)
+   * from the live `sensorDetectionPolylines`. Empty unless previewing.
+   */
+  const previewPolylines = useMemo<CesiumPolyline[]>(() => {
+    if (!previewActive || !flowPreview) return [];
+    const sensorPool: MapAsset[] = [
+      ...CAMERA_ASSETS,
+      ...RADAR_ASSETS,
+      ...LIDAR_ASSETS,
+      ...DRONE_HIVE_ASSETS,
+    ];
+    const out: CesiumPolyline[] = [];
+    for (const id of flowPreview.sensorIds) {
+      const sensor = sensorPool.find((a) => a.id === id);
+      if (!sensor) continue;
+      out.push({
+        id: `flow-preview-${id}`,
+        points: [
+          { lat: sensor.latitude, lon: sensor.longitude },
+          { lat: flowPreview.lat, lon: flowPreview.lon },
+        ],
+        color: 'rgba(34, 184, 207, 0.25)',
+        width: 1,
+        dashed: true,
+      });
+    }
+    return out;
+  }, [previewActive, flowPreview]);
+
   const polylines = useMemo<CesiumPolyline[]>(
-    () => [...trailPolylines, ...engagementPolylines, ...planningScanPolylines],
-    [trailPolylines, engagementPolylines, planningScanPolylines],
+    () => [
+      ...trailPolylines,
+      ...sensorDetectionPolylines,
+      ...previewPolylines,
+      ...engagementPolylines,
+      ...planningScanPolylines,
+    ],
+    [trailPolylines, sensorDetectionPolylines, previewPolylines, engagementPolylines, planningScanPolylines],
   );
 
   /**

@@ -33,7 +33,7 @@ import type { Affiliation } from '@/primitives/markerStyles';
 
 export type DetectionType = 'uav' | 'missile' | 'aircraft' | 'naval' | 'ground_vehicle' | 'unknown';
 export type EntityStage = 'raw_detection' | 'classified';
-export type ClassifiedType = 'drone' | 'bird' | 'aircraft' | 'car' | 'unknown';
+export type ClassifiedType = 'drone' | 'bird' | 'aircraft' | 'car' | 'tank' | 'truck' | 'unknown';
 export type MitigationStatus = 'idle' | 'mitigating' | 'mitigated' | 'failed';
 export type WeaponPointingStatus = 'idle' | 'pointing' | 'pointed' | 'locking' | 'locked';
 export type BdaStatus = 'pending' | 'looking' | 'stabilizing' | 'observing' | 'complete';
@@ -274,7 +274,7 @@ function UnifiedCard({
 
   return (
     <TargetCard
-      accent={slots.accent}
+      severity={slots.severity}
       completed={slots.completed}
       open={isOpen}
       onToggle={onToggle}
