@@ -1216,6 +1216,20 @@ export const Dashboard = ({ demoMode = false }: DashboardProps = {}) => {
   }, [targets, t]);
 
   const handleBdaCamera = useCallback((targetId: string) => {
+    // Toggling off mid-slew: the look-at request isn't set until the
+    // pointing dwell completes, so cancel the pending slew + its timeout
+    // directly when the camera is still pointing at this target.
+    if (cameraPointingTargetId === targetId) {
+      if (cameraPointingTimeoutRef.current) {
+        clearTimeout(cameraPointingTimeoutRef.current);
+        cameraPointingTimeoutRef.current = null;
+      }
+      setCameraPointingTargetId(null);
+      setAllCamerasBusyForTarget(null);
+      toast.success(t.toasts.cameraCancelled);
+      return;
+    }
+
     if (cameraLookAtRequest) {
       const tgt = targets.find(tg => tg.id === targetId);
       if (tgt) {
@@ -1251,7 +1265,7 @@ export const Dashboard = ({ demoMode = false }: DashboardProps = {}) => {
       setAllCamerasBusyForTarget(targetId);
       toast(t.toasts.allCamerasBusy, { icon: '⚠️' });
     }
-  }, [targets, cameraLookAtRequest, t]);
+  }, [targets, cameraLookAtRequest, cameraPointingTargetId, t]);
 
   const handleRequestCameraControl = useCallback((targetId: string) => {
     setCameraControlRequest({ targetId, countdown: 10 });
@@ -1808,7 +1822,7 @@ export const Dashboard = ({ demoMode = false }: DashboardProps = {}) => {
         </div>
         <Separator className="bg-white/10" />
 
-        <div className="flex flex-col items-center gap-0.5 py-0 w-fit flex-1">
+        <div className="flex flex-col items-center gap-0.5 py-2 w-fit flex-1">
           <Tooltip>
             <TooltipTrigger asChild>
               <Toggle

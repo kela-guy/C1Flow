@@ -118,12 +118,12 @@ export const DEFAULT_DEVICE_PANEL_STRINGS: DevicesPanelStrings = {
   audioTrackAriaLabel: 'Audio track',
   audioTrackSearchPlaceholder: 'Search…',
   audioTrackNoMatches: 'No matches',
-  pinToFeed: 'Pin to feed',
-  pinToFeedAriaLabel: 'Pin device to a video feed',
-  unpinFromFeed: 'Unpin',
-  unpinFromFeedAriaLabel: 'Remove device from the video feed',
-  pinToFeedTooltip: 'Pin to feed',
-  pinnedToFeedTooltip: 'Pinned to feed',
+  pinToFeed: 'Watch live',
+  pinToFeedAriaLabel: 'Watch live video from this device',
+  unpinFromFeed: 'Stop watching',
+  unpinFromFeedAriaLabel: 'Stop watching this device feed',
+  pinToFeedTooltip: 'Watch live',
+  pinnedToFeedTooltip: 'Watching live',
 };
 
 /** Per-state dot colour used for the small status indicator in the row icon. */

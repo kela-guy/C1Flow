@@ -4,7 +4,7 @@
  * carries a label so it reads explicitly inside the action bar.
  */
 
-import { Pin, PinOff } from '@/lib/icons/central';
+import { Video } from '@/lib/icons/central';
 import type { Device, DevicesPanelStrings } from '../types';
 
 interface PinToFeedButtonProps {
@@ -43,7 +43,7 @@ export function PinToFeedButton({
           : 'text-sky-200 bg-sky-500/15 hover:bg-sky-500/25'
       }`}
     >
-      {isPinned ? <PinOff size={12} /> : <Pin size={12} />}
+      <Video size={12} />
       {isPinned ? strings.unpinFromFeed : strings.pinToFeed}
     </button>
   );

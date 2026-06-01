@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { ActionButton } from './ActionButton';
+import { CameraToggleButton } from './CameraToggleButton';
 import { SplitActionButton, type SplitDropdownGroup } from './SplitActionButton';
 import { CARD_TOKENS } from './tokens';
 
@@ -45,6 +46,22 @@ export interface CardAction {
     label: string;
     icon?: React.ElementType;
     tone: CardActionStatusStripTone;
+    /** Icon pixel size. Defaults to 11. */
+    iconSize?: number;
+  };
+  /**
+   * Renders the action as a single on/off toggle (via `CameraToggleButton`)
+   * instead of a plain button. `onClick` is invoked for both the on and off
+   * presses — the caller decides start vs stop based on `on`.
+   */
+  toggle?: {
+    on: boolean;
+    pending?: boolean;
+    offLabel: string;
+    onLabel: string;
+    pendingLabel?: string;
+    offIcon?: React.ElementType;
+    onIcon?: React.ElementType;
   };
 }
 
@@ -66,7 +83,7 @@ function StatusStrip({ strip }: StatusStripProps) {
       role="status"
       className="w-full min-h-[30px] flex items-center justify-center gap-2 px-3 text-xs font-medium text-zinc-300 cursor-default select-none pointer-events-none"
     >
-      {Icon && <Icon size={11} className={`shrink-0 ${STATUS_STRIP_ICON_TONE[strip.tone]}`} aria-hidden="true" />}
+      {Icon && <Icon size={strip.iconSize ?? 11} className={`shrink-0 ${STATUS_STRIP_ICON_TONE[strip.tone]}`} aria-hidden="true" />}
       <span>{strip.label}</span>
     </div>
   );
@@ -213,40 +230,14 @@ export function CardActions({
           {/* Secondary row */}
           {secondaryActions.length > 0 && (
             <div className="grid gap-1.5" style={{ gridTemplateColumns: `repeat(${Math.min(secondaryActions.length, 4)}, 1fr)` }}>
-              {secondaryActions.map((action) => (
-                <ActionButton
-                  key={action.id}
-                  label={action.label}
-                  icon={action.icon}
-                  variant={action.variant ?? 'ghost'}
-                  size={action.size ?? 'sm'}
-                  onClick={(e) => handleClick(action, e!)}
-                  disabled={action.disabled}
-                  loading={action.loading}
-                  title={action.title}
-                  className={`w-full ${action.className ?? ''}`}
-                />
-              ))}
+              {secondaryActions.map((action) => renderSecondaryAction(action, handleClick))}
             </div>
           )}
 
           {/* Any ungrouped actions (backward compat) */}
           {ungrouped.length > 0 && (
             <div className="grid gap-1.5" style={{ gridTemplateColumns: `repeat(${Math.min(ungrouped.length, 4)}, 1fr)` }}>
-              {ungrouped.map((action) => (
-                <ActionButton
-                  key={action.id}
-                  label={action.label}
-                  icon={action.icon}
-                  variant={action.variant ?? 'ghost'}
-                  size={action.size ?? 'sm'}
-                  onClick={(e) => handleClick(action, e!)}
-                  disabled={action.disabled}
-                  loading={action.loading}
-                  title={action.title}
-                  className={`w-full ${action.className ?? ''}`}
-                />
-              ))}
+              {ungrouped.map((action) => renderSecondaryAction(action, handleClick))}
             </div>
           )}
         </div>
@@ -283,24 +274,51 @@ export function CardActions({
           </div>
         ))}
 
-        {rest.map((action) => (
-          <ActionButton
-            key={action.id}
-            label={action.label}
-            icon={action.icon}
-            variant={action.variant ?? 'ghost'}
-            size={action.size ?? 'sm'}
-            onClick={(e) => handleClick(action, e!)}
-            disabled={action.disabled}
-            loading={action.loading}
-            title={action.title}
-            className={`w-full ${action.className ?? ''}`}
-          />
-        ))}
+        {rest.map((action) => renderSecondaryAction(action, handleClick))}
       </div>
 
       {confirmingAction?.confirm && renderConfirmDialog(confirmingAction, confirmStep, handleConfirm, handleCancel)}
     </div>
+  );
+}
+
+/** Renders a non-primary action, switching to a toggle button when `action.toggle` is set. */
+function renderSecondaryAction(
+  action: CardAction,
+  handleClick: (action: CardAction, e: React.MouseEvent) => void,
+) {
+  if (action.toggle) {
+    const tg = action.toggle;
+    return (
+      <CameraToggleButton
+        key={action.id}
+        on={tg.on}
+        pending={tg.pending}
+        size={action.size ?? 'sm'}
+        offLabel={tg.offLabel}
+        onLabel={tg.onLabel}
+        pendingLabel={tg.pendingLabel}
+        offIcon={tg.offIcon}
+        onIcon={tg.onIcon}
+        onToggle={(e) => handleClick(action, e)}
+        className={action.className ?? ''}
+      />
+    );
+  }
+
+  return (
+    <ActionButton
+      key={action.id}
+      label={action.label}
+      icon={action.icon}
+      variant={action.variant ?? 'ghost'}
+      size={action.size ?? 'sm'}
+      onClick={(e) => handleClick(action, e!)}
+      disabled={action.disabled}
+      loading={action.loading}
+      title={action.title}
+      className={`w-full ${action.className ?? ''}`}
+    />
   );
 }
 

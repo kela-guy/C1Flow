@@ -10,8 +10,10 @@ export {
   type Severity,
 } from './urgency';
 export { StatusChip, STATUS_CHIP_COLORS, type StatusChipColor } from './StatusChip';
+export { ActivityTimestampChip, type ActivityTimestampChipProps } from './ActivityTimestampChip';
 export { ActionButton, ACTION_BUTTON_VARIANTS, ACTION_BUTTON_SIZES, type ActionButtonVariant, type ActionButtonSize } from './ActionButton';
 export { SplitActionButton, SPLIT_BUTTON_VARIANTS, SPLIT_BUTTON_SIZES, type SplitButtonVariant, type SplitButtonSize, type SplitActionButtonProps, type SplitDropdownItem, type SplitDropdownGroup } from './SplitActionButton';
+export { CameraToggleButton, type CameraToggleButtonProps } from './CameraToggleButton';
 export { AccordionSection } from './AccordionSection';
 export { TelemetryRow } from './TelemetryRow';
 export { TargetCard, type TargetCardProps } from './TargetCard';

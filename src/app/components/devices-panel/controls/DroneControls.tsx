@@ -9,8 +9,9 @@
  */
 
 import { useEffect, useState } from 'react';
-import { Check, Loader2, Wrench } from '@/lib/icons/central';
+import { Check, Wrench } from '@/lib/icons/central';
 import { Switch } from '../../ui/switch';
+import { AppLoader } from '../../ui/app-loader';
 import type { Device, DevicesPanelStrings } from '../types';
 
 interface DroneControlsProps {
@@ -66,7 +67,7 @@ export function DroneControls({ device, strings }: DroneControlsProps) {
         aria-label={strings.calibrateAriaLabel}
       >
         {calibState === 'running' ? (
-          <Loader2 size={12} className="animate-spin motion-reduce:animate-none" />
+          <AppLoader size={12} label={strings.calibrating} />
         ) : calibState === 'done' ? (
           <Check size={12} className="text-emerald-400" />
         ) : (

@@ -48,9 +48,9 @@ export const spec: ComponentSpec = {
     {
       name: 'active filters',
       trigger: 'activeFilterCount > 0',
-      description: 'Reset button appears with filter count badge, popover triggers have sky-blue highlight',
+      description: 'Reset button fades in inline at the end of the search row (no longer a column in the filter grid); active popover triggers have sky-blue highlight',
       implementedInPrototype: true,
-      visualNotes: 'bg-sky-500/12 on active filter buttons, sky-300 count badge',
+      visualNotes: 'Reset enters with animate-in fade-in-0 zoom-in-95 (reduced-motion safe); bg-sky-500/12 on active filter buttons',
     },
     {
       name: 'empty sensors list',
@@ -176,7 +176,7 @@ export const spec: ComponentSpec = {
       'aria-hidden on decorative icons',
     ],
     keyboardNav: [
-      'Tab — move between search, filter buttons, reset',
+      'Tab — move between search, reset (when visible), filter buttons',
       'Enter/Space — activate buttons, toggle popover items',
       'Escape — close open popover (Radix built-in)',
     ],

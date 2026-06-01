@@ -4,7 +4,7 @@
  * being icon-only and inline-sized.
  */
 
-import { Pin, PinFilled } from '@/lib/icons/central';
+import { Video } from '@/lib/icons/central';
 import { Toggle } from '../../ui/toggle';
 import { Tooltip, TooltipContent, TooltipTrigger } from '../../ui/tooltip';
 import type { Device, DevicesPanelStrings } from '../types';
@@ -51,12 +51,7 @@ export function PinToFeedToggle({
           // filled chip.
           className="size-6 min-w-0 p-0 rounded text-white/70 hover:bg-white/10 hover:text-white data-[state=on]:bg-transparent data-[state=on]:text-white [&_svg]:size-3"
         >
-          {/*
-            On = Central's filled Pin (separate package variant).
-            Off = Central's outlined Pin. Both ship as native variant
-            components so we no longer need the fill/strokeWidth hack.
-          */}
-          {isPinned ? <PinFilled /> : <Pin />}
+          <Video />
         </Toggle>
       </TooltipTrigger>
       <TooltipContent

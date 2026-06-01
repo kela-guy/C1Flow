@@ -16,6 +16,7 @@ export const spec: ComponentSpec = {
     { name: 'className', type: 'string', required: false, defaultValue: "''", description: 'Additional CSS classes merged onto the button element' },
     { name: 'disabled', type: 'boolean', required: false, defaultValue: 'false', description: 'Disables button interaction and applies dimmed styling' },
     { name: 'loading', type: 'boolean', required: false, defaultValue: 'false', description: 'Shows spinning Loader2 icon, prevents interaction, keeps full opacity' },
+    { name: 'pressed', type: 'boolean', required: false, description: 'Toggle state. When defined, exposes aria-pressed; when true, fills with a brighter white surface (inset ring + higher-opacity background) over the variant. Leave undefined for non-toggle buttons.' },
     { name: 'title', type: 'string', required: false, description: 'When set, wraps button in a Tooltip with this text' },
   ],
 
@@ -67,6 +68,14 @@ export const spec: ComponentSpec = {
       description: 'Icon replaced with spinning Loader2, full opacity, cursor-wait, pointer-events-none',
       implementedInPrototype: true,
       visualNotes: 'animate-spin on Loader2 icon',
+    },
+    {
+      name: 'pressed (toggle on)',
+      trigger: 'pressed=true',
+      description: 'Brighter white "filled" toggle state — inset ring + higher-opacity background over the variant, aria-pressed="true"',
+      implementedInPrototype: true,
+      storyProps: { label: 'Release camera', pressed: true, icon: 'Video' },
+      visualNotes: 'bg-white/[0.20], text-white, shadow-[inset_0_0_0_1px_rgba(255,255,255,0.22)]',
     },
     {
       name: 'with tooltip',

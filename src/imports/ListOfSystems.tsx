@@ -11,7 +11,7 @@ import {
   CardMedia,
   CardLog,
   CardClosure,
-  StatusChip,
+  ActivityTimestampChip,
   FilterBar,
   NewUpdatesPill,
   AccordionSection,
@@ -25,7 +25,7 @@ import {
 } from '@/lib/icons/central';
 import { useCardSlots, type CardCallbacks, type CardContext } from './useCardSlots';
 import { useTargetFilters } from './useTargetFilters';
-import { getActivityStatus, isCompletedActivityStatus, useActivityStatus } from './useActivityStatus';
+import { getActivityStatus, getCreatedAtMs, formatTimeSince, isCompletedActivityStatus, useActivityStatus } from './useActivityStatus';
 import { useStrings, type Strings } from '@/lib/intl';
 import type { Affiliation } from '@/primitives/markerStyles';
 
@@ -241,7 +241,17 @@ function buildStatusChip(target: Detection, labels: Record<ActivityStatus, strin
   const status = getActivityStatus(target);
   const label = labels[status];
   const color = ACTIVITY_STATUS_CHIP_COLOR[status];
-  return <StatusChip label={label} color={color} />;
+  // Status dot + timestamp: the timestamp is the visible text, color conveys the
+  // activity status (status word kept in the aria-label), and hover surfaces the
+  // relative "time since detection".
+  return (
+    <ActivityTimestampChip
+      timestamp={target.timestamp}
+      color={color}
+      statusLabel={label}
+      hoverLabel={formatTimeSince(getCreatedAtMs(target))}
+    />
+  );
 }
 
 // ─── Unified Card ───────────────────────────────────────────────────────────

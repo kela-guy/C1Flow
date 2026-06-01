@@ -1,7 +1,9 @@
 import React from 'react';
-import { ChevronDown, Loader2 } from '@/lib/icons/central';
+import { ChevronDown } from '@/lib/icons/central';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
+import { useIsRtl } from '@/lib/direction';
 import { cn } from '@/shared/components/ui/utils';
+import { AppLoader } from '@/shared/components/ui/app-loader';
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -106,6 +108,8 @@ export function SplitActionButton({
   placeholder = 'Select',
 }: SplitActionButtonProps) {
   const prefersReducedMotion = useReducedMotion();
+  const isRtl = useIsRtl();
+  const dir = isRtl ? 'rtl' : 'ltr';
   const [menuOpen, setMenuOpen] = React.useState(false);
   const shellRef = React.useRef<HTMLDivElement>(null);
   const [shellWidth, setShellWidth] = React.useState(0);
@@ -142,7 +146,7 @@ export function SplitActionButton({
       : 'active:scale-[0.98] will-change-transform';
 
   return (
-    <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
+    <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen} dir={dir}>
       {/*
         Make the *whole shell* the trigger so the popper anchors to the
         full button width — not just the small chevron — keeping the
@@ -174,6 +178,11 @@ export function SplitActionButton({
         >
           <button
             type="button"
+            // The shell is the Radix dropdown trigger, and Radix opens the
+            // menu on `pointerdown`. Stop pointerdown here so a press on the
+            // primary segment never bubbles up to open the menu — the main
+            // button performs its action only; the chevron opens the menu.
+            onPointerDown={isDisabled ? undefined : (e) => e.stopPropagation()}
             onClick={isDisabled ? undefined : (e) => { e.stopPropagation(); onClick(e); }}
             disabled={isDisabled}
             onMouseEnter={onHover ? () => onHover(true) : undefined}
@@ -196,7 +205,7 @@ export function SplitActionButton({
                 exit={prefersReducedMotion ? undefined : { opacity: 0, y: 25 }}
               >
                 {loading ? (
-                  <Loader2 size={sz.icon} className={cn('shrink-0', prefersReducedMotion ? 'opacity-90' : 'animate-spin opacity-90')} aria-hidden="true" />
+                  <AppLoader size={sz.icon} label={label} className="shrink-0 opacity-90" />
                 ) : (
                   Icon && <Icon size={sz.icon} className="shrink-0 opacity-95" aria-hidden="true" />
                 )}
@@ -244,6 +253,7 @@ export function SplitActionButton({
       </DropdownMenuTrigger>
 
       <DropdownMenuContent
+        dir={dir}
         side="bottom"
         align="end"
         sideOffset={6}

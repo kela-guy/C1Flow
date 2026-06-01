@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { ChevronDown, Search, TimerReset, X } from '@/lib/icons/central';
+import { ChevronDown, Search, X } from '@/lib/icons/central';
 import { Checkbox } from '@/shared/components/ui/checkbox';
 import { Popover, PopoverContent, PopoverTrigger } from '@/shared/components/ui/popover';
 
@@ -53,6 +53,25 @@ export interface FilterBarProps {
   defaultSummary?: (selectedValues: string[], options: FilterOption[]) => string;
 }
 
+function ResetIcon({ size = 11, className }: { size?: number; className?: string }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      className={className}
+      aria-hidden="true"
+    >
+      <path
+        d="M19.0272 12C19.0272 8.13401 15.8932 5 12.0272 5C10.6574 5 9.58239 5.32722 8.62515 5.91476C8.15098 6.20581 7.69545 6.56697 7.24144 7H9.99983V9H3.99983V3H5.99983V5.42237C6.49705 4.96215 7.01882 4.55402 7.57893 4.21024C8.86186 3.42278 10.3011 3 12.0272 3C16.9977 3 21.0272 7.02944 21.0272 12C21.0272 16.9706 16.9977 21 12.0272 21C8.10696 21 4.77458 18.4941 3.53955 14.9999L5.42523 14.3334C6.38666 17.0536 8.98089 19 12.0272 19C15.8932 19 19.0272 15.866 19.0272 12Z"
+        fill="currentColor"
+      />
+    </svg>
+  );
+}
+
 const DEFAULT_SUMMARY = (selectedValues: string[], options: FilterOption[]) => {
   if (selectedValues.length === 0) return 'All';
   if (selectedValues.length === 1) {
@@ -93,8 +112,7 @@ export function FilterBar({
     onFilterChange(filterId, next);
   };
 
-  // Lay filters across columns; reset takes the last cell.
-  const colCount = filters.length + 1;
+  const hasActiveFilters = activeFilterCount > 0;
 
   return (
     <div className="border-b border-white/5 px-2 py-1.5" data-handoff-component="filter-bar">
@@ -120,49 +138,50 @@ export function FilterBar({
             </button>
           )}
         </div>
+
+        {hasActiveFilters && (
+          <button
+            type="button"
+            onClick={onReset}
+            className="inline-flex h-7 shrink-0 cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded bg-white/[0.06] px-2 text-xs font-medium text-white transition-[background-color,transform] duration-150 hover:bg-white/[0.10] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-white/20 active:scale-[0.99] motion-reduce:active:scale-100 animate-in fade-in-0 zoom-in-95 motion-reduce:animate-none"
+            aria-label={resetAriaLabel}
+          >
+            <ResetIcon size={11} className="shrink-0" />
+            <span>{resetLabel}</span>
+          </button>
+        )}
       </div>
 
-      <div
-        className="grid items-center gap-1.5 mt-1.5"
-        style={{ gridTemplateColumns: `repeat(${colCount}, minmax(0, 1fr))` }}
-      >
-        {filters.map((def) => {
-          const selected = selections[def.id] ?? [];
-          const summarize = def.summarize ?? defaultSummary;
-          const value = summarize(selected, def.options);
-          return (
-            <FilterPopoverButton
-              key={def.id}
-              open={openId === def.id}
-              onOpenChange={(open) => setOpenId(open ? def.id : null)}
-              icon={def.icon}
-              label={def.label}
-              value={value}
-              active={selected.length > 0}
-            >
-              <MultiSelectList
-                items={def.options}
-                selected={selected}
-                onToggle={(v) => toggleValue(def.id, v)}
-                emptyLabel={def.emptyLabel ?? emptyOptionsLabel}
-              />
-            </FilterPopoverButton>
-          );
-        })}
-
-        <button
-          type="button"
-          onClick={onReset}
-          disabled={activeFilterCount === 0}
-          className={`inline-flex h-7 cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded bg-white/[0.06] px-2 text-xs font-medium text-white transition-[opacity,transform] duration-150 hover:bg-white/[0.10] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-white/20 active:scale-[0.99] disabled:cursor-default motion-reduce:active:scale-100 ${
-            activeFilterCount === 0 ? 'pointer-events-none opacity-0' : 'opacity-100'
-          }`}
-          aria-label={resetAriaLabel}
+      {filters.length > 0 && (
+        <div
+          className="grid items-center gap-1.5 mt-1.5"
+          style={{ gridTemplateColumns: `repeat(${filters.length}, minmax(0, 1fr))` }}
         >
-          <TimerReset size={11} className="shrink-0" aria-hidden="true" />
-          <span>{resetLabel}</span>
-        </button>
-      </div>
+          {filters.map((def) => {
+            const selected = selections[def.id] ?? [];
+            const summarize = def.summarize ?? defaultSummary;
+            const value = summarize(selected, def.options);
+            return (
+              <FilterPopoverButton
+                key={def.id}
+                open={openId === def.id}
+                onOpenChange={(open) => setOpenId(open ? def.id : null)}
+                icon={def.icon}
+                label={def.label}
+                value={value}
+                active={selected.length > 0}
+              >
+                <MultiSelectList
+                  items={def.options}
+                  selected={selected}
+                  onToggle={(v) => toggleValue(def.id, v)}
+                  emptyLabel={def.emptyLabel ?? emptyOptionsLabel}
+                />
+              </FilterPopoverButton>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }

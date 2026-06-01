@@ -15,8 +15,9 @@
  */
 
 import { useCallback, useEffect, useRef } from 'react';
-import { AlertTriangle, Loader2, Play, RotateCcw, X } from '@/lib/icons/central';
+import { AlertTriangle, Play, RotateCcw, X } from '@/lib/icons/central';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/shared/components/ui/tooltip';
+import { AppLoader } from '@/shared/components/ui/app-loader';
 import { useStrings, type Strings } from '@/lib/intl';
 import { PlaybackTimeline } from '../PlaybackTimeline';
 import { PLAYBACK_BUFFERING_GRACE_MS } from './playbackDefaults';
@@ -265,7 +266,7 @@ function PlaybackStatusChrome({
         aria-label={strings.loading}
         className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-2 bg-black/60 pointer-events-none"
       >
-        <Loader2 size={20} className="text-white/85 animate-spin motion-reduce:animate-none" />
+        <AppLoader size={40} label={strings.loading} className="text-white/85" />
         <span className="text-xs text-white/85 font-mono tracking-wider uppercase">
           {strings.loadingEllipsis}
         </span>
@@ -279,7 +280,7 @@ function PlaybackStatusChrome({
         aria-label={strings.buffering}
         className="absolute inset-0 z-20 flex items-center justify-center bg-black/35 pointer-events-none"
       >
-        <Loader2 size={20} className="text-white/85 animate-spin motion-reduce:animate-none" />
+        <AppLoader size={40} label={strings.buffering} className="text-white/85" />
       </div>
     );
   }

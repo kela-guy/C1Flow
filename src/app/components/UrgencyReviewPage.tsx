@@ -25,7 +25,7 @@ import { useId, useMemo, useState, type ComponentType, type ReactNode } from 're
 import {
   CardHeader,
   MapMarker,
-  StatusChip,
+  ActivityTimestampChip,
   TargetCard,
   resolveTargetMarkerStyle,
   hexToRgba,
@@ -48,10 +48,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from './ui/select';
-import type { Detection, ActivityStatus } from '@/imports/ListOfSystems';
+import type { Detection } from '@/imports/ListOfSystems';
 import { DroneIcon } from './TacticalMap';
 import { useCardSlots, type CardCallbacks } from '@/imports/useCardSlots';
-import { getActivityStatus } from '@/imports/useActivityStatus';
+import { getCreatedAtMs } from '@/imports/useActivityStatus';
 import {
   cuas_possible_threat,
   cuas_classified,
@@ -82,13 +82,19 @@ interface SeverityFixture {
   key: string;
   severity: Severity;
   target: Detection;
+  /**
+   * Synthetic "seconds since detection" for the recency dot. The mock
+   * timestamps are hours old (everything would land in the stale/gray bucket),
+   * so the review surface assigns ages that exercise each color tier.
+   */
+  dotAgeSec: number;
 }
 
 const SEVERITY_FIXTURES: SeverityFixture[] = [
-  { key: 'critical', severity: 'CRITICAL', target: cuas_mitigating },
-  { key: 'high', severity: 'HIGH', target: cuas_classified },
-  { key: 'medium', severity: 'MEDIUM', target: cuas_possible_threat },
-  { key: 'low', severity: 'LOW', target: cuas_bda_complete },
+  { key: 'critical', severity: 'CRITICAL', target: cuas_mitigating, dotAgeSec: 5 },
+  { key: 'high', severity: 'HIGH', target: cuas_classified, dotAgeSec: 60 },
+  { key: 'medium', severity: 'MEDIUM', target: cuas_possible_threat, dotAgeSec: 200 },
+  { key: 'low', severity: 'LOW', target: cuas_bda_complete, dotAgeSec: 600 },
 ];
 
 // ── Entity selector ────────────────────────────────────────────────────
@@ -163,34 +169,60 @@ function SeverityBadge({ severity }: { severity: Severity }) {
   );
 }
 
+// ── Friendly affiliation ───────────────────────────────────────────────
+//
+// Friendly entities aren't threats — they sit on the affiliation axis, not
+// the severity axis. The friendly row paints the icon, badge, and marker in a
+// cyan/teal accent so it reads as "friendly / own forces" at a glance.
+
+const FRIENDLY_TEAL = '#2dd4bf';
+
+function FriendlyBadge() {
+  return (
+    <span
+      className="inline-flex items-center gap-1.5 font-['Heebo'] text-[12px] font-semibold tracking-normal text-white/90"
+      data-handoff-component="affiliation-badge"
+    >
+      <span
+        className="inline-block h-1.5 w-1.5 rounded-full"
+        style={{ backgroundColor: FRIENDLY_TEAL }}
+        aria-hidden="true"
+      />
+      ידידותי
+    </span>
+  );
+}
+
 // ── Status chip ────────────────────────────────────────────────────────
 //
-// Same derivation the dashboard uses (`getActivityStatus`) so the
-// review surface stays faithful to the real card. The chip surfaces
-// *how recently the target was seen / whether it's been handled* —
-// Active / Recently active / Timed out / Handled / Dismissed. Urgency
-// tier lives on a separate channel (the icon glyph + surface color).
+// Recency-driven dot: the color AND the text vary by how long ago the target
+// was detected.
+//   red    — less than 10 seconds   (just detected)
+//   yellow — more than 10 seconds   (recently active)
+//   gray   — more than 5 minutes    (stale)
+// The timestamp stays the visible text; the bucket phrase is the tooltip /
+// aria-label.
 
-const ACTIVITY_STATUS_CHIP_COLOR: Record<ActivityStatus, 'green' | 'red' | 'orange' | 'gray'> = {
-  active: 'green',
-  recently_active: 'orange',
-  timeout: 'gray',
-  dismissed: 'gray',
-  mitigated: 'green',
-};
+const RECENT_THRESHOLD_SEC = 10;
+const STALE_THRESHOLD_SEC = 5 * 60;
 
-const ACTIVITY_STATUS_LABEL: Record<ActivityStatus, string> = {
-  active: 'פעיל',
-  recently_active: 'פעיל לאחרונה',
-  timeout: 'פג תוקף',
-  dismissed: 'נדחה',
-  mitigated: 'טופל',
-};
+function recencyDotFromAgeSec(ageSec: number): { color: 'red' | 'orange' | 'gray'; label: string } {
+  if (ageSec < RECENT_THRESHOLD_SEC) return { color: 'red', label: 'פחות מ-10 שניות' };
+  if (ageSec < STALE_THRESHOLD_SEC) return { color: 'orange', label: 'יותר מ-10 שניות' };
+  return { color: 'gray', label: 'יותר מ-5 דקות' };
+}
 
-function buildStatusChip(target: Detection) {
-  const status = getActivityStatus(target);
+function buildStatusChip(target: Detection, ageSec?: number) {
+  // Use the explicit demo age when provided; otherwise fall back to the real
+  // elapsed time since detection.
+  const effectiveAge = ageSec ?? Math.max(0, (Date.now() - getCreatedAtMs(target)) / 1000);
+  const { color, label } = recencyDotFromAgeSec(effectiveAge);
   return (
-    <StatusChip label={ACTIVITY_STATUS_LABEL[status]} color={ACTIVITY_STATUS_CHIP_COLOR[status]} />
+    <ActivityTimestampChip
+      timestamp={target.timestamp}
+      color={color}
+      statusLabel={label}
+    />
   );
 }
 
@@ -254,7 +286,72 @@ function HandshakeRow({
                   SEVERITY_SURFACE_OPACITY[severity],
                 )}
                 title={entity.cardName}
-                status={buildStatusChip(target)}
+                status={buildStatusChip(target, fixture.dotAgeSec)}
+                open={false}
+              />
+            }
+          />
+        </div>
+      </div>
+
+      <div className="flex items-center justify-center">
+        <MapMarker
+          style={markerStyle}
+          icon={entity.renderMarker(markerStyle.glyphColor)}
+          surfaceSize={44}
+          ringSize={36}
+        />
+      </div>
+    </div>
+  );
+}
+
+// ── Friendly row ───────────────────────────────────────────────────────
+//
+// A friendly entity rendered on the cyan/teal accent (icon + badge + marker),
+// plus a multi-color activity-dot showcase demonstrating one dot per status
+// color with distinct text.
+
+function FriendlyRow({ entity }: { entity: EntityOption }) {
+  const slots = useCardSlots(cuas_classified, REVIEW_NOOP_CALLBACKS);
+
+  // Teal marker — friendly affiliation rendered on the cyan/teal accent
+  // rather than a severity color.
+  const markerStyle = useMemo(() => {
+    const base = resolveTargetMarkerStyle(cuas_classified, 'default');
+    return {
+      ...base,
+      surfaceFill: FRIENDLY_TEAL,
+      innerGlowColor: FRIENDLY_TEAL,
+      ringColor: FRIENDLY_TEAL,
+      glyphColor: FRIENDLY_TEAL,
+    };
+  }, []);
+
+  return (
+    <div
+      className="grid grid-cols-[minmax(0,1fr)_120px] items-center gap-6 rounded-[10px] border border-white/[0.06] bg-white/[0.015] p-4"
+      data-handoff-component="urgency-friendly-row"
+    >
+      <div className="flex flex-col items-start justify-start gap-2">
+        <FriendlyBadge />
+
+        <div className="w-full max-w-[360px]">
+          <TargetCard
+            severity="LOW"
+            completed={slots.completed}
+            open={false}
+            onToggle={() => {
+              /* review surface — open state intentionally inert */
+            }}
+            header={
+              <CardHeader
+                {...slots.header}
+                icon={entity.cardIcon}
+                iconColor={FRIENDLY_TEAL}
+                iconBgColor={hexToRgba(FRIENDLY_TEAL, 0.12)}
+                title={entity.cardName}
+                status={buildStatusChip(cuas_classified, 30)}
                 open={false}
               />
             }
@@ -331,6 +428,7 @@ export default function UrgencyReviewPage() {
           {SEVERITY_FIXTURES.map((fixture) => (
             <HandshakeRow key={fixture.key} fixture={fixture} entity={entity} />
           ))}
+          <FriendlyRow entity={entity} />
         </div>
       </div>
     </main>

@@ -31,6 +31,28 @@ export function getCreatedAtMs(target: Pick<Detection, 'createdAtMs' | 'timestam
   return target.createdAtMs ?? parseDisplayTimestamp(target.timestamp);
 }
 
+/**
+ * Human-readable "time since detection" phrase (Hebrew, the app's default
+ * locale). Bucketed into coarse "less than / more than" tiers rather than an
+ * exact duration — the card surfaces *recency at a glance*, not a stopwatch.
+ * Used for the activity chip hover tooltip (see ActivityTimestampChip).
+ */
+export function formatTimeSince(createdAtMs: number, nowMs = Date.now()): string {
+  const totalSec = Math.max(0, Math.floor((nowMs - createdAtMs) / 1000));
+
+  if (totalSec < 10) return 'לפני פחות מ-10 שניות';
+  if (totalSec < 60) return 'לפני פחות מדקה';
+
+  const min = Math.floor(totalSec / 60);
+  if (min < 60) return min === 1 ? 'לפני יותר מדקה' : `לפני יותר מ-${min} דקות`;
+
+  const hr = Math.floor(min / 60);
+  if (hr < 24) return hr === 1 ? 'לפני יותר משעה' : `לפני יותר מ-${hr} שעות`;
+
+  const days = Math.floor(hr / 24);
+  return days === 1 ? 'לפני יותר מיום' : `לפני יותר מ-${days} ימים`;
+}
+
 export function getPriorityBaseline(
   target: Pick<Detection, 'status' | 'entityStage' | 'flowType'>,
 ): number {

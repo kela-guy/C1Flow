@@ -8,7 +8,7 @@ export const spec: ComponentSpec = {
   status: 'prototype',
 
   props: [
-    { name: 'actions', type: 'CardAction[]', required: true, description: 'Array of action definitions: id, label, icon, variant, size, onClick, plus optional confirm config, dropdown sub-actions, and effector status strips' },
+    { name: 'actions', type: 'CardAction[]', required: true, description: 'Array of action definitions: id, label, icon, variant, size, onClick, plus optional confirm config, dropdown sub-actions, effector status strips, and a toggle config (renders a CameraToggleButton)' },
     { name: 'layout', type: "'row' | 'grid' | 'stack'", required: false, defaultValue: "'row'", description: 'Layout mode (currently only legacy row layout is used when no groups exist)' },
     { name: 'className', type: 'string', required: false, defaultValue: "''", description: 'Additional CSS classes on outer wrapper' },
   ],
@@ -59,6 +59,13 @@ export const spec: ComponentSpec = {
       trigger: 'Action has dropdownActions[]',
       description: 'Primary button with dropdown chevron for additional actions',
       implementedInPrototype: true,
+    },
+    {
+      name: 'camera toggle',
+      trigger: 'Action has a toggle config',
+      description: 'Renders a single CameraToggleButton (off ⇄ pending ⇄ on) instead of a plain button; onClick fires for both on and off presses. Replaces the former separate Point Camera + Cancel buttons.',
+      implementedInPrototype: true,
+      visualNotes: 'Emerald "live" treatment in the on state; hover/focus reveals the stop affordance',
     },
     {
       name: 'disabled',

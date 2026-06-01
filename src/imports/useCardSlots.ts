@@ -22,7 +22,7 @@ import {
   BookOpen,
   Send,
   Shield,
-  EyeOff,
+  Video,
   Lock,
   Timer,
   Compass,
@@ -226,7 +226,11 @@ function buildHeader(target: Detection, severity: Severity, t: Strings): CardHea
     title: isMission
       ? (target.plannedMission?.missionType === 'ptz' ? t.cards.cameraScan : t.cards.droneMission)
       : target.name,
-    subtitle: isMission ? target.id : target.timestamp,
+    // Missions keep their planned-action ID as the subtitle. Detected
+    // targets no longer repeat the timestamp here — it now lives in the
+    // status slot as a color-coded activity chip (see ActivityTimestampChip),
+    // so the title row stays a clean single line.
+    subtitle: isMission ? target.id : undefined,
   };
 }
 
@@ -400,30 +404,42 @@ function buildFlowActions(
   if (flow.showCamera) {
     const cameraPointing = !!ctx.isCameraPointing;
     const cameraActive = !!ctx.isCameraActive;
-    const CameraLockedIcon = (props: React.SVGProps<SVGSVGElement>) =>
-      React.createElement(Check, { ...props, className: `${props.className ?? ''} text-emerald-400` });
+    const cameraOn = cameraActive || cameraPointing;
 
     actions.push({
       id: 'point-camera',
-      label: cameraPointing ? t.cards.cameraPointing : cameraActive ? t.cards.cameraLocked : t.cards.pointCamera,
-      icon: cameraActive ? CameraLockedIcon : Eye,
-      variant: cameraPointing || cameraActive ? 'ghost' : 'fill',
+      label: t.cards.pointCamera,
       size: 'sm',
       group: 'secondary',
-      loading: cameraPointing,
-      onClick: (e) => { e.stopPropagation(); if (!cameraActive) callbacks.onVerify?.('investigate'); },
-      className: cameraActive ? 'text-white cursor-default' : '',
+      onClick: (e) => {
+        e.stopPropagation();
+        if (cameraOn) callbacks.onBdaCamera?.();
+        else callbacks.onVerify?.('investigate');
+      },
+      toggle: {
+        on: cameraOn,
+        pending: cameraPointing,
+        offLabel: t.cards.pointCamera,
+        onLabel: t.cards.releaseCamera,
+        pendingLabel: t.cards.cameraPointing,
+        offIcon: Video,
+        onIcon: Video,
+      },
     });
   }
 
-  actions.push({
-    id: 'dismiss-target', label: t.cards.dismiss, icon: X, variant: 'ghost', size: 'sm',
-    group: 'secondary',
-    onClick: (e) => { e.stopPropagation(); callbacks.onDismiss?.('dismissed'); },
-  });
-
   return actions;
 }
+
+const CheckmarkBoldIcon = ({ size = 20, className }: { size?: number; className?: string }) =>
+  React.createElement(
+    'svg',
+    { width: size, height: size, viewBox: '0 0 24 24', fill: 'none', className, 'aria-hidden': true },
+    React.createElement('path', {
+      d: 'M20.7646 6.89844L9.26074 19.8115L3.23242 13.8906L4.98438 12.1074L9.13965 16.1885L18.8984 5.23535L20.7646 6.89844Z',
+      fill: 'currentColor',
+    }),
+  );
 
 function buildActions(target: Detection, callbacks: CardCallbacks, ctx: CardContext, t: Strings): CardAction[] {
   const actions: CardAction[] = [];
@@ -447,7 +463,7 @@ function buildActions(target: Detection, callbacks: CardCallbacks, ctx: CardCont
       label: c.jamCompleted,
       group: 'primary',
       onClick: (e) => e.stopPropagation(),
-      statusStrip: { label: c.jamCompletedStrip, icon: Check, tone: 'success' },
+      statusStrip: { label: c.jamCompletedStrip, icon: CheckmarkBoldIcon, tone: 'success', iconSize: 20 },
     });
 
     if (countdown != null && countdown > 0) {
@@ -473,34 +489,23 @@ function buildActions(target: Detection, callbacks: CardCallbacks, ctx: CardCont
         onClick: (e: React.MouseEvent) => { e.stopPropagation(); callbacks.onRequestCameraControl?.(); },
         className: 'ring-1 ring-amber-400/40',
       });
-    } else if (cameraActive) {
-      actions.push({
-        id: 'bda-camera',
-        label: c.cancelCamera,
-        icon: EyeOff,
-        variant: 'fill' as const,
-        size: 'sm' as const,
-        group: 'secondary' as const,
-        onClick: (e: React.MouseEvent) => { e.stopPropagation(); callbacks.onBdaCamera?.(); },
-      });
     } else {
       actions.push({
         id: 'bda-camera',
         label: c.pointCamera,
-        icon: Eye,
-        variant: 'fill' as const,
         size: 'sm' as const,
         group: 'secondary' as const,
         onClick: (e: React.MouseEvent) => { e.stopPropagation(); callbacks.onBdaCamera?.(); },
+        toggle: {
+          on: cameraActive,
+          offLabel: c.pointCamera,
+          onLabel: c.releaseCamera,
+          offIcon: Video,
+          onIcon: Video,
+        },
       });
     }
 
-    actions.push(
-      { id: 'complete-mission', label: c.completeMission, icon: Check, variant: 'fill', size: 'sm',
-        group: 'secondary',
-        onClick: (e) => { e.stopPropagation(); callbacks.onCompleteMission?.(); },
-      },
-    );
     return actions;
   }
 

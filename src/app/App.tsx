@@ -9,6 +9,7 @@ import FovTestPage from "./components/FovTestPage";
 import StyleguidePage from "./components/StyleguidePage";
 import UrgencyReviewPage from "./components/UrgencyReviewPage";
 import { TooltipProvider } from "./components/ui/tooltip";
+import { AppLoader } from "./components/ui/app-loader";
 import { DirectionProvider } from "@/lib/direction";
 
 // Playground hosts the rebuilt video feature (`camera-v2/`). Code-split so
@@ -18,7 +19,8 @@ const PlaygroundPage = lazy(() => import("./components/PlaygroundPage"));
 
 function PlaygroundFallback() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-[#09090b] text-sm text-neutral-400">
+    <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-[#09090b] text-sm text-neutral-400">
+      <AppLoader size={108} label="Loading playground" />
       Loading playground…
     </div>
   );

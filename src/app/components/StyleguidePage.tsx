@@ -4,7 +4,7 @@ import {
   Eye, Radio, ShieldAlert, Zap, Crosshair, Ban, AlertTriangle,
   Trash2, Send, Compass, Gauge, Navigation, MapPin, CheckCircle2,
   Bird, Activity, History, Radar, Hand, Copy, Check, Download,
-  BellOff, Camera, Wrench, Loader2, Search, X, Lock,
+  BellOff, Camera, Wrench, Search, X, Lock,
   SlidersHorizontal, Tag,
 } from '@/lib/icons/central';
 import { ChevronsUpDown, Square } from 'lucide-react';
@@ -12,6 +12,7 @@ import { toast } from 'sonner';
 import { Toaster } from '@/shared/components/ui/sonner';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { TooltipProvider } from '@/shared/components/ui/tooltip';
+import { AppLoader } from '@/shared/components/ui/app-loader';
 import { NAV, findGroupForId, findParentItemForChild } from '@/app/styleguide/navConfig';
 import { CHANGELOG } from '@/app/styleguide/changelog';
 import { StyleguideSidebar } from '@/app/styleguide/StyleguideSidebar';
@@ -22,6 +23,7 @@ import { StyleguidePager } from '@/app/styleguide/StyleguidePager';
 import {
   CARD_TOKENS, ELEVATION, SURFACE, LAYOUT_TOKENS, surfaceAt, overlayAt,
   StatusChip, STATUS_CHIP_COLORS, type StatusChipColor,
+  ActivityTimestampChip,
   ActionButton, ACTION_BUTTON_VARIANTS, ACTION_BUTTON_SIZES, type ActionButtonVariant,
   SplitActionButton, SPLIT_BUTTON_VARIANTS,
   AccordionSection, TelemetryRow,
@@ -61,7 +63,7 @@ import {
   drone_friendly, drone_hostile, drone_unknown,
 } from '@/test-utils/mockDetections';
 import type { Detection, RegulusEffector } from '@/imports/ListOfSystems';
-import { getActivityStatus } from '@/imports/useActivityStatus';
+import { getActivityStatus, getCreatedAtMs, formatTimeSince } from '@/imports/useActivityStatus';
 
 import themeCssSrc from '@/styles/theme.css?raw';
 import indexCssSrc from '@/index.css?raw';
@@ -360,7 +362,7 @@ function PlaybackStatusMockup({ variant }: { variant: PlaybackStatusVariant }) {
 
         {variant === 'loading' && (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-black/60">
-            <Loader2 size={16} className="text-white/85 animate-spin motion-reduce:animate-none" />
+            <AppLoader size={40} label="טוען הקלטה" className="text-white/85" />
             <span className="text-xs text-white/85 font-mono uppercase tracking-wider">
               טוען הקלטה…
             </span>
@@ -368,7 +370,7 @@ function PlaybackStatusMockup({ variant }: { variant: PlaybackStatusVariant }) {
         )}
         {variant === 'buffering' && (
           <div className="absolute inset-0 flex items-center justify-center bg-black/35">
-            <Loader2 size={16} className="text-white/85 animate-spin motion-reduce:animate-none" />
+            <AppLoader size={40} label="באפרינג" className="text-white/85" />
           </div>
         )}
         {variant === 'ended' && (
@@ -2386,7 +2388,16 @@ const ACTIVITY_STATUS_LABELS: Record<string, string> = {
 
 function styleguideStatusChip(target: Detection) {
   const status = getActivityStatus(target);
-  return <StatusChip label={ACTIVITY_STATUS_LABELS[status] ?? status} color={ACTIVITY_STATUS_CHIP_COLOR[status] ?? 'gray'} />;
+  // Status dot + timestamp; color carries the activity status, hover surfaces
+  // the relative "time since detection".
+  return (
+    <ActivityTimestampChip
+      timestamp={target.timestamp}
+      color={ACTIVITY_STATUS_CHIP_COLOR[status] ?? 'gray'}
+      statusLabel={ACTIVITY_STATUS_LABELS[status] ?? status}
+      hoverLabel={formatTimeSince(getCreatedAtMs(target))}
+    />
+  );
 }
 
 const noopCallbacks: CardCallbacks = {
@@ -2922,7 +2933,8 @@ export default function StyleguidePage() {
             >
               <Suspense
                 fallback={
-                  <div className="flex items-center justify-center min-h-[240px] rounded-xl bg-white/[0.02] shadow-[0_0_0_1px_rgba(255,255,255,0.06)] text-sm text-n-9">
+                  <div className="flex flex-col items-center justify-center gap-3 min-h-[240px] rounded-xl bg-white/[0.02] shadow-[0_0_0_1px_rgba(255,255,255,0.06)] text-sm text-n-9">
+                    <AppLoader size={64} label="Loading icon library" />
                     Loading icon library…
                   </div>
                 }
@@ -4471,7 +4483,7 @@ export function DetectionRow() {
                 <div className="mt-4 grid grid-cols-3 gap-3">
                   {([
                     { label: 'Idle', icon: <Wrench size={12} />, text: 'כיול' },
-                    { label: 'Running', icon: <Loader2 size={12} className="animate-spin" />, text: 'מכייל...' },
+                    { label: 'Running', icon: <AppLoader size={12} label="מכייל" />, text: 'מכייל...' },
                     { label: 'Done', icon: <Check size={12} className="text-emerald-400" />, text: 'הושלם' },
                   ] as const).map(({ label, icon, text }) => (
                     <div key={label} className="flex flex-col items-center gap-2 rounded-lg border border-white/[0.06] bg-black/20 p-4">

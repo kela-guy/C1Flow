@@ -392,7 +392,7 @@ export default function PlaygroundPage() {
           </div>
           <Separator className="bg-white/10" />
 
-          <div className="flex flex-col items-center gap-0.5 py-0 w-fit flex-1">
+          <div className="flex flex-col items-center gap-0.5 py-2 w-fit flex-1">
             <Tooltip>
               <TooltipTrigger asChild>
                 <Toggle

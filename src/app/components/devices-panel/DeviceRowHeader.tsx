@@ -4,7 +4,7 @@
  * Owns:
  *   - the icon tile + its connection-state status dot
  *   - the device name + malfunction warning + connection chip
- *   - inline meta (mute countdown, pin toggle, battery)
+ *   - inline meta (mute countdown, pin toggle)
  *   - the type-specific inline action: ECM jam, floodlight switch,
  *     or speaker play.
  *
@@ -16,7 +16,6 @@
 
 import { AlertTriangle, BellOff } from '@/lib/icons/central';
 import { StatusChip } from '@/primitives/StatusChip';
-import { BatteryIcon } from '@/primitives/ProductIcons';
 import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip';
 import {
   CONNECTION_STATE_CHIP_COLORS,
@@ -143,12 +142,6 @@ export function DeviceRowHeader({
                 onPinToFeed={onPinToFeed}
                 onUnpinFromFeed={onUnpinFromFeed}
               />
-            )}
-            {device.batteryPct != null && (
-              <span className="flex items-center gap-1.5 text-xs font-['Heebo'] tabular-nums text-white/50 align-middle">
-                <BatteryIcon pct={device.batteryPct} />
-                {device.batteryPct}%
-              </span>
             )}
           </div>
         </div>

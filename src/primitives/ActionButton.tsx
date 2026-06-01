@@ -1,7 +1,7 @@
 import React from "react";
-import { Loader2 } from "@/lib/icons/central";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { cn } from "@/shared/components/ui/utils";
+import { AppLoader } from "@/shared/components/ui/app-loader";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/shared/components/ui/tooltip";
 
 export const ACTION_BUTTON_VARIANTS = {
@@ -56,6 +56,7 @@ export function ActionButton({
   className = "",
   disabled = false,
   loading = false,
+  pressed,
   title,
 }: {
   label: string;
@@ -66,6 +67,13 @@ export function ActionButton({
   className?: string;
   disabled?: boolean;
   loading?: boolean;
+  /**
+   * Toggle "on" state. When defined, the button advertises `aria-pressed`
+   * and — when `true` — fills with a brighter white surface (inset ring +
+   * higher-opacity background) over the chosen variant. Leave undefined for
+   * plain (non-toggle) buttons.
+   */
+  pressed?: boolean;
   title?: string;
 }) {
   const prefersReducedMotion = useReducedMotion();
@@ -79,15 +87,18 @@ export function ActionButton({
       data-handoff-component="action-button"
       onClick={isDisabled ? undefined : onClick}
       disabled={isDisabled}
+      aria-pressed={pressed}
       className={cn(
         'inline-flex items-center justify-center gap-2 px-3 rounded overflow-hidden',
         sz.height, sz.text, sz.font, c.text,
         c.base, c.hover, c.active,
-        'transition-[background-color,transform] duration-150 ease-out',
+        'transition-[background-color,box-shadow,transform] duration-150 ease-out',
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-white/30',
         !loading && 'active:scale-[0.98] will-change-transform',
         isDisabled && !loading && 'opacity-45 pointer-events-none',
         loading && 'cursor-wait',
+        pressed &&
+          'bg-white/[0.20] hover:bg-white/[0.24] active:bg-white/[0.16] text-white shadow-[inset_0_0_0_1px_rgba(255,255,255,0.22)]',
         className,
       )}
       {...(loading ? { "aria-live": "polite" as const } : {})}
@@ -102,11 +113,7 @@ export function ActionButton({
           exit={prefersReducedMotion ? undefined : { opacity: 0, y: 25 }}
         >
           {loading ? (
-            <Loader2
-              size={sz.icon}
-              className={cn('shrink-0', prefersReducedMotion ? 'opacity-90' : 'animate-spin opacity-90')}
-              aria-hidden="true"
-            />
+            <AppLoader size={sz.icon} label={label} className="shrink-0 opacity-90" />
           ) : (
             Icon && <Icon size={sz.icon} className="shrink-0 opacity-95" aria-hidden="true" />
           )}
